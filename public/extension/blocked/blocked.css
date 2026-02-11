@@ -1,0 +1,286 @@
+/* blocked.css — Cinematic intervention screen */
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background */
+.blocked-bg {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 20%, rgba(248,113,113,0.06) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 80%, rgba(91,140,255,0.04) 0%, transparent 60%),
+              var(--bg-deep);
+  animation: gradientShift 15s ease infinite;
+  background-size: 200% 200%;
+  z-index: 0;
+}
+
+.blocked-container {
+  position: relative;
+  z-index: 1;
+  max-width: 480px;
+  width: 100%;
+  padding: var(--sp-10) var(--sp-6);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+/* Shield */
+.blocked-shield {
+  filter: drop-shadow(0 0 30px rgba(248,113,113,0.2));
+}
+
+/* Title */
+.blocked-title {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+/* Domain pill */
+.blocked-domain-pill {
+  display: inline-flex;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--danger-dim);
+  border: 1px solid rgba(248, 113, 113, 0.15);
+}
+.blocked-domain-pill span {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--danger);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.blocked-reason {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Quote Card */
+.quote-card {
+  text-align: left;
+  border-left: 3px solid rgba(91, 140, 255, 0.3);
+  width: 100%;
+}
+.quote-text {
+  font-style: italic;
+  font-size: 14px;
+  color: var(--text-primary);
+  opacity: 0.8;
+  margin-bottom: 6px;
+  line-height: 1.6;
+}
+.quote-author {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Unlock Card */
+.unlock-card {
+  width: 100%;
+  text-align: left;
+}
+.unlock-title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--sp-4);
+  justify-content: center;
+}
+
+.unlock-reqs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.req-item {}
+.req-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: 6px;
+}
+.req-icon {
+  font-size: 13px;
+  width: 20px;
+  text-align: center;
+}
+.req-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color 0.3s;
+}
+.req-status {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s;
+}
+.req-item.met .req-label { color: var(--success); }
+.req-item.met .req-status { color: var(--success); }
+.req-item.met .req-icon { filter: none; }
+
+/* Progress tracks */
+.req-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.req-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s var(--ease-out);
+}
+.req-fill-accent { background: var(--gradient-primary); }
+.req-fill-success { background: var(--gradient-success); }
+
+/* Unlock success */
+.unlock-success {
+  text-align: center;
+  margin-top: var(--sp-5);
+  position: relative;
+}
+.success-text {
+  color: var(--success);
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: var(--sp-3);
+}
+.success-burst {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 100px;
+  pointer-events: none;
+}
+
+.btn-unlock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-8);
+  border-radius: var(--radius-md);
+  background: var(--gradient-success);
+  border: none;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  box-shadow: 0 4px 20px rgba(52, 211, 153, 0.25);
+}
+.btn-unlock:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px rgba(52, 211, 153, 0.35);
+}
+
+/* Override */
+.override-section {
+  width: 100%;
+}
+.override-toggle {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: var(--sp-2);
+  list-style: none;
+  text-align: center;
+  transition: color var(--duration-fast);
+}
+.override-toggle:hover { color: var(--text-secondary); }
+.override-toggle::-webkit-details-marker { display: none; }
+
+.override-content {
+  margin-top: var(--sp-3);
+  text-align: left;
+}
+.override-warning {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 12px;
+  color: var(--warning);
+  margin-bottom: var(--sp-3);
+}
+.override-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: var(--sp-1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.override-textarea {
+  width: 100%;
+  resize: none;
+  margin-bottom: var(--sp-3);
+}
+
+.reflection-timer {
+  text-align: center;
+  margin-bottom: var(--sp-3);
+}
+.reflection-timer p {
+  font-size: 13px;
+  color: var(--warning);
+  margin-bottom: var(--sp-2);
+  font-weight: 600;
+}
+.reflection-track {
+  display: flex;
+  justify-content: center;
+}
+.reflection-ring {
+  width: 44px;
+  height: 44px;
+  transform: rotate(-90deg);
+}
+.reflection-ring-fill {
+  transition: stroke-dashoffset 1s linear;
+}
+
+.btn-override {
+  width: 100%;
+  padding: var(--sp-3);
+  border-radius: var(--radius-md);
+  background: var(--danger-dim);
+  border: 1px solid rgba(248, 113, 113, 0.15);
+  color: var(--danger);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.btn-override:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.2);
+}
+.btn-override:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

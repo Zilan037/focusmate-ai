@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Site Blocked — FocusGuard</title>
+  <link rel="stylesheet" href="../assets/styles-common.css" />
+  <link rel="stylesheet" href="blocked.css" />
+</head>
+<body>
+  <div class="blocked-bg"></div>
+  <div class="blocked-container">
+    <!-- Shield Icon -->
+    <div class="blocked-shield fade-up">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(248,113,113,0.1)" stroke="url(#dangerGrad)" stroke-width="1.2"/>
+        <line x1="8" y1="8" x2="16" y2="16" stroke="#F87171" stroke-width="2" stroke-linecap="round"/>
+        <line x1="16" y1="8" x2="8" y2="16" stroke="#F87171" stroke-width="2" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="dangerGrad" x1="3" y1="2" x2="21" y2="24">
+            <stop offset="0%" stop-color="#F87171"/>
+            <stop offset="100%" stop-color="#FBBF24"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <h1 class="blocked-title text-gradient-danger fade-up delay-1">Site Blocked</h1>
+    <div class="blocked-domain-pill fade-up delay-1">
+      <span id="blocked-domain">example.com</span>
+    </div>
+    <p class="blocked-reason fade-up delay-2" id="blocked-reason">This site is on your block list.</p>
+
+    <!-- Quote -->
+    <div class="quote-card glass-card fade-up delay-2">
+      <p class="quote-text" id="quote-text">"Focus on being productive instead of busy."</p>
+      <span class="quote-author">— Tim Ferriss</span>
+    </div>
+
+    <!-- Unlock Requirements -->
+    <div class="unlock-card glass-card fade-up delay-3">
+      <h2 class="unlock-title">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="2" stroke="#5B8CFF" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0v2" stroke="#5B8CFF" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Unlock Requirements
+      </h2>
+      <div class="unlock-reqs">
+        <div class="req-item" id="req-focus">
+          <div class="req-header">
+            <span class="req-icon">⏱</span>
+            <span class="req-label">Focus time</span>
+            <span class="req-status" id="req-focus-status">0/10 min</span>
+          </div>
+          <div class="req-track"><div class="req-fill req-fill-accent" id="req-focus-bar" style="width:0%"></div></div>
+        </div>
+        <div class="req-item" id="req-tasks">
+          <div class="req-header">
+            <span class="req-icon">✓</span>
+            <span class="req-label">Tasks completed</span>
+            <span class="req-status" id="req-tasks-status">0/2</span>
+          </div>
+          <div class="req-track"><div class="req-fill req-fill-success" id="req-tasks-bar" style="width:0%"></div></div>
+        </div>
+        <div class="req-item" id="req-interruptions">
+          <div class="req-header">
+            <span class="req-icon">🔕</span>
+            <span class="req-label">Interruptions</span>
+            <span class="req-status" id="req-int-status">0 (max 3)</span>
+          </div>
+          <div class="req-track"><div class="req-fill req-fill-accent" id="req-int-bar" style="width:100%"></div></div>
+        </div>
+      </div>
+
+      <div id="unlock-success" class="unlock-success" style="display:none;">
+        <div class="success-burst" id="success-burst"></div>
+        <h3 class="success-text">Requirements Met!</h3>
+        <button id="btn-unlock" class="btn-unlock">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Access Site
+        </button>
+      </div>
+    </div>
+
+    <!-- Override -->
+    <div class="override-section fade-up delay-4">
+      <details>
+        <summary class="override-toggle">Override (not recommended)</summary>
+        <div class="override-content glass-card">
+          <p class="override-warning">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L1 13h12L7 1z" stroke="#FBBF24" stroke-width="1.2" fill="none"/><line x1="7" y1="5" x2="7" y2="9" stroke="#FBBF24" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="11" r="0.5" fill="#FBBF24"/></svg>
+            Overriding lowers your productivity score.
+          </p>
+          <label class="override-label">Why do you need access?</label>
+          <textarea id="override-reason" class="override-textarea input" placeholder="Type your reason..." rows="2"></textarea>
+          <div id="reflection-timer" class="reflection-timer" style="display:none;">
+            <p>Reflect for <span id="reflection-count">15</span>s...</p>
+            <div class="reflection-track">
+              <svg class="reflection-ring" viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="17" stroke="rgba(255,255,255,0.05)" stroke-width="3" fill="none"/>
+                <circle class="reflection-ring-fill" id="reflection-ring" cx="20" cy="20" r="17" 
+                  stroke-dasharray="107" stroke-dashoffset="107" stroke-width="3" fill="none" stroke="#FBBF24" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <button id="btn-override" class="btn-override" disabled>Override & Continue</button>
+        </div>
+      </details>
+    </div>
+
+    <button id="btn-go-back" class="btn-ghost fade-up delay-4" style="margin-top:8px;">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Go Back
+    </button>
+  </div>
+
+  <script src="../utils/storage.js"></script>
+  <script src="blocked.js"></script>
+</body>
+</html>
