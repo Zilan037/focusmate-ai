@@ -1,6 +1,6 @@
 // storage.js — chrome.storage.local helpers
 
-export const Storage = {
+const Storage = {
   async get(key) {
     return new Promise((resolve) => {
       chrome.storage.local.get(key, (result) => {

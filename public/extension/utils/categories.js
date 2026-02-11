@@ -1,6 +1,6 @@
 // categories.js — Domain categorization engine
 
-export const CategoryPatterns = {
+const CategoryPatterns = {
   "Social Media": [
     "facebook.com", "instagram.com", "twitter.com", "x.com", "tiktok.com",
     "snapchat.com", "linkedin.com", "pinterest.com", "tumblr.com", "reddit.com",
@@ -42,7 +42,7 @@ export const CategoryPatterns = {
   ],
 };
 
-export const Categories = {
+const Categories = {
   categorize(domain, overrides = {}) {
     if (!domain) return "Other";
 

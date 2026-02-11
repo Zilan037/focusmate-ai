@@ -1,10 +1,7 @@
 // background.js — Service worker: tracking engine, focus timer, blocking
 // Manifest V3 service worker — event-driven, no persistent state in memory
 
-import { Storage } from "./utils/storage.js";
-import { Categories } from "./utils/categories.js";
-import { Scoring } from "./utils/scoring.js";
-import { Insights } from "./utils/insights.js";
+importScripts("utils/storage.js", "utils/categories.js", "utils/scoring.js", "utils/insights.js");
 
 // ─── State (in-memory, rebuilt from storage on wake) ───
 let currentSession = null;    // { domain, startTime, tabId }
