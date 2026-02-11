@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Site Blocked — FocusGuard</title>
+  <link rel="stylesheet" href="../assets/styles-common.css" />
+  <link rel="stylesheet" href="blocked.css" />
+</head>
+<body>
+  <div class="blocked-container">
+    <div class="blocked-icon">🛡️</div>
+    <h1 class="blocked-title">Site Blocked</h1>
+    <p class="blocked-domain" id="blocked-domain">example.com</p>
+    <p class="blocked-reason" id="blocked-reason">This site is on your block list.</p>
+
+    <div class="quote-box">
+      <p id="quote-text">"Focus on being productive instead of busy."</p>
+      <span class="quote-author">— Tim Ferriss</span>
+    </div>
+
+    <!-- Task-Based Unlock -->
+    <div class="unlock-section">
+      <h2>🔓 Unlock Requirements</h2>
+      <div class="unlock-reqs">
+        <div class="req-item" id="req-focus">
+          <div class="req-header">
+            <span class="req-label">Focus time</span>
+            <span class="req-status" id="req-focus-status">0/10 min</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="req-focus-bar" style="width:0%"></div></div>
+        </div>
+        <div class="req-item" id="req-tasks">
+          <div class="req-header">
+            <span class="req-label">Tasks completed</span>
+            <span class="req-status" id="req-tasks-status">0/2</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill green" id="req-tasks-bar" style="width:0%"></div></div>
+        </div>
+        <div class="req-item" id="req-interruptions">
+          <div class="req-header">
+            <span class="req-label">Interruptions</span>
+            <span class="req-status" id="req-int-status">0 (max 3)</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill blue" id="req-int-bar" style="width:100%"></div></div>
+        </div>
+      </div>
+
+      <div id="unlock-success" class="unlock-success" style="display:none;">
+        <div class="success-icon">✅</div>
+        <h3>Requirements Met!</h3>
+        <button id="btn-unlock" class="btn-unlock">🔓 Access Site</button>
+      </div>
+    </div>
+
+    <!-- Override -->
+    <div class="override-section">
+      <details>
+        <summary class="override-toggle">Override (not recommended)</summary>
+        <div class="override-content">
+          <p class="override-warning">⚠️ Overriding will count as a block bypass and lower your productivity score.</p>
+          <label>Why do you need access?</label>
+          <textarea id="override-reason" placeholder="Type your reason..." rows="2"></textarea>
+          <div id="reflection-timer" class="reflection-timer" style="display:none;">
+            <p>Reflect for <span id="reflection-count">15</span> seconds...</p>
+            <div class="progress-track"><div class="progress-fill orange" id="reflection-bar" style="width:0%"></div></div>
+          </div>
+          <button id="btn-override" class="btn-override" disabled>Override & Continue</button>
+        </div>
+      </details>
+    </div>
+
+    <button id="btn-go-back" class="btn-back">← Go Back</button>
+  </div>
+
+  <script src="../utils/storage.js"></script>
+  <script src="blocked.js"></script>
+</body>
+</html>

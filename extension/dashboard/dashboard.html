@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FocusGuard Dashboard</title>
+  <link rel="stylesheet" href="../assets/styles-common.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="dashboard">
+    <header class="dash-header">
+      <div class="dash-logo">
+        <span>🛡️</span>
+        <h1>FocusGuard Dashboard</h1>
+      </div>
+      <div class="dash-tabs">
+        <button class="tab-btn active" data-tab="overview">Overview</button>
+        <button class="tab-btn" data-tab="insights">Insights</button>
+        <button class="tab-btn" data-tab="sessions">Sessions</button>
+        <button class="tab-btn" data-tab="settings">Settings</button>
+      </div>
+    </header>
+
+    <!-- Overview Tab -->
+    <div id="tab-overview" class="tab-content active">
+      <div class="overview-cards">
+        <div class="card stat-card-lg">
+          <span class="stat-label">Active Time</span>
+          <span class="stat-value-lg" id="d-active">0h 0m</span>
+        </div>
+        <div class="card stat-card-lg">
+          <span class="stat-label">Focus %</span>
+          <span class="stat-value-lg focus-c" id="d-focus">0%</span>
+        </div>
+        <div class="card stat-card-lg">
+          <span class="stat-label">Score</span>
+          <span class="stat-value-lg" id="d-score">0</span>
+          <span class="score-label" id="d-score-label"></span>
+        </div>
+        <div class="card stat-card-lg">
+          <span class="stat-label">Streak</span>
+          <span class="stat-value-lg streak-c" id="d-streak">🔥 0</span>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="card chart-card">
+          <h3>Domain Usage</h3>
+          <canvas id="chart-domains" width="500" height="300"></canvas>
+        </div>
+        <div class="card chart-card">
+          <h3>Category Breakdown</h3>
+          <canvas id="chart-categories" width="300" height="300"></canvas>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="card chart-card wide">
+          <h3>Hourly Activity</h3>
+          <canvas id="chart-hourly" width="800" height="250"></canvas>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <div class="card chart-card wide">
+          <h3>Weekly Trends</h3>
+          <canvas id="chart-weekly" width="800" height="250"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insights Tab -->
+    <div id="tab-insights" class="tab-content">
+      <h2 class="tab-heading">Behavioral Insights</h2>
+      <div id="insights-list" class="insights-grid"></div>
+      <h2 class="tab-heading" style="margin-top:24px;">Distraction Loops</h2>
+      <div id="loops-list" class="loops-list"></div>
+    </div>
+
+    <!-- Sessions Tab -->
+    <div id="tab-sessions" class="tab-content">
+      <h2 class="tab-heading">Focus Sessions Log</h2>
+      <table class="sessions-table" id="sessions-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Duration</th>
+            <th>Tasks</th>
+            <th>Interruptions</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="sessions-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="tab-settings" class="tab-content">
+      <h2 class="tab-heading">Settings</h2>
+
+      <div class="settings-section">
+        <h3>Blocked Domains</h3>
+        <div class="input-row">
+          <input type="text" id="input-block-domain" placeholder="e.g. instagram.com" />
+          <button id="btn-add-block" class="btn-sm">+ Add</button>
+        </div>
+        <div id="blocked-list" class="tag-list"></div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Daily Limits</h3>
+        <div class="input-row">
+          <input type="text" id="input-limit-domain" placeholder="domain" />
+          <input type="number" id="input-limit-minutes" placeholder="min" min="1" max="480" style="width:70px;" />
+          <button id="btn-add-limit" class="btn-sm">+ Add</button>
+        </div>
+        <div id="limits-list" class="tag-list"></div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Focus Defaults</h3>
+        <label class="setting-label">Default Duration (min)
+          <input type="number" id="input-focus-duration" min="5" max="120" value="25" />
+        </label>
+        <label class="setting-label">Unlock: Focus Minutes Required
+          <input type="number" id="input-unlock-focus" min="1" max="60" value="10" />
+        </label>
+        <label class="setting-label">Unlock: Tasks Required
+          <input type="number" id="input-unlock-tasks" min="0" max="10" value="2" />
+        </label>
+        <label class="setting-label">Unlock: Max Interruptions
+          <input type="number" id="input-unlock-interruptions" min="1" max="20" value="3" />
+        </label>
+        <button id="btn-save-settings" class="btn-primary-sm">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../utils/storage.js"></script>
+  <script src="../utils/categories.js"></script>
+  <script src="../utils/scoring.js"></script>
+  <script src="../utils/insights.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

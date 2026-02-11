@@ -1,0 +1,212 @@
+body {
+  width: 320px;
+  min-height: 400px;
+  margin: 0;
+  background: #0f0f1a;
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.popup-container {
+  padding: 16px;
+}
+
+/* Header */
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.popup-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-icon { font-size: 24px; }
+.popup-logo h1 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #7c8aff, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.icon-btn {
+  background: rgba(124,138,255,0.1);
+  border: 1px solid rgba(124,138,255,0.2);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+.icon-btn:hover { background: rgba(124,138,255,0.2); }
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.stat-card {
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+.stat-label {
+  display: block;
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+.stat-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #e0e0e0;
+}
+.focus-color { color: #3b82f6; }
+.streak-color { color: #f59e0b; }
+
+/* Sections */
+.section {
+  margin-bottom: 14px;
+}
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #a0a0c0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px 0;
+}
+
+/* Domain Bars */
+.domain-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.domain-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.domain-name {
+  flex: 0 0 110px;
+  font-size: 11px;
+  color: #ccc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.domain-bar-track {
+  flex: 1;
+  height: 8px;
+  background: #2a2a4a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.domain-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+.domain-time {
+  flex: 0 0 36px;
+  font-size: 10px;
+  color: #888;
+  text-align: right;
+}
+
+/* Focus Controls */
+.focus-controls { text-align: center; }
+.duration-selector {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.dur-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  color: #ccc;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dur-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+.dur-btn.active {
+  background: rgba(59,130,246,0.2);
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6, #7c8aff);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.btn-primary:hover { opacity: 0.9; }
+
+.focus-active { text-align: center; }
+.focus-timer {
+  font-size: 36px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  color: #3b82f6;
+  margin-bottom: 10px;
+}
+.focus-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.btn-secondary {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #1a1a2e;
+  border: 1px solid #3b82f6;
+  color: #3b82f6;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-danger {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: rgba(239,68,68,0.15);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #ef4444;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-block {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.2);
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-block:hover { background: rgba(239,68,68,0.2); }
