@@ -1,10 +1,13 @@
-// dashboard.js — Premium analytics dashboard with sidebar navigation
+// dashboard.js — Premium analytics dashboard V2 with sidebar navigation
 
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
   setupTabs();
+  setupSidebar();
+  setupTheme();
   await loadOverview();
+  await loadComparisons();
   await loadDaily();
   await loadInsights();
   await loadSessions();
@@ -12,6 +15,8 @@ async function init() {
   await loadWeekly();
   await loadSettings();
   await loadSidebarStats();
+  setupDataManagement();
+  setupQuickActions();
 }
 
 // ─── Animated Number ───
@@ -36,6 +41,53 @@ function formatTime(m) {
   return `${h}h ${mins}m`;
 }
 
+// ─── Theme ───
+function setupTheme() {
+  const themeBtn = document.getElementById("btn-theme-dash");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", async () => {
+      const current = document.documentElement.getAttribute("data-theme");
+      const next = current === "light" ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", next);
+      await chrome.runtime.sendMessage({ action: "setTheme", theme: next });
+      updateThemeButtons(next);
+    });
+  }
+
+  // Settings theme buttons
+  document.querySelectorAll(".theme-option").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const theme = btn.dataset.theme;
+      document.documentElement.setAttribute("data-theme", theme);
+      await chrome.runtime.sendMessage({ action: "setTheme", theme });
+      updateThemeButtons(theme);
+    });
+  });
+
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
+  updateThemeButtons(current);
+}
+
+function updateThemeButtons(theme) {
+  document.querySelectorAll(".theme-option").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.theme === theme);
+  });
+}
+
+// ─── Sidebar ───
+function setupSidebar() {
+  const collapseBtn = document.getElementById("btn-collapse");
+  const layout = document.querySelector(".dashboard-layout");
+  
+  const collapsed = localStorage.getItem("fg_sidebar_collapsed") === "true";
+  if (collapsed) layout.classList.add("collapsed");
+
+  collapseBtn.addEventListener("click", () => {
+    layout.classList.toggle("collapsed");
+    localStorage.setItem("fg_sidebar_collapsed", layout.classList.contains("collapsed"));
+  });
+}
+
 // ─── Tab Switching ───
 function setupTabs() {
   document.querySelectorAll(".nav-item").forEach((btn) => {
@@ -52,11 +104,26 @@ function setupTabs() {
 async function loadSidebarStats() {
   const scoreData = await chrome.runtime.sendMessage({ action: "getScore" });
   const streak = await chrome.runtime.sendMessage({ action: "getStreak" });
-  document.getElementById("sidebar-score").textContent = scoreData.score || 0;
-  if (scoreData.label) {
-    document.getElementById("sidebar-score").style.color = scoreData.label.color;
-  }
+  const scoreEl = document.getElementById("sidebar-score");
+  scoreEl.textContent = scoreData.score || 0;
+  if (scoreData.label) scoreEl.style.color = scoreData.label.color;
   document.getElementById("sidebar-streak").textContent = streak.current || 0;
+}
+
+// ─── Comparison Stats ───
+async function loadComparisons() {
+  try {
+    const cmp = await chrome.runtime.sendMessage({ action: "getComparisonStats" });
+    setComparison("cmp-active", cmp.active);
+    setComparison("cmp-focus", cmp.focus);
+  } catch (e) {}
+}
+
+function setComparison(id, data) {
+  const el = document.getElementById(id);
+  if (!el || !data || data.pct === 0) return;
+  el.className = `comparison-badge ${data.direction}`;
+  el.textContent = `${data.direction === "up" ? "↑" : "↓"} ${data.pct}%`;
 }
 
 // ─── Overview ───
@@ -76,7 +143,6 @@ async function loadOverview() {
   const scoreEl = document.getElementById("d-score");
   animateNumber(scoreEl, score);
   
-  // Score ring
   const ring = document.getElementById("d-score-ring");
   const circumference = 151;
   ring.style.strokeDashoffset = circumference - (score / 100) * circumference;
@@ -96,6 +162,16 @@ async function loadOverview() {
   drawWeeklyChart(weekData || []);
 }
 
+// ─── Quick Actions ───
+function setupQuickActions() {
+  document.getElementById("btn-quick-focus")?.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ action: "startFocus", duration: 25, tasks: [] });
+    alert("Focus session started! 25 minutes.");
+  });
+
+  document.getElementById("btn-quick-export")?.addEventListener("click", exportAllData);
+}
+
 // ─── Canvas Helpers ───
 function getCtx(id) {
   const canvas = document.getElementById(id);
@@ -113,10 +189,21 @@ function getCtx(id) {
   return { ctx, w, h };
 }
 
+function getChartColors() {
+  const isLight = document.documentElement.getAttribute("data-theme") === "light";
+  return {
+    text: isLight ? "#5A6478" : "#7A8BA7",
+    textMuted: isLight ? "#8A95A8" : "#4A5568",
+    gridLine: isLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.03)",
+    barBg: isLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.04)",
+  };
+}
+
 function drawDomainChart(domains) {
   const data = getCtx("chart-domains");
   if (!data) return;
   const { ctx, w, h } = data;
+  const colors = getChartColors();
   ctx.clearRect(0, 0, w, h);
 
   const sorted = Object.entries(domains)
@@ -124,7 +211,7 @@ function drawDomainChart(domains) {
     .slice(0, 8);
 
   if (sorted.length === 0) {
-    ctx.fillStyle = "#4A5568";
+    ctx.fillStyle = colors.textMuted;
     ctx.font = "13px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("No data yet", w / 2, h / 2);
@@ -143,13 +230,11 @@ function drawDomainChart(domains) {
     const barW = Math.max(4, (info.time / maxTime) * chartW);
     const color = Categories.getCategoryColor(info.category || "Other");
 
-    // Label
-    ctx.fillStyle = "#7A8BA7";
+    ctx.fillStyle = colors.text;
     ctx.font = "12px Inter, sans-serif";
     ctx.textAlign = "right";
     ctx.fillText(domain.length > 18 ? domain.slice(0, 18) + "…" : domain, labelW - 12, y + barH / 2 + 4);
 
-    // Bar with gradient
     const grad = ctx.createLinearGradient(labelW, 0, labelW + barW, 0);
     grad.addColorStop(0, color);
     grad.addColorStop(1, color + "66");
@@ -158,15 +243,13 @@ function drawDomainChart(domains) {
     ctx.roundRect(labelW, y, barW, barH, 6);
     ctx.fill();
 
-    // Time
-    ctx.fillStyle = "#7A8BA7";
+    ctx.fillStyle = colors.text;
     ctx.textAlign = "left";
     ctx.font = "11px Inter, sans-serif";
     ctx.fillText(Math.round(info.time) + "m", labelW + barW + 10, y + barH / 2 + 4);
   });
 }
 
-// ─── SVG Category Donut ───
 function drawCategoryDonut(domains) {
   const container = document.getElementById("category-donut");
   if (!container) return;
@@ -192,7 +275,6 @@ function drawCategoryDonut(domains) {
   entries.forEach(([cat, time]) => {
     const slice = (time / total) * Math.PI * 2;
     const color = Categories.getCategoryColor(cat);
-    
     const x1 = cx + Math.cos(angle) * r;
     const y1 = cy + Math.sin(angle) * r;
     const x2 = cx + Math.cos(angle + slice) * r;
@@ -202,20 +284,18 @@ function drawCategoryDonut(domains) {
     const x4 = cx + Math.cos(angle) * innerR;
     const y4 = cy + Math.sin(angle) * innerR;
     const largeArc = slice > Math.PI ? 1 : 0;
-
-    html += `<path d="M${x1},${y1} A${r},${r} 0 ${largeArc},1 ${x2},${y2} L${x3},${y3} A${innerR},${innerR} 0 ${largeArc},0 ${x4},${y4} Z" fill="${color}" opacity="0.85"/>`;
+    html += `<path d="M${x1},${y1} A${r},${r} 0 ${largeArc},1 ${x2},${y2} L${x3},${y3} A${innerR},${innerR} 0 ${largeArc},0 ${x4},${y4} Z" fill="${color}" opacity="0.85"><title>${cat}: ${Math.round(time)}m (${Math.round((time/total)*100)}%)</title></path>`;
     angle += slice;
   });
   html += `</svg>`;
 
-  // Legend
   html += `<div style="display:flex;flex-direction:column;gap:6px;margin-left:16px;">`;
   entries.forEach(([cat, time]) => {
     const pct = Math.round((time / total) * 100);
     const color = Categories.getCategoryColor(cat);
     html += `<div style="display:flex;align-items:center;gap:8px;">
       <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></span>
-      <span style="font-size:11px;color:#7A8BA7;">${cat} <span style="color:#4A5568;">${pct}%</span></span>
+      <span style="font-size:11px;color:var(--text-secondary);">${cat} <span style="color:var(--text-muted);">${pct}%</span></span>
     </div>`;
   });
   html += `</div>`;
@@ -230,6 +310,7 @@ function drawHourlyChart(hourly) {
   const data = getCtx("chart-hourly");
   if (!data) return;
   const { ctx, w, h } = data;
+  const colors = getChartColors();
   ctx.clearRect(0, 0, w, h);
   if (!hourly || hourly.length === 0) return;
 
@@ -239,10 +320,15 @@ function drawHourlyChart(hourly) {
   const barW = chartW / 24 - 3;
   const maxVal = Math.max(1, ...hourly.map((h) => h.productive + h.distracted));
 
-  // Grid lines
+  // Find peak hour
+  let peakHour = 0, peakVal = 0;
+  hourly.forEach((hr, i) => {
+    if (hr.productive > peakVal) { peakVal = hr.productive; peakHour = i; }
+  });
+
   for (let i = 0; i <= 4; i++) {
     const y = padding.top + (chartH / 4) * i;
-    ctx.strokeStyle = "rgba(255,255,255,0.03)";
+    ctx.strokeStyle = colors.gridLine;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(padding.left, y);
@@ -255,7 +341,6 @@ function drawHourlyChart(hourly) {
     const prodH = (hr.productive / maxVal) * chartH;
     const distH = (hr.distracted / maxVal) * chartH;
 
-    // Productive
     const prodGrad = ctx.createLinearGradient(0, padding.top + chartH - prodH - distH, 0, padding.top + chartH);
     prodGrad.addColorStop(0, "#34D399");
     prodGrad.addColorStop(1, "rgba(52,211,153,0.3)");
@@ -264,15 +349,21 @@ function drawHourlyChart(hourly) {
     ctx.roundRect(x, padding.top + chartH - prodH - distH, barW, prodH, [3, 3, 0, 0]);
     ctx.fill();
 
-    // Distracted
     ctx.fillStyle = "rgba(248,113,113,0.6)";
     ctx.beginPath();
     ctx.roundRect(x, padding.top + chartH - distH, barW, distH, [0, 0, 3, 3]);
     ctx.fill();
 
-    // Labels
+    // Peak indicator
+    if (i === peakHour && peakVal > 0) {
+      ctx.fillStyle = "#34D399";
+      ctx.beginPath();
+      ctx.arc(x + barW / 2, padding.top + chartH - prodH - distH - 8, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     if (i % 3 === 0) {
-      ctx.fillStyle = "#4A5568";
+      ctx.fillStyle = colors.textMuted;
       ctx.font = "9px Inter, sans-serif";
       ctx.textAlign = "center";
       ctx.fillText(i + ":00", x + barW / 2, h - 8);
@@ -284,6 +375,7 @@ function drawWeeklyChart(weekData) {
   const data = getCtx("chart-weekly");
   if (!data) return;
   const { ctx, w, h } = data;
+  const colors = getChartColors();
   ctx.clearRect(0, 0, w, h);
   if (!weekData || weekData.length === 0) return;
 
@@ -302,7 +394,6 @@ function drawWeeklyChart(weekData) {
     const prodH = (prod / maxVal) * chartH;
     const distH = (dist / maxVal) * chartH;
 
-    // Productive
     const prodGrad = ctx.createLinearGradient(0, padding.top + chartH - prodH, 0, padding.top + chartH);
     prodGrad.addColorStop(0, "#5B8CFF");
     prodGrad.addColorStop(1, "rgba(91,140,255,0.2)");
@@ -311,20 +402,17 @@ function drawWeeklyChart(weekData) {
     ctx.roundRect(x, padding.top + chartH - prodH, barW, prodH, [4, 4, 0, 0]);
     ctx.fill();
 
-    // Distracted
     ctx.fillStyle = "rgba(248,113,113,0.5)";
     ctx.beginPath();
     ctx.roundRect(x + barW + 4, padding.top + chartH - distH, barW, distH, [4, 4, 0, 0]);
     ctx.fill();
 
-    // Day label
     const dayName = new Date(day.date).toLocaleDateString("en", { weekday: "short" });
-    ctx.fillStyle = "#7A8BA7";
+    ctx.fillStyle = colors.text;
     ctx.font = "11px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(dayName, x + barW, h - 8);
 
-    // Score
     ctx.fillStyle = "#5B8CFF";
     ctx.font = "10px Inter, sans-serif";
     ctx.fillText(day.data.score || 0, x + barW, padding.top + chartH - Math.max(prodH, distH) - 8);
@@ -340,7 +428,6 @@ async function loadDaily() {
   document.getElementById("daily-distracted").textContent = formatTime(usage.distractedTime || 0);
   document.getElementById("daily-sessions").textContent = (usage.focusSessions || []).length;
 
-  // Heatmap
   const grid = document.getElementById("heatmap-grid");
   grid.innerHTML = "";
   const hourly = usage.hourlyActivity || [];
@@ -382,11 +469,8 @@ async function loadWeekly() {
     <div class="pattern-card"><span class="pattern-label">Avg Sessions/Day</span><span class="pattern-value">${avgSession.toFixed(1)}</span></div>
   `;
 
-  // Weekly detail chart
   const data = getCtx("chart-weekly-detail");
   if (!data) return;
-  const { ctx, w, h } = data;
-  ctx.clearRect(0, 0, w, h);
   drawWeeklyChart(weekData);
 }
 
@@ -397,12 +481,21 @@ async function loadDomains() {
   
   renderDomainsTable(usage.domains || {}, settings);
 
-  // Search
   document.getElementById("domain-search").addEventListener("input", (e) => {
     const q = e.target.value.toLowerCase();
     document.querySelectorAll("#domains-body tr").forEach(row => {
       row.style.display = row.dataset.domain.includes(q) ? "" : "none";
     });
+  });
+
+  // CSV Export
+  document.getElementById("btn-export-csv")?.addEventListener("click", () => {
+    const domains = usage.domains || {};
+    let csv = "Domain,Category,Time (min),Sessions\n";
+    Object.entries(domains).forEach(([domain, info]) => {
+      csv += `${domain},${info.category || "Other"},${Math.round(info.time || 0)},${info.visits || 0}\n`;
+    });
+    downloadFile(csv, "focusguard-domains.csv", "text/csv");
   });
 }
 
@@ -420,10 +513,14 @@ function renderDomainsTable(domains, settings) {
   sorted.forEach(([domain, info]) => {
     const isBlocked = (settings.blockedDomains || []).includes(domain);
     const color = Categories.getCategoryColor(info.category || "Other");
+    const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
     const tr = document.createElement("tr");
     tr.dataset.domain = domain;
     tr.innerHTML = `
-      <td style="font-weight:600;">${domain}</td>
+      <td style="font-weight:600;">
+        <img class="domain-row-favicon" src="${faviconUrl}" onerror="this.style.display='none'" />
+        ${domain}
+      </td>
       <td><span class="category-pill" style="background:${color}22;color:${color};border:1px solid ${color}33;">${info.category || "Other"}</span></td>
       <td>${Math.round(info.time || 0)}m</td>
       <td>${info.visits || 0}</td>
@@ -453,18 +550,21 @@ async function loadInsights() {
   const container = document.getElementById("insights-list");
   container.innerHTML = "";
 
+  const insightIcons = { warning: "⚠️", productive: "🎯", info: "💡" };
+
   if (!insights || insights.length === 0) {
     container.innerHTML = '<div class="insight-card glass-card info"><div class="insight-text">Not enough data yet</div><div class="insight-detail">Keep browsing and insights will appear as patterns emerge.</div></div>';
   } else {
-    insights.forEach((ins) => {
+    insights.forEach((ins, i) => {
       const card = document.createElement("div");
-      card.className = `insight-card glass-card ${ins.type}`;
-      card.innerHTML = `<div class="insight-text">${ins.text}</div><div class="insight-detail">${ins.detail}</div>`;
+      card.className = `insight-card glass-card ${ins.type} fade-up`;
+      card.style.animationDelay = `${i * 80}ms`;
+      const icon = insightIcons[ins.type] || "💡";
+      card.innerHTML = `<span class="insight-icon-wrap">${icon}</span><div class="insight-text">${ins.text}</div><div class="insight-detail">${ins.detail}</div>`;
       container.appendChild(card);
     });
   }
 
-  // Loops
   const loopsContainer = document.getElementById("loops-list");
   loopsContainer.innerHTML = "";
   const loops = usage.distractionLoops || [];
@@ -493,7 +593,13 @@ async function loadSessions() {
 
   const sessions = usage.focusSessions || [];
   if (sessions.length === 0) {
-    container.innerHTML = '<div class="empty-state">No focus sessions today. Start one from the popup!</div>';
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🎯</div>
+        <div class="empty-state-title">No focus sessions today</div>
+        <div>Start one from the popup to build your streak!</div>
+      </div>
+    `;
     return;
   }
 
@@ -600,4 +706,49 @@ function renderLimits(settings) {
     });
     container.appendChild(tag);
   });
+}
+
+// ─── Data Management ───
+function setupDataManagement() {
+  document.getElementById("btn-export-data")?.addEventListener("click", exportAllData);
+
+  document.getElementById("input-import-data")?.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      await chrome.runtime.sendMessage({ action: "importData", data });
+      alert("Data imported successfully! Refreshing...");
+      location.reload();
+    } catch (err) {
+      alert("Failed to import data: " + err.message);
+    }
+  });
+
+  document.getElementById("btn-clear-data")?.addEventListener("click", async () => {
+    if (confirm("Are you sure you want to clear ALL data? This cannot be undone.")) {
+      await chrome.storage.local.clear();
+      alert("All data cleared. Refreshing...");
+      location.reload();
+    }
+  });
+}
+
+async function exportAllData() {
+  const result = await chrome.runtime.sendMessage({ action: "exportData" });
+  if (result.data) {
+    const json = JSON.stringify(result.data, null, 2);
+    downloadFile(json, "focusguard-backup.json", "application/json");
+  }
+}
+
+function downloadFile(content, filename, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }

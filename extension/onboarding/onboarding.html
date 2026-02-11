@@ -4,10 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Welcome to FocusGuard</title>
+  <script>
+    (async()=>{try{const{focusguard_theme:t}=await chrome.storage.local.get("focusguard_theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
+  </script>
   <link rel="stylesheet" href="../assets/styles-common.css" />
   <link rel="stylesheet" href="onboarding.css" />
 </head>
 <body>
+  <div class="onboarding-bg">
+    <div class="ob-orb ob-orb-1"></div>
+    <div class="ob-orb ob-orb-2"></div>
+  </div>
   <div class="onboarding">
     <!-- Step Indicator -->
     <div class="step-dots">
@@ -16,6 +23,7 @@
       <div class="step-dot" data-step="2"></div>
       <div class="step-dot" data-step="3"></div>
       <div class="step-dot" data-step="4"></div>
+      <div class="step-dot" data-step="5"></div>
     </div>
 
     <div class="steps-container" id="steps-container">
@@ -59,6 +67,11 @@
             <span class="goal-number" id="goal-number">4</span>
             <span class="goal-unit">hours</span>
           </div>
+          <div class="goal-labels">
+            <span class="goal-label-item">🌱 Beginner</span>
+            <span class="goal-label-item">⚡ Intermediate</span>
+            <span class="goal-label-item">🔥 Expert</span>
+          </div>
           <input type="range" id="goal-slider" class="goal-slider" min="1" max="8" value="4" />
           <div class="goal-range"><span>1h</span><span>8h</span></div>
           <button class="btn-primary btn-lg" onclick="nextStep()">Continue</button>
@@ -92,14 +105,46 @@
         </div>
       </div>
 
-      <!-- Step 5: Ready -->
+      <!-- Step 5: Choose Theme -->
       <div class="step" data-step="4">
         <div class="step-content">
-          <div class="ready-check">
+          <h2>Choose Your Theme</h2>
+          <p class="step-desc">Pick a look that suits you. You can change this anytime.</p>
+          <div class="theme-preview-options">
+            <div class="theme-preview-card selected" id="theme-dark-card" onclick="selectTheme('dark', this)">
+              <div class="theme-preview dark-preview">
+                <div class="tp-bar"></div>
+                <div class="tp-content">
+                  <div class="tp-circle"></div>
+                  <div class="tp-lines"><div></div><div></div><div></div></div>
+                </div>
+              </div>
+              <span class="theme-preview-label">🌙 Dark</span>
+            </div>
+            <div class="theme-preview-card" id="theme-light-card" onclick="selectTheme('light', this)">
+              <div class="theme-preview light-preview">
+                <div class="tp-bar"></div>
+                <div class="tp-content">
+                  <div class="tp-circle"></div>
+                  <div class="tp-lines"><div></div><div></div><div></div></div>
+                </div>
+              </div>
+              <span class="theme-preview-label">☀️ Light</span>
+            </div>
+          </div>
+          <button class="btn-primary btn-lg" onclick="nextStep()">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 6: Ready -->
+      <div class="step" data-step="5">
+        <div class="step-content">
+          <div class="ready-check" id="ready-check">
             <svg width="60" height="60" viewBox="0 0 60 60">
               <circle cx="30" cy="30" r="28" fill="rgba(52,211,153,0.1)" stroke="#34D399" stroke-width="2"/>
-              <path d="M20 30l6 6 14-14" stroke="#34D399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <path class="check-path" d="M20 30l6 6 14-14" stroke="#34D399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="40" stroke-dashoffset="40"/>
             </svg>
+            <div class="confetti-container" id="confetti-container"></div>
           </div>
           <h2>You're All Set!</h2>
           <p class="step-desc">FocusGuard is ready to help you stay productive.</p>
@@ -107,6 +152,7 @@
             <div class="summary-row"><span>Blocked sites</span><span id="summary-sites">0</span></div>
             <div class="summary-row"><span>Daily goal</span><span id="summary-goal">4h</span></div>
             <div class="summary-row"><span>Focus duration</span><span id="summary-dur">25m</span></div>
+            <div class="summary-row"><span>Theme</span><span id="summary-theme">Dark</span></div>
           </div>
           <button class="btn-primary btn-lg" onclick="completeOnboarding()">Launch FocusGuard</button>
         </div>

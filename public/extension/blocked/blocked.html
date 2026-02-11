@@ -4,25 +4,44 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Site Blocked — FocusGuard</title>
+  <script>
+    (async()=>{try{const{focusguard_theme:t}=await chrome.storage.local.get("focusguard_theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
+  </script>
   <link rel="stylesheet" href="../assets/styles-common.css" />
   <link rel="stylesheet" href="blocked.css" />
 </head>
 <body>
-  <div class="blocked-bg"></div>
+  <div class="blocked-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
   <div class="blocked-container">
-    <!-- Shield Icon -->
+    <!-- Shield Icon with rotating ring -->
     <div class="blocked-shield fade-up">
-      <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(248,113,113,0.1)" stroke="url(#dangerGrad)" stroke-width="1.2"/>
-        <line x1="8" y1="8" x2="16" y2="16" stroke="#F87171" stroke-width="2" stroke-linecap="round"/>
-        <line x1="16" y1="8" x2="8" y2="16" stroke="#F87171" stroke-width="2" stroke-linecap="round"/>
-        <defs>
-          <linearGradient id="dangerGrad" x1="3" y1="2" x2="21" y2="24">
-            <stop offset="0%" stop-color="#F87171"/>
-            <stop offset="100%" stop-color="#FBBF24"/>
-          </linearGradient>
-        </defs>
-      </svg>
+      <div class="shield-ring-wrap">
+        <svg class="shield-ring-anim" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="46" fill="none" stroke="url(#ringGrad)" stroke-width="1" stroke-dasharray="6 4" />
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#F87171" />
+              <stop offset="50%" stop-color="#FBBF24" />
+              <stop offset="100%" stop-color="#F87171" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <svg class="shield-icon-blocked" width="60" height="60" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(248,113,113,0.1)" stroke="url(#dangerGrad)" stroke-width="1.2"/>
+          <line x1="8" y1="8" x2="16" y2="16" stroke="#F87171" stroke-width="2" stroke-linecap="round"/>
+          <line x1="16" y1="8" x2="8" y2="16" stroke="#F87171" stroke-width="2" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="dangerGrad" x1="3" y1="2" x2="21" y2="24">
+              <stop offset="0%" stop-color="#F87171"/>
+              <stop offset="100%" stop-color="#FBBF24"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
     </div>
 
     <h1 class="blocked-title text-gradient-danger fade-up delay-1">Site Blocked</h1>
@@ -31,11 +50,22 @@
     </div>
     <p class="blocked-reason fade-up delay-2" id="blocked-reason">This site is on your block list.</p>
 
+    <!-- Time on page -->
+    <div class="time-on-page fade-up delay-2">
+      <span class="time-on-page-label">Time on this page:</span>
+      <span class="time-on-page-value" id="time-on-page">0:00</span>
+    </div>
+
     <!-- Quote -->
     <div class="quote-card glass-card fade-up delay-2">
       <p class="quote-text" id="quote-text">"Focus on being productive instead of busy."</p>
-      <span class="quote-author">— Tim Ferriss</span>
+      <span class="quote-author" id="quote-author">— Tim Ferriss</span>
     </div>
+
+    <!-- Breathing Exercise -->
+    <button id="btn-breathe" class="btn-ghost fade-up delay-3" style="margin-bottom:var(--sp-2);">
+      🫁 Take a Breath
+    </button>
 
     <!-- Unlock Requirements -->
     <div class="unlock-card glass-card fade-up delay-3">
@@ -110,6 +140,14 @@
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Go Back
     </button>
+  </div>
+
+  <!-- Breathing Overlay -->
+  <div id="breathing-overlay" class="breathing-overlay" style="display:none;">
+    <div class="breathing-circle" id="breathing-circle"></div>
+    <div class="breathing-text" id="breathing-label">Breathe in...</div>
+    <div class="breathing-sub">Follow the circle</div>
+    <button id="btn-close-breathe" class="btn-ghost" style="margin-top:var(--sp-8);color:var(--text-primary);">Done</button>
   </div>
 
   <script src="../utils/storage.js"></script>

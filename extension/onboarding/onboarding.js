@@ -1,4 +1,4 @@
-// onboarding.js — 5-step premium onboarding wizard
+// onboarding.js — Premium onboarding wizard V2
 
 const COMMON_SITES = [
   { name: "YouTube", icon: "📺", domain: "youtube.com" },
@@ -16,6 +16,7 @@ let currentStep = 0;
 let selectedSites = [];
 let dailyGoal = 4;
 let focusDuration = 25;
+let selectedTheme = "dark";
 
 document.addEventListener("DOMContentLoaded", () => {
   renderSitesGrid();
@@ -74,9 +75,22 @@ function addCustomSite() {
 function setupGoalSlider() {
   const slider = document.getElementById("goal-slider");
   const display = document.getElementById("goal-number");
+  const labels = document.querySelectorAll(".goal-label-item");
+  
   slider.addEventListener("input", () => {
     dailyGoal = parseInt(slider.value);
     display.textContent = dailyGoal;
+    
+    // Highlight appropriate label
+    labels.forEach((l, i) => {
+      if ((dailyGoal <= 3 && i === 0) || (dailyGoal <= 5 && dailyGoal > 3 && i === 1) || (dailyGoal > 5 && i === 2)) {
+        l.style.color = "var(--accent)";
+        l.style.fontWeight = "700";
+      } else {
+        l.style.color = "";
+        l.style.fontWeight = "";
+      }
+    });
   });
 }
 
@@ -86,31 +100,59 @@ function selectDuration(el) {
   focusDuration = parseInt(el.dataset.dur);
 }
 
+function selectTheme(theme, el) {
+  selectedTheme = theme;
+  document.querySelectorAll(".theme-preview-card").forEach(c => c.classList.remove("selected"));
+  el.classList.add("selected");
+  document.documentElement.setAttribute("data-theme", theme);
+  try {
+    chrome.runtime.sendMessage({ action: "setTheme", theme });
+  } catch(e) {}
+}
+
 function nextStep() {
-  // Mark current dot as completed
+  // Mark current dot
   document.querySelector(`.step-dot[data-step="${currentStep}"]`).classList.remove("active");
   document.querySelector(`.step-dot[data-step="${currentStep}"]`).classList.add("completed");
 
   currentStep++;
 
-  // Update dots
   document.querySelector(`.step-dot[data-step="${currentStep}"]`).classList.add("active");
 
-  // Switch steps
   document.querySelectorAll(".step").forEach((s) => s.classList.remove("active"));
   document.querySelector(`.step[data-step="${currentStep}"]`).classList.add("active");
 
   // Update summary on last step
-  if (currentStep === 4) {
+  if (currentStep === 5) {
     document.getElementById("summary-sites").textContent = selectedSites.length;
     document.getElementById("summary-goal").textContent = dailyGoal + "h";
     document.getElementById("summary-dur").textContent = focusDuration + "m";
+    document.getElementById("summary-theme").textContent = selectedTheme === "dark" ? "🌙 Dark" : "☀️ Light";
+
+    // Trigger confetti
+    setTimeout(spawnConfetti, 400);
+  }
+}
+
+function spawnConfetti() {
+  const container = document.getElementById("confetti-container");
+  const colors = ["#5B8CFF", "#7C6AFF", "#34D399", "#FBBF24", "#F87171"];
+  
+  for (let i = 0; i < 20; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    const angle = (Math.PI * 2 * i) / 20;
+    const dist = 40 + Math.random() * 60;
+    piece.style.setProperty("--tx", `${Math.cos(angle) * dist}px`);
+    piece.style.setProperty("--ty", `${Math.sin(angle) * dist}px`);
+    piece.style.animationDelay = `${Math.random() * 0.3}s`;
+    container.appendChild(piece);
   }
 }
 
 async function completeOnboarding() {
   try {
-    // Save settings
     for (const domain of selectedSites) {
       await chrome.runtime.sendMessage({ action: "blockDomain", domain });
     }
@@ -127,6 +169,5 @@ async function completeOnboarding() {
     console.error("Onboarding save error:", e);
   }
 
-  // Close onboarding tab
   window.close();
 }
