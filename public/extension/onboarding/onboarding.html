@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to FocusGuard</title>
+  <link rel="stylesheet" href="../assets/styles-common.css" />
+  <link rel="stylesheet" href="onboarding.css" />
+</head>
+<body>
+  <div class="onboarding">
+    <!-- Step Indicator -->
+    <div class="step-dots">
+      <div class="step-dot active" data-step="0"></div>
+      <div class="step-dot" data-step="1"></div>
+      <div class="step-dot" data-step="2"></div>
+      <div class="step-dot" data-step="3"></div>
+      <div class="step-dot" data-step="4"></div>
+    </div>
+
+    <div class="steps-container" id="steps-container">
+      <!-- Step 1: Welcome -->
+      <div class="step active" data-step="0">
+        <div class="step-content">
+          <div class="welcome-shield">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(91,140,255,0.15)" stroke="url(#oGrad)" stroke-width="1.2"/>
+              <path d="M9 12l2 2 4-4" stroke="#5B8CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <defs><linearGradient id="oGrad" x1="3" y1="2" x2="21" y2="24"><stop offset="0%" stop-color="#5B8CFF"/><stop offset="100%" stop-color="#7C6AFF"/></linearGradient></defs>
+            </svg>
+          </div>
+          <h1 class="text-gradient">Welcome to FocusGuard</h1>
+          <p class="welcome-sub">Your Behavioral Productivity OS</p>
+          <p class="welcome-desc">Track browsing habits, block distractions, and build deep focus — all from your browser.</p>
+          <button class="btn-primary btn-lg" onclick="nextStep()">Get Started</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Select Distracting Sites -->
+      <div class="step" data-step="1">
+        <div class="step-content">
+          <h2>Select Distracting Sites</h2>
+          <p class="step-desc">Choose sites you want to block during focus sessions.</p>
+          <div class="sites-grid" id="sites-grid"></div>
+          <div class="custom-site-row">
+            <input type="text" id="custom-site" class="input" placeholder="Add custom domain..." />
+            <button class="btn-ghost" onclick="addCustomSite()">+ Add</button>
+          </div>
+          <button class="btn-primary btn-lg" onclick="nextStep()">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Daily Goal -->
+      <div class="step" data-step="2">
+        <div class="step-content">
+          <h2>Set Your Daily Goal</h2>
+          <p class="step-desc">How many hours of focused work per day?</p>
+          <div class="goal-display">
+            <span class="goal-number" id="goal-number">4</span>
+            <span class="goal-unit">hours</span>
+          </div>
+          <input type="range" id="goal-slider" class="goal-slider" min="1" max="8" value="4" />
+          <div class="goal-range"><span>1h</span><span>8h</span></div>
+          <button class="btn-primary btn-lg" onclick="nextStep()">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Focus Duration -->
+      <div class="step" data-step="3">
+        <div class="step-content">
+          <h2>Choose Focus Duration</h2>
+          <p class="step-desc">Your default focus session length.</p>
+          <div class="focus-options">
+            <div class="focus-option" data-dur="15" onclick="selectDuration(this)">
+              <span class="focus-option-time">15m</span>
+              <span class="focus-option-desc">Quick sprint</span>
+            </div>
+            <div class="focus-option selected" data-dur="25" onclick="selectDuration(this)">
+              <span class="focus-option-time">25m</span>
+              <span class="focus-option-desc">Pomodoro</span>
+            </div>
+            <div class="focus-option" data-dur="45" onclick="selectDuration(this)">
+              <span class="focus-option-time">45m</span>
+              <span class="focus-option-desc">Deep work</span>
+            </div>
+            <div class="focus-option" data-dur="60" onclick="selectDuration(this)">
+              <span class="focus-option-time">60m</span>
+              <span class="focus-option-desc">Marathon</span>
+            </div>
+          </div>
+          <button class="btn-primary btn-lg" onclick="nextStep()">Continue</button>
+        </div>
+      </div>
+
+      <!-- Step 5: Ready -->
+      <div class="step" data-step="4">
+        <div class="step-content">
+          <div class="ready-check">
+            <svg width="60" height="60" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="28" fill="rgba(52,211,153,0.1)" stroke="#34D399" stroke-width="2"/>
+              <path d="M20 30l6 6 14-14" stroke="#34D399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2>You're All Set!</h2>
+          <p class="step-desc">FocusGuard is ready to help you stay productive.</p>
+          <div class="summary glass-card">
+            <div class="summary-row"><span>Blocked sites</span><span id="summary-sites">0</span></div>
+            <div class="summary-row"><span>Daily goal</span><span id="summary-goal">4h</span></div>
+            <div class="summary-row"><span>Focus duration</span><span id="summary-dur">25m</span></div>
+          </div>
+          <button class="btn-primary btn-lg" onclick="completeOnboarding()">Launch FocusGuard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../utils/storage.js"></script>
+  <script src="onboarding.js"></script>
+</body>
+</html>
