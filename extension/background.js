@@ -9,10 +9,18 @@ let recentDomains = [];       // For distraction loop detection
 let idleState = "active";
 
 // ─── Initialization ───
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(async (details) => {
   console.log("[FocusGuard] Installed / Updated");
   await Storage.updateStreak();
   await ensureAlarms();
+
+  // Open onboarding on first install
+  if (details.reason === "install") {
+    const { focusguard_onboarded } = await chrome.storage.local.get("focusguard_onboarded");
+    if (!focusguard_onboarded) {
+      chrome.tabs.create({ url: chrome.runtime.getURL("onboarding/onboarding.html") });
+    }
+  }
 });
 
 chrome.runtime.onStartup.addListener(async () => {
@@ -457,6 +465,16 @@ async function handleMessage(msg) {
         interruptionsMet: (focus.interruptions || 0) < reqs.maxInterruptions,
         allMet: elapsed >= reqs.focusMinutes && tasksDone >= reqs.tasksRequired && (focus.interruptions || 0) < reqs.maxInterruptions,
       };
+    }
+
+    case "completeOnboarding": {
+      await chrome.storage.local.set({ focusguard_onboarded: true });
+      if (msg.settings) {
+        const s = await Storage.getSettings();
+        s.focusDefaults.duration = msg.settings.focusDuration || 25;
+        await Storage.saveSettings(s);
+      }
+      return { success: true };
     }
 
     default:

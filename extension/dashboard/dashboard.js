@@ -1,25 +1,62 @@
-// dashboard.js — Full analytics dashboard with Canvas charts
+// dashboard.js — Premium analytics dashboard with sidebar navigation
 
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
   setupTabs();
   await loadOverview();
+  await loadDaily();
   await loadInsights();
   await loadSessions();
+  await loadDomains();
+  await loadWeekly();
   await loadSettings();
+  await loadSidebarStats();
+}
+
+// ─── Animated Number ───
+function animateNumber(el, target, duration = 600, suffix = "") {
+  const start = parseInt(el.textContent) || 0;
+  if (start === target) return;
+  const startTime = performance.now();
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(start + (target - start) * eased) + suffix;
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function formatTime(m) {
+  if (!m) return "0h 0m";
+  const h = Math.floor(m / 60);
+  const mins = Math.round(m % 60);
+  return `${h}h ${mins}m`;
 }
 
 // ─── Tab Switching ───
 function setupTabs() {
-  document.querySelectorAll(".tab-btn").forEach((btn) => {
+  document.querySelectorAll(".nav-item").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".nav-item").forEach((b) => b.classList.remove("active"));
       document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
     });
   });
+}
+
+// ─── Sidebar Stats ───
+async function loadSidebarStats() {
+  const scoreData = await chrome.runtime.sendMessage({ action: "getScore" });
+  const streak = await chrome.runtime.sendMessage({ action: "getStreak" });
+  document.getElementById("sidebar-score").textContent = scoreData.score || 0;
+  if (scoreData.label) {
+    document.getElementById("sidebar-score").style.color = scoreData.label.color;
+  }
+  document.getElementById("sidebar-streak").textContent = streak.current || 0;
 }
 
 // ─── Overview ───
@@ -29,48 +66,57 @@ async function loadOverview() {
   const scoreData = await chrome.runtime.sendMessage({ action: "getScore" });
   const weekData = await chrome.runtime.sendMessage({ action: "getWeekUsage" });
 
-  // Stats
-  const h = Math.floor((usage.totalActive || 0) / 60);
-  const m = Math.round((usage.totalActive || 0) % 60);
-  document.getElementById("d-active").textContent = `${h}h ${m}m`;
+  document.getElementById("d-active").textContent = formatTime(usage.totalActive || 0);
 
   const focusPct = usage.totalActive > 0
     ? Math.round(((usage.focusTime || 0) / usage.totalActive) * 100) : 0;
   document.getElementById("d-focus").textContent = focusPct + "%";
 
+  const score = scoreData.score || 0;
   const scoreEl = document.getElementById("d-score");
-  scoreEl.textContent = scoreData.score || 0;
+  animateNumber(scoreEl, score);
+  
+  // Score ring
+  const ring = document.getElementById("d-score-ring");
+  const circumference = 151;
+  ring.style.strokeDashoffset = circumference - (score / 100) * circumference;
+
   if (scoreData.label) {
     scoreEl.style.color = scoreData.label.color;
-    document.getElementById("d-score-label").textContent = scoreData.label.emoji + " " + scoreData.label.label;
-    document.getElementById("d-score-label").style.color = scoreData.label.color;
+    const labelEl = document.getElementById("d-score-label");
+    labelEl.textContent = scoreData.label.emoji + " " + scoreData.label.label;
+    labelEl.style.color = scoreData.label.color;
   }
 
   document.getElementById("d-streak").textContent = `🔥 ${streak.current || 0}`;
 
-  // Charts
   drawDomainChart(usage.domains || {});
-  drawCategoryChart(usage.domains || {});
+  drawCategoryDonut(usage.domains || {});
   drawHourlyChart(usage.hourlyActivity || []);
   drawWeeklyChart(weekData || []);
 }
 
-// ─── Canvas Chart Helpers ───
+// ─── Canvas Helpers ───
 function getCtx(id) {
   const canvas = document.getElementById(id);
+  if (!canvas) return null;
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.parentElement.getBoundingClientRect();
-  canvas.width = rect.width * dpr - 40 * dpr;
-  canvas.height = (parseInt(canvas.getAttribute("height")) || 300) * dpr;
-  canvas.style.width = (rect.width - 40) + "px";
-  canvas.style.height = (parseInt(canvas.getAttribute("height")) || 300) + "px";
+  const w = rect.width - 40;
+  const h = parseInt(canvas.getAttribute("height")) || 280;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + "px";
+  canvas.style.height = h + "px";
   const ctx = canvas.getContext("2d");
   ctx.scale(dpr, dpr);
-  return { ctx, w: rect.width - 40, h: parseInt(canvas.getAttribute("height")) || 300 };
+  return { ctx, w, h };
 }
 
 function drawDomainChart(domains) {
-  const { ctx, w, h } = getCtx("chart-domains");
+  const data = getCtx("chart-domains");
+  if (!data) return;
+  const { ctx, w, h } = data;
   ctx.clearRect(0, 0, w, h);
 
   const sorted = Object.entries(domains)
@@ -78,8 +124,8 @@ function drawDomainChart(domains) {
     .slice(0, 8);
 
   if (sorted.length === 0) {
-    ctx.fillStyle = "#666";
-    ctx.font = "14px sans-serif";
+    ctx.fillStyle = "#4A5568";
+    ctx.font = "13px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("No data yet", w / 2, h / 2);
     return;
@@ -87,39 +133,43 @@ function drawDomainChart(domains) {
 
   const maxTime = sorted[0][1].time || 1;
   const barH = 28;
-  const gap = 8;
+  const gap = 10;
   const labelW = 130;
   const chartW = w - labelW - 60;
-  const startY = 20;
+  const startY = 10;
 
   sorted.forEach(([domain, info], i) => {
     const y = startY + i * (barH + gap);
-    const barW = (info.time / maxTime) * chartW;
+    const barW = Math.max(4, (info.time / maxTime) * chartW);
     const color = Categories.getCategoryColor(info.category || "Other");
 
     // Label
-    ctx.fillStyle = "#aaa";
-    ctx.font = "12px sans-serif";
+    ctx.fillStyle = "#7A8BA7";
+    ctx.font = "12px Inter, sans-serif";
     ctx.textAlign = "right";
-    ctx.fillText(domain.length > 18 ? domain.slice(0, 18) + "…" : domain, labelW - 10, y + barH / 2 + 4);
+    ctx.fillText(domain.length > 18 ? domain.slice(0, 18) + "…" : domain, labelW - 12, y + barH / 2 + 4);
 
-    // Bar
-    ctx.fillStyle = color;
+    // Bar with gradient
+    const grad = ctx.createLinearGradient(labelW, 0, labelW + barW, 0);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, color + "66");
+    ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.roundRect(labelW, y, barW, barH, 4);
+    ctx.roundRect(labelW, y, barW, barH, 6);
     ctx.fill();
 
-    // Time label
-    ctx.fillStyle = "#888";
+    // Time
+    ctx.fillStyle = "#7A8BA7";
     ctx.textAlign = "left";
-    ctx.font = "11px sans-serif";
-    ctx.fillText(Math.round(info.time) + "m", labelW + barW + 8, y + barH / 2 + 4);
+    ctx.font = "11px Inter, sans-serif";
+    ctx.fillText(Math.round(info.time) + "m", labelW + barW + 10, y + barH / 2 + 4);
   });
 }
 
-function drawCategoryChart(domains) {
-  const { ctx, w, h } = getCtx("chart-categories");
-  ctx.clearRect(0, 0, w, h);
+// ─── SVG Category Donut ───
+function drawCategoryDonut(domains) {
+  const container = document.getElementById("category-donut");
+  if (!container) return;
 
   const catTotals = {};
   Object.entries(domains).forEach(([, info]) => {
@@ -131,111 +181,119 @@ function drawCategoryChart(domains) {
   const total = entries.reduce((s, [, v]) => s + v, 0);
 
   if (total === 0) {
-    ctx.fillStyle = "#666";
-    ctx.font = "14px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("No data yet", w / 2, h / 2);
+    container.innerHTML = '<div class="empty-state">No data yet</div>';
     return;
   }
 
-  const cx = w / 2 - 50;
-  const cy = h / 2;
-  const r = Math.min(cx, cy) - 20;
-  const innerR = r * 0.55;
+  const r = 70, innerR = 45, cx = 90, cy = 90;
+  let html = `<svg width="180" height="180" viewBox="0 0 180 180">`;
+  
   let angle = -Math.PI / 2;
-
   entries.forEach(([cat, time]) => {
     const slice = (time / total) * Math.PI * 2;
     const color = Categories.getCategoryColor(cat);
+    
+    const x1 = cx + Math.cos(angle) * r;
+    const y1 = cy + Math.sin(angle) * r;
+    const x2 = cx + Math.cos(angle + slice) * r;
+    const y2 = cy + Math.sin(angle + slice) * r;
+    const x3 = cx + Math.cos(angle + slice) * innerR;
+    const y3 = cy + Math.sin(angle + slice) * innerR;
+    const x4 = cx + Math.cos(angle) * innerR;
+    const y4 = cy + Math.sin(angle) * innerR;
+    const largeArc = slice > Math.PI ? 1 : 0;
 
-    ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(angle) * innerR, cy + Math.sin(angle) * innerR);
-    ctx.arc(cx, cy, r, angle, angle + slice);
-    ctx.arc(cx, cy, innerR, angle + slice, angle, true);
-    ctx.closePath();
-    ctx.fillStyle = color;
-    ctx.fill();
-
+    html += `<path d="M${x1},${y1} A${r},${r} 0 ${largeArc},1 ${x2},${y2} L${x3},${y3} A${innerR},${innerR} 0 ${largeArc},0 ${x4},${y4} Z" fill="${color}" opacity="0.85"/>`;
     angle += slice;
   });
+  html += `</svg>`;
 
   // Legend
-  const legendX = w - 120;
-  entries.forEach(([cat, time], i) => {
-    const y = 30 + i * 22;
-    ctx.fillStyle = Categories.getCategoryColor(cat);
-    ctx.fillRect(legendX, y - 6, 10, 10);
-    ctx.fillStyle = "#ccc";
-    ctx.font = "11px sans-serif";
-    ctx.textAlign = "left";
+  html += `<div style="display:flex;flex-direction:column;gap:6px;margin-left:16px;">`;
+  entries.forEach(([cat, time]) => {
     const pct = Math.round((time / total) * 100);
-    ctx.fillText(`${cat} (${pct}%)`, legendX + 16, y + 3);
+    const color = Categories.getCategoryColor(cat);
+    html += `<div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></span>
+      <span style="font-size:11px;color:#7A8BA7;">${cat} <span style="color:#4A5568;">${pct}%</span></span>
+    </div>`;
   });
+  html += `</div>`;
+
+  container.innerHTML = html;
+  container.style.display = "flex";
+  container.style.alignItems = "center";
+  container.style.justifyContent = "center";
 }
 
 function drawHourlyChart(hourly) {
-  const { ctx, w, h } = getCtx("chart-hourly");
+  const data = getCtx("chart-hourly");
+  if (!data) return;
+  const { ctx, w, h } = data;
   ctx.clearRect(0, 0, w, h);
-
   if (!hourly || hourly.length === 0) return;
 
-  const padding = { top: 20, right: 20, bottom: 40, left: 40 };
+  const padding = { top: 20, right: 20, bottom: 36, left: 36 };
   const chartW = w - padding.left - padding.right;
   const chartH = h - padding.top - padding.bottom;
-  const barW = chartW / 24 - 2;
-
+  const barW = chartW / 24 - 3;
   const maxVal = Math.max(1, ...hourly.map((h) => h.productive + h.distracted));
 
+  // Grid lines
+  for (let i = 0; i <= 4; i++) {
+    const y = padding.top + (chartH / 4) * i;
+    ctx.strokeStyle = "rgba(255,255,255,0.03)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(w - padding.right, y);
+    ctx.stroke();
+  }
+
   hourly.forEach((hr, i) => {
-    const x = padding.left + (i / 24) * chartW + 1;
+    const x = padding.left + (i / 24) * chartW + 1.5;
     const prodH = (hr.productive / maxVal) * chartH;
     const distH = (hr.distracted / maxVal) * chartH;
 
     // Productive
-    ctx.fillStyle = "#22c55e";
-    ctx.fillRect(x, padding.top + chartH - prodH - distH, barW, prodH);
+    const prodGrad = ctx.createLinearGradient(0, padding.top + chartH - prodH - distH, 0, padding.top + chartH);
+    prodGrad.addColorStop(0, "#34D399");
+    prodGrad.addColorStop(1, "rgba(52,211,153,0.3)");
+    ctx.fillStyle = prodGrad;
+    ctx.beginPath();
+    ctx.roundRect(x, padding.top + chartH - prodH - distH, barW, prodH, [3, 3, 0, 0]);
+    ctx.fill();
 
     // Distracted
-    ctx.fillStyle = "#ef4444";
-    ctx.fillRect(x, padding.top + chartH - distH, barW, distH);
+    ctx.fillStyle = "rgba(248,113,113,0.6)";
+    ctx.beginPath();
+    ctx.roundRect(x, padding.top + chartH - distH, barW, distH, [0, 0, 3, 3]);
+    ctx.fill();
 
-    // Hour label
+    // Labels
     if (i % 3 === 0) {
-      ctx.fillStyle = "#666";
-      ctx.font = "10px sans-serif";
+      ctx.fillStyle = "#4A5568";
+      ctx.font = "9px Inter, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(i + ":00", x + barW / 2, h - 10);
+      ctx.fillText(i + ":00", x + barW / 2, h - 8);
     }
   });
-
-  // Legend
-  ctx.fillStyle = "#22c55e";
-  ctx.fillRect(w - 180, 10, 10, 10);
-  ctx.fillStyle = "#ccc";
-  ctx.font = "11px sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText("Productive", w - 166, 19);
-
-  ctx.fillStyle = "#ef4444";
-  ctx.fillRect(w - 100, 10, 10, 10);
-  ctx.fillStyle = "#ccc";
-  ctx.fillText("Distracted", w - 86, 19);
 }
 
 function drawWeeklyChart(weekData) {
-  const { ctx, w, h } = getCtx("chart-weekly");
+  const data = getCtx("chart-weekly");
+  if (!data) return;
+  const { ctx, w, h } = data;
   ctx.clearRect(0, 0, w, h);
-
   if (!weekData || weekData.length === 0) return;
 
   const days = weekData.slice(0, 7).reverse();
-  const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+  const padding = { top: 20, right: 20, bottom: 36, left: 50 };
   const chartW = w - padding.left - padding.right;
   const chartH = h - padding.top - padding.bottom;
   const groupW = chartW / days.length;
   const barW = groupW * 0.3;
-
-  const maxVal = Math.max(1, ...days.map((d) => (d.data.totalActive || 0)));
+  const maxVal = Math.max(1, ...days.map((d) => d.data.totalActive || 0));
 
   days.forEach((day, i) => {
     const x = padding.left + i * groupW + groupW * 0.15;
@@ -244,29 +302,146 @@ function drawWeeklyChart(weekData) {
     const prodH = (prod / maxVal) * chartH;
     const distH = (dist / maxVal) * chartH;
 
-    // Productive bar
-    ctx.fillStyle = "#22c55e";
+    // Productive
+    const prodGrad = ctx.createLinearGradient(0, padding.top + chartH - prodH, 0, padding.top + chartH);
+    prodGrad.addColorStop(0, "#5B8CFF");
+    prodGrad.addColorStop(1, "rgba(91,140,255,0.2)");
+    ctx.fillStyle = prodGrad;
     ctx.beginPath();
-    ctx.roundRect(x, padding.top + chartH - prodH, barW, prodH, 3);
+    ctx.roundRect(x, padding.top + chartH - prodH, barW, prodH, [4, 4, 0, 0]);
     ctx.fill();
 
-    // Distracted bar
-    ctx.fillStyle = "#ef4444";
+    // Distracted
+    ctx.fillStyle = "rgba(248,113,113,0.5)";
     ctx.beginPath();
-    ctx.roundRect(x + barW + 3, padding.top + chartH - distH, barW, distH, 3);
+    ctx.roundRect(x + barW + 4, padding.top + chartH - distH, barW, distH, [4, 4, 0, 0]);
     ctx.fill();
 
     // Day label
     const dayName = new Date(day.date).toLocaleDateString("en", { weekday: "short" });
-    ctx.fillStyle = "#888";
-    ctx.font = "11px sans-serif";
+    ctx.fillStyle = "#7A8BA7";
+    ctx.font = "11px Inter, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(dayName, x + barW, h - 12);
+    ctx.fillText(dayName, x + barW, h - 8);
 
     // Score
-    ctx.fillStyle = "#7c8aff";
-    ctx.font = "10px sans-serif";
-    ctx.fillText(day.data.score || 0, x + barW, padding.top + chartH - Math.max(prodH, distH) - 6);
+    ctx.fillStyle = "#5B8CFF";
+    ctx.font = "10px Inter, sans-serif";
+    ctx.fillText(day.data.score || 0, x + barW, padding.top + chartH - Math.max(prodH, distH) - 8);
+  });
+}
+
+// ─── Daily ───
+async function loadDaily() {
+  const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+  
+  document.getElementById("daily-active").textContent = formatTime(usage.totalActive || 0);
+  document.getElementById("daily-focus").textContent = formatTime(usage.focusTime || 0);
+  document.getElementById("daily-distracted").textContent = formatTime(usage.distractedTime || 0);
+  document.getElementById("daily-sessions").textContent = (usage.focusSessions || []).length;
+
+  // Heatmap
+  const grid = document.getElementById("heatmap-grid");
+  grid.innerHTML = "";
+  const hourly = usage.hourlyActivity || [];
+  const maxHourly = Math.max(1, ...hourly.map(h => h.productive + h.distracted));
+
+  for (let i = 0; i < 24; i++) {
+    const cell = document.createElement("div");
+    cell.className = "heatmap-cell";
+    cell.dataset.hour = i + ":00";
+    const val = hourly[i] ? (hourly[i].productive + hourly[i].distracted) : 0;
+    const intensity = val / maxHourly;
+    cell.style.background = `rgba(91, 140, 255, ${0.03 + intensity * 0.6})`;
+    cell.title = `${i}:00 — ${Math.round(val)}min active`;
+    grid.appendChild(cell);
+  }
+}
+
+// ─── Weekly ───
+async function loadWeekly() {
+  const weekData = await chrome.runtime.sendMessage({ action: "getWeekUsage" });
+  const days = (weekData || []).slice(0, 7).reverse();
+
+  const container = document.getElementById("weekly-patterns");
+  if (days.length === 0) {
+    container.innerHTML = '<div class="empty-state">Not enough data yet</div>';
+    return;
+  }
+
+  const scores = days.map(d => d.data.score || 0);
+  const avgScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  const bestDay = days.reduce((best, d) => (d.data.score || 0) > (best.data.score || 0) ? d : best, days[0]);
+  const worstDay = days.reduce((worst, d) => (d.data.score || 0) < (worst.data.score || 0) ? d : worst, days[0]);
+  const avgSession = days.reduce((sum, d) => sum + (d.data.focusSessions || []).length, 0) / days.length;
+
+  container.innerHTML = `
+    <div class="pattern-card"><span class="pattern-label">Avg Score</span><span class="pattern-value">${avgScore}</span></div>
+    <div class="pattern-card"><span class="pattern-label">Best Day</span><span class="pattern-value">${new Date(bestDay.date).toLocaleDateString("en", { weekday: "short" })}</span></div>
+    <div class="pattern-card"><span class="pattern-label">Worst Day</span><span class="pattern-value">${new Date(worstDay.date).toLocaleDateString("en", { weekday: "short" })}</span></div>
+    <div class="pattern-card"><span class="pattern-label">Avg Sessions/Day</span><span class="pattern-value">${avgSession.toFixed(1)}</span></div>
+  `;
+
+  // Weekly detail chart
+  const data = getCtx("chart-weekly-detail");
+  if (!data) return;
+  const { ctx, w, h } = data;
+  ctx.clearRect(0, 0, w, h);
+  drawWeeklyChart(weekData);
+}
+
+// ─── Domains ───
+async function loadDomains() {
+  const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+  const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+  
+  renderDomainsTable(usage.domains || {}, settings);
+
+  // Search
+  document.getElementById("domain-search").addEventListener("input", (e) => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll("#domains-body tr").forEach(row => {
+      row.style.display = row.dataset.domain.includes(q) ? "" : "none";
+    });
+  });
+}
+
+function renderDomainsTable(domains, settings) {
+  const tbody = document.getElementById("domains-body");
+  tbody.innerHTML = "";
+
+  const sorted = Object.entries(domains).sort((a, b) => (b[1].time || 0) - (a[1].time || 0));
+  
+  if (sorted.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No domain data yet</td></tr>';
+    return;
+  }
+
+  sorted.forEach(([domain, info]) => {
+    const isBlocked = (settings.blockedDomains || []).includes(domain);
+    const color = Categories.getCategoryColor(info.category || "Other");
+    const tr = document.createElement("tr");
+    tr.dataset.domain = domain;
+    tr.innerHTML = `
+      <td style="font-weight:600;">${domain}</td>
+      <td><span class="category-pill" style="background:${color}22;color:${color};border:1px solid ${color}33;">${info.category || "Other"}</span></td>
+      <td>${Math.round(info.time || 0)}m</td>
+      <td>${info.visits || 0}</td>
+      <td><div class="toggle ${isBlocked ? 'active' : ''}" data-domain="${domain}"></div></td>
+    `;
+    
+    tr.querySelector(".toggle").addEventListener("click", async function() {
+      const d = this.dataset.domain;
+      if (this.classList.contains("active")) {
+        await chrome.runtime.sendMessage({ action: "unblockDomain", domain: d });
+        this.classList.remove("active");
+      } else {
+        await chrome.runtime.sendMessage({ action: "blockDomain", domain: d });
+        this.classList.add("active");
+      }
+    });
+    
+    tbody.appendChild(tr);
   });
 }
 
@@ -279,11 +454,11 @@ async function loadInsights() {
   container.innerHTML = "";
 
   if (!insights || insights.length === 0) {
-    container.innerHTML = '<div class="insight-card info"><div class="insight-text">Not enough data yet</div><div class="insight-detail">Keep browsing and insights will appear as patterns emerge.</div></div>';
+    container.innerHTML = '<div class="insight-card glass-card info"><div class="insight-text">Not enough data yet</div><div class="insight-detail">Keep browsing and insights will appear as patterns emerge.</div></div>';
   } else {
     insights.forEach((ins) => {
       const card = document.createElement("div");
-      card.className = `insight-card ${ins.type}`;
+      card.className = `insight-card glass-card ${ins.type}`;
       card.innerHTML = `<div class="insight-text">${ins.text}</div><div class="insight-detail">${ins.detail}</div>`;
       container.appendChild(card);
     });
@@ -294,11 +469,11 @@ async function loadInsights() {
   loopsContainer.innerHTML = "";
   const loops = usage.distractionLoops || [];
   if (loops.length === 0) {
-    loopsContainer.innerHTML = '<div style="color:#666;font-size:13px;">No distraction loops detected today 👍</div>';
+    loopsContainer.innerHTML = '<div class="empty-state">No distraction loops detected today 👍</div>';
   } else {
     loops.forEach((loop) => {
       const card = document.createElement("div");
-      card.className = "loop-card";
+      card.className = "loop-card glass-card";
       card.innerHTML = `
         <div class="loop-severity ${loop.severity}"></div>
         <span class="loop-time">${loop.time}</span>
@@ -313,25 +488,33 @@ async function loadInsights() {
 // ─── Sessions ───
 async function loadSessions() {
   const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
-  const tbody = document.getElementById("sessions-body");
-  tbody.innerHTML = "";
+  const container = document.getElementById("sessions-grid");
+  container.innerHTML = "";
 
   const sessions = usage.focusSessions || [];
   if (sessions.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#666;">No focus sessions today</td></tr>';
+    container.innerHTML = '<div class="empty-state">No focus sessions today. Start one from the popup!</div>';
     return;
   }
 
   sessions.forEach((s) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${s.start}</td>
-      <td>${s.duration}m</td>
-      <td>${s.tasksCompleted}/${s.totalTasks}</td>
-      <td>${s.interruptions}</td>
-      <td class="status-${s.status}">${s.status === "completed" ? "✅ Completed" : "❌ Failed"}</td>
+    const card = document.createElement("div");
+    card.className = "session-card glass-card";
+    const pct = s.duration > 0 ? Math.min(100, (s.duration / 60) * 100) : 0;
+    const barColor = s.status === "completed" ? "var(--gradient-success)" : "var(--gradient-danger)";
+    card.innerHTML = `
+      <span class="session-time">${s.start}</span>
+      <div class="session-bar-wrap">
+        <div class="session-bar-fill" style="width:${pct}%;background:${barColor};"></div>
+      </div>
+      <div class="session-meta">
+        <span>${s.duration}m</span>
+        <span>✓ ${s.tasksCompleted}/${s.totalTasks}</span>
+        <span>⚡ ${s.interruptions}</span>
+        <span class="session-status status-${s.status}">${s.status === "completed" ? "✓ Done" : "✗ Failed"}</span>
+      </div>
     `;
-    tbody.appendChild(tr);
+    container.appendChild(card);
   });
 }
 
@@ -347,7 +530,6 @@ async function loadSettings() {
   document.getElementById("input-unlock-tasks").value = settings.focusDefaults.unlockRequirements.tasksRequired;
   document.getElementById("input-unlock-interruptions").value = settings.focusDefaults.unlockRequirements.maxInterruptions;
 
-  // Add block domain
   document.getElementById("btn-add-block").addEventListener("click", async () => {
     const input = document.getElementById("input-block-domain");
     const domain = input.value.trim().replace(/^www\./, "").toLowerCase();
@@ -358,7 +540,6 @@ async function loadSettings() {
     renderBlockedDomains(updated);
   });
 
-  // Add limit
   document.getElementById("btn-add-limit").addEventListener("click", async () => {
     const domainInput = document.getElementById("input-limit-domain");
     const minInput = document.getElementById("input-limit-minutes");
@@ -372,14 +553,20 @@ async function loadSettings() {
     renderLimits(settings);
   });
 
-  // Save focus defaults
   document.getElementById("btn-save-settings").addEventListener("click", async () => {
     settings.focusDefaults.duration = parseInt(document.getElementById("input-focus-duration").value) || 25;
     settings.focusDefaults.unlockRequirements.focusMinutes = parseInt(document.getElementById("input-unlock-focus").value) || 10;
     settings.focusDefaults.unlockRequirements.tasksRequired = parseInt(document.getElementById("input-unlock-tasks").value) || 2;
     settings.focusDefaults.unlockRequirements.maxInterruptions = parseInt(document.getElementById("input-unlock-interruptions").value) || 3;
     await chrome.runtime.sendMessage({ action: "saveSettings", settings });
-    alert("Settings saved!");
+    
+    const btn = document.getElementById("btn-save-settings");
+    btn.textContent = "✓ Saved!";
+    btn.style.background = "var(--gradient-success)";
+    setTimeout(() => {
+      btn.textContent = "Save Settings";
+      btn.style.background = "";
+    }, 2000);
   });
 }
 

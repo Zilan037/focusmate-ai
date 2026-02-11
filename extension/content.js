@@ -1,7 +1,6 @@
-// content.js — Floating productivity widget injected on every page
+// content.js — Premium floating productivity widget
 
 (function () {
-  // Don't inject on chrome:// or extension pages
   if (
     location.protocol === "chrome:" ||
     location.protocol === "chrome-extension:" ||
@@ -11,145 +10,232 @@
   }
 
   const WIDGET_ID = "focusguard-widget";
-
-  // Prevent double injection
   if (document.getElementById(WIDGET_ID)) return;
 
-  // ─── Create Widget ───
   const widget = document.createElement("div");
   widget.id = WIDGET_ID;
   widget.innerHTML = `
-    <div id="fg-widget-header">
-      <span id="fg-logo">🛡️</span>
-      <span id="fg-title">FocusGuard</span>
-      <button id="fg-minimize" title="Minimize">−</button>
+    <div id="fg-bubble" class="fg-bubble">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(91,140,255,0.2)" stroke="#5B8CFF" stroke-width="1.5"/>
+        <path d="M9 12l2 2 4-4" stroke="#5B8CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </div>
-    <div id="fg-widget-body">
-      <div class="fg-stat">
-        <span class="fg-stat-label">This site</span>
-        <span class="fg-stat-value" id="fg-domain-time">0m</span>
+    <div id="fg-expanded" class="fg-expanded">
+      <div id="fg-widget-header" class="fg-header">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(91,140,255,0.2)" stroke="#5B8CFF" stroke-width="1.5"/>
+        </svg>
+        <span class="fg-title">FocusGuard</span>
+        <button id="fg-minimize" class="fg-close">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
       </div>
-      <div class="fg-stat">
-        <span class="fg-stat-label">Total today</span>
-        <span class="fg-stat-value" id="fg-total-time">0m</span>
-      </div>
-      <div id="fg-focus-section" style="display:none;">
-        <div class="fg-stat fg-focus-stat">
-          <span class="fg-stat-label">⏱ Focus</span>
-          <span class="fg-stat-value" id="fg-focus-time">0m</span>
+      <div class="fg-body">
+        <div class="fg-stat-row">
+          <span class="fg-dot" style="background:#5B8CFF"></span>
+          <span class="fg-label">This site</span>
+          <span class="fg-value" id="fg-domain-time">0m</span>
         </div>
+        <div class="fg-stat-row">
+          <span class="fg-dot" style="background:#34D399"></span>
+          <span class="fg-label">Total today</span>
+          <span class="fg-value" id="fg-total-time">0m</span>
+        </div>
+        <div id="fg-focus-section" class="fg-stat-row fg-focus-row" style="display:none;">
+          <span class="fg-dot" style="background:#FBBF24"></span>
+          <span class="fg-label">Focus</span>
+          <span class="fg-value fg-focus-value" id="fg-focus-time">0m</span>
+        </div>
+        <button id="fg-block-btn" class="fg-block-btn">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/><line x1="3.5" y1="3.5" x2="10.5" y2="10.5" stroke="currentColor" stroke-width="1.5"/></svg>
+          Block Site
+        </button>
       </div>
-      <button id="fg-block-btn" title="Block this site">🚫 Block Site</button>
     </div>
   `;
 
-  // ─── Styles ───
   const style = document.createElement("style");
   style.textContent = `
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
     #${WIDGET_ID} {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      width: 200px;
-      background: #1a1a2e;
-      border: 1px solid #2a2a4a;
-      border-radius: 12px;
-      color: #e0e0e0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 13px;
       z-index: 2147483647;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      overflow: hidden;
-      transition: all 0.3s ease;
-      cursor: move;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       user-select: none;
     }
-    #${WIDGET_ID}.fg-minimized {
-      width: 42px;
-      height: 42px;
+
+    /* Bubble (minimized) */
+    .fg-bubble {
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
-      cursor: pointer;
-    }
-    #${WIDGET_ID}.fg-minimized #fg-widget-body,
-    #${WIDGET_ID}.fg-minimized #fg-title,
-    #${WIDGET_ID}.fg-minimized #fg-minimize {
-      display: none;
-    }
-    #${WIDGET_ID}.fg-minimized #fg-widget-header {
-      padding: 10px;
+      background: rgba(12, 12, 30, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
       justify-content: center;
-      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    #fg-widget-header {
+    .fg-bubble:hover {
+      transform: scale(1.08);
+      border-color: rgba(91, 140, 255, 0.3);
+      box-shadow: 0 4px 24px rgba(91, 140, 255, 0.2);
+    }
+    .fg-bubble.fg-pulse {
+      animation: fgPulse 2s ease-in-out infinite;
+    }
+
+    /* Expanded */
+    .fg-expanded {
+      display: none;
+      width: 220px;
+      background: rgba(12, 12, 30, 0.85);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      animation: fgScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    #${WIDGET_ID}.fg-open .fg-bubble { display: none; }
+    #${WIDGET_ID}.fg-open .fg-expanded { display: block; }
+
+    /* Header */
+    .fg-header {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 12px;
-      background: #16162a;
-      border-bottom: 1px solid #2a2a4a;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      cursor: move;
     }
-    #fg-logo { font-size: 16px; }
-    #fg-title { flex: 1; font-weight: 600; font-size: 12px; color: #a0a0c0; }
-    #fg-minimize {
-      background: none;
-      border: none;
-      color: #a0a0c0;
-      cursor: pointer;
-      font-size: 16px;
-      padding: 0 4px;
-      line-height: 1;
+    .fg-title {
+      flex: 1;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(232, 236, 244, 0.7);
+      letter-spacing: 0.3px;
     }
-    #fg-minimize:hover { color: #fff; }
-    #fg-widget-body { padding: 10px 12px; }
-    .fg-stat {
+    .fg-close {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border: none;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      color: rgba(232, 236, 244, 0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .fg-close:hover {
+      background: rgba(248, 113, 113, 0.15);
+      color: #F87171;
+    }
+
+    /* Body */
+    .fg-body {
+      padding: 10px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .fg-stat-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       padding: 4px 0;
     }
-    .fg-stat-label { color: #888; font-size: 11px; }
-    .fg-stat-value { font-weight: 700; color: #7c8aff; font-size: 13px; }
-    .fg-focus-stat .fg-stat-value { color: #3b82f6; }
-    #fg-block-btn {
-      display: block;
+    .fg-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .fg-label {
+      flex: 1;
+      font-size: 11px;
+      color: rgba(232, 236, 244, 0.5);
+    }
+    .fg-value {
+      font-size: 12px;
+      font-weight: 700;
+      color: #E8ECF4;
+      font-variant-numeric: tabular-nums;
+    }
+    .fg-focus-value {
+      color: #5B8CFF;
+      text-shadow: 0 0 12px rgba(91, 140, 255, 0.4);
+    }
+
+    .fg-block-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
       width: 100%;
-      margin-top: 8px;
-      padding: 6px;
-      background: rgba(239,68,68,0.15);
-      border: 1px solid rgba(239,68,68,0.3);
-      border-radius: 6px;
-      color: #ef4444;
+      margin-top: 4px;
+      padding: 7px;
+      background: rgba(248, 113, 113, 0.08);
+      border: 1px solid rgba(248, 113, 113, 0.12);
+      border-radius: 10px;
+      color: #F87171;
       cursor: pointer;
+      font-family: 'Inter', sans-serif;
       font-size: 11px;
       font-weight: 600;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
-    #fg-block-btn:hover { background: rgba(239,68,68,0.25); }
+    .fg-block-btn:hover {
+      background: rgba(248, 113, 113, 0.15);
+      border-color: rgba(248, 113, 113, 0.25);
+    }
+
+    @keyframes fgScaleIn {
+      from { opacity: 0; transform: scale(0.9) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes fgPulse {
+      0%, 100% { box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
+      50% { box-shadow: 0 4px 24px rgba(91, 140, 255, 0.3); }
+    }
   `;
 
   document.documentElement.appendChild(style);
   document.documentElement.appendChild(widget);
 
-  // ─── Minimize/Expand ───
-  let minimized = false;
-  document.getElementById("fg-minimize").addEventListener("click", (e) => {
-    e.stopPropagation();
-    minimized = true;
-    widget.classList.add("fg-minimized");
-  });
-  widget.addEventListener("click", () => {
-    if (minimized) {
-      minimized = false;
-      widget.classList.remove("fg-minimized");
-    }
+  // ─── Toggle ───
+  const bubble = document.getElementById("fg-bubble");
+  const minimizeBtn = document.getElementById("fg-minimize");
+
+  bubble.addEventListener("click", () => {
+    widget.classList.add("fg-open");
   });
 
-  // ─── Dragging ───
+  minimizeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    widget.classList.remove("fg-open");
+  });
+
+  // ─── Dragging (header only) ───
   let isDragging = false;
   let dragOffset = { x: 0, y: 0 };
+  const header = document.getElementById("fg-widget-header");
 
-  widget.addEventListener("mousedown", (e) => {
-    if (e.target.id === "fg-block-btn" || e.target.id === "fg-minimize") return;
+  header.addEventListener("mousedown", (e) => {
+    if (e.target.closest(".fg-close")) return;
     isDragging = true;
     const rect = widget.getBoundingClientRect();
     dragOffset.x = e.clientX - rect.left;
@@ -166,11 +252,13 @@
   });
 
   document.addEventListener("mouseup", () => {
-    isDragging = false;
-    widget.style.transition = "all 0.3s ease";
+    if (isDragging) {
+      isDragging = false;
+      widget.style.transition = "";
+    }
   });
 
-  // ─── Data Updates ───
+  // ─── Data ───
   function formatMinutes(m) {
     if (m < 1) return "<1m";
     if (m < 60) return Math.round(m) + "m";
@@ -182,39 +270,32 @@
   async function updateWidget() {
     try {
       const domain = location.hostname.replace(/^www\./, "");
-
       const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
       const focusState = await chrome.runtime.sendMessage({ action: "getFocusState" });
 
-      // Domain time
-      const domainTime = usage?.domains?.[domain]?.time || 0;
-      document.getElementById("fg-domain-time").textContent = formatMinutes(domainTime);
-
-      // Total time
+      document.getElementById("fg-domain-time").textContent = formatMinutes(usage?.domains?.[domain]?.time || 0);
       document.getElementById("fg-total-time").textContent = formatMinutes(usage?.totalActive || 0);
 
-      // Focus mode
       const focusSection = document.getElementById("fg-focus-section");
       if (focusState?.active) {
-        focusSection.style.display = "block";
+        focusSection.style.display = "flex";
         document.getElementById("fg-focus-time").textContent = focusState.remaining + "m left";
+        bubble.classList.add("fg-pulse");
       } else {
         focusSection.style.display = "none";
+        bubble.classList.remove("fg-pulse");
       }
-    } catch (e) {
-      // Extension context may be invalidated
-    }
+    } catch (e) {}
   }
 
-  // Update every 30 seconds
   updateWidget();
   setInterval(updateWidget, 30000);
 
-  // ─── Block Button ───
+  // ─── Block ───
   document.getElementById("fg-block-btn").addEventListener("click", async (e) => {
     e.stopPropagation();
     const domain = location.hostname.replace(/^www\./, "");
-    if (confirm(`Block ${domain}? You'll be redirected away from this site.`)) {
+    if (confirm(`Block ${domain}?`)) {
       await chrome.runtime.sendMessage({ action: "blockDomain", domain });
       location.href = "about:blank";
     }

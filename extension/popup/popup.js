@@ -1,4 +1,4 @@
-// popup.js — Extension popup logic
+// popup.js — Premium extension popup logic
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -8,34 +8,71 @@ async function init() {
   await loadStats();
   setupListeners();
   await checkFocusState();
+  updateDurHighlight();
 }
 
+// ─── Animated Number Counter ───
+function animateNumber(el, target, duration = 600, suffix = "") {
+  const start = parseInt(el.textContent) || 0;
+  if (start === target) return;
+  const startTime = performance.now();
+  
+  function tick(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    const current = Math.round(start + (target - start) * eased);
+    el.textContent = current + suffix;
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ─── Format Time ───
+function formatTime(minutes) {
+  if (!minutes || minutes === 0) return "0h 0m";
+  const h = Math.floor(minutes / 60);
+  const m = Math.round(minutes % 60);
+  return `${h}h ${m}m`;
+}
+
+// ─── Load Stats ───
 async function loadStats() {
   try {
     const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
     const streak = await chrome.runtime.sendMessage({ action: "getStreak" });
     const scoreData = await chrome.runtime.sendMessage({ action: "getScore" });
 
-    // Active time
-    const hours = Math.floor((usage.totalActive || 0) / 60);
-    const mins = Math.round((usage.totalActive || 0) % 60);
-    document.getElementById("stat-active").textContent = `${hours}h ${mins}m`;
-
-    // Focus %
-    const focusPct = usage.totalActive > 0
-      ? Math.round(((usage.focusTime || 0) / usage.totalActive) * 100)
-      : 0;
-    document.getElementById("stat-focus").textContent = focusPct + "%";
-
-    // Score
+    // Score ring
+    const score = scoreData.score || 0;
     const scoreEl = document.getElementById("stat-score");
-    scoreEl.textContent = scoreData.score || 0;
+    animateNumber(scoreEl, score);
+    
+    // Update ring
+    const ring = document.getElementById("score-ring");
+    const circumference = 264;
+    const offset = circumference - (score / 100) * circumference;
+    ring.style.strokeDashoffset = offset;
+    
+    // Score label
+    const labelEl = document.getElementById("score-label");
     if (scoreData.label) {
+      labelEl.textContent = scoreData.label.label;
       scoreEl.style.color = scoreData.label.color;
     }
 
+    // Stats
+    document.getElementById("stat-focus-time").textContent = formatTime(usage.focusTime || 0);
+    document.getElementById("stat-distracted").textContent = formatTime(usage.distractedTime || 0);
+    document.getElementById("stat-active").textContent = formatTime(usage.totalActive || 0);
+
     // Streak
-    document.getElementById("stat-streak").textContent = `🔥 ${streak.current || 0}`;
+    const streakCount = streak.current || 0;
+    document.getElementById("streak-count").textContent = streakCount;
+    const streakBadge = document.getElementById("streak-badge");
+    if (streakCount > 0) {
+      streakBadge.classList.add("active");
+    }
 
     // Domain bars
     renderDomainBars(usage.domains || {});
@@ -44,6 +81,7 @@ async function loadStats() {
   }
 }
 
+// ─── Domain Bars ───
 function renderDomainBars(domains) {
   const container = document.getElementById("domain-bars");
   container.innerHTML = "";
@@ -53,7 +91,7 @@ function renderDomainBars(domains) {
     .slice(0, 5);
 
   if (sorted.length === 0) {
-    container.innerHTML = '<div style="text-align:center;color:#666;font-size:11px;padding:8px;">No activity yet today</div>';
+    container.innerHTML = '<div class="empty-state">No activity yet today</div>';
     return;
   }
 
@@ -63,13 +101,17 @@ function renderDomainBars(domains) {
     const pct = Math.round(((info.time || 0) / maxTime) * 100);
     const color = Categories.getCategoryColor(info.category || "Other");
     const mins = Math.round(info.time || 0);
+    const letter = domain.charAt(0).toUpperCase();
 
     const bar = document.createElement("div");
     bar.className = "domain-bar";
     bar.innerHTML = `
-      <span class="domain-name">${domain}</span>
-      <div class="domain-bar-track">
-        <div class="domain-bar-fill" style="width:${pct}%;background:${color};"></div>
+      <div class="domain-favicon" style="background:${color}">${letter}</div>
+      <div class="domain-info">
+        <span class="domain-name">${domain}</span>
+        <div class="domain-bar-track">
+          <div class="domain-bar-fill" style="width:${pct}%;background:${color};"></div>
+        </div>
       </div>
       <span class="domain-time">${mins}m</span>
     `;
@@ -77,11 +119,24 @@ function renderDomainBars(domains) {
   });
 }
 
-function setupListeners() {
-  // Dashboard button
-  document.getElementById("btn-dashboard").addEventListener("click", () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/dashboard.html") });
+// ─── Duration Highlight ───
+function updateDurHighlight() {
+  const btns = document.querySelectorAll(".dur-btn");
+  const highlight = document.getElementById("dur-highlight");
+  let activeIndex = 0;
+  btns.forEach((btn, i) => {
+    if (btn.classList.contains("active")) activeIndex = i;
   });
+  const btnWidth = 100 / btns.length;
+  highlight.style.width = `calc(${btnWidth}% - 1.5px)`;
+  highlight.style.transform = `translateX(${activeIndex * 100}%)`;
+}
+
+// ─── Listeners ───
+function setupListeners() {
+  // Dashboard buttons
+  document.getElementById("btn-dashboard").addEventListener("click", openDashboard);
+  document.getElementById("btn-dashboard-bottom").addEventListener("click", openDashboard);
 
   // Duration selector
   document.querySelectorAll(".dur-btn").forEach((btn) => {
@@ -89,6 +144,7 @@ function setupListeners() {
       document.querySelectorAll(".dur-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       selectedDuration = parseInt(btn.dataset.dur);
+      updateDurHighlight();
     });
   });
 
@@ -106,7 +162,7 @@ function setupListeners() {
 
   // Stop focus
   document.getElementById("btn-stop-focus").addEventListener("click", async () => {
-    if (confirm("Stop focus session early? This will be marked as failed.")) {
+    if (confirm("Stop focus session early?")) {
       await chrome.runtime.sendMessage({ action: "stopFocus" });
       await checkFocusState();
       await loadStats();
@@ -128,6 +184,11 @@ function setupListeners() {
   });
 }
 
+function openDashboard() {
+  chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/dashboard.html") });
+}
+
+// ─── Focus State ───
 async function checkFocusState() {
   const state = await chrome.runtime.sendMessage({ action: "getFocusState" });
 
@@ -143,8 +204,18 @@ async function checkFocusState() {
     document.getElementById("focus-timer").textContent =
       `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 
+    // Update focus ring
+    const ring = document.getElementById("focus-ring");
+    const pct = state.duration > 0 ? state.remaining / state.duration : 0;
+    const offset = 264 * (1 - pct);
+    ring.style.strokeDashoffset = offset;
+
     const pauseBtn = document.getElementById("btn-pause-focus");
-    pauseBtn.textContent = state.paused ? "▶ Resume" : "⏸ Pause";
+    if (state.paused) {
+      pauseBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><polygon points="3,1 13,7 3,13"/></svg>';
+    } else {
+      pauseBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg>';
+    }
   } else {
     inactiveEl.style.display = "block";
     activeEl.style.display = "none";
