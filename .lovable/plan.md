@@ -1,40 +1,133 @@
 
 
-# 🛡️ FocusGuard — Landing Page + Analytics Dashboard
+# FocusGuard Chrome Extension — Full Build Plan
 
-## Page 1: Landing Page
-A polished, modern landing page that showcases FocusGuard as a product:
+I'll create the entire Chrome extension inside an `extension/` folder in your project. You'll download it from GitHub, go to `chrome://extensions`, enable Developer Mode, click "Load unpacked", and point it to the `extension/` folder.
 
-- **Hero Section** — Bold headline, tagline ("Your Behavioral Productivity Operating System"), CTA button ("Add to Chrome" / "View Dashboard"), and a mockup/illustration of the extension in action
-- **Feature Highlights** — Cards or sections for key features: Smart Tracking, Focus Mode, Task-Based Unlock, Domain Blocking, Behavioral Insights, Productivity Scoring
-- **How It Works** — 3-4 step visual flow showing the system architecture (track → analyze → intervene → report)
-- **What Makes It Different** — Comparison section showing FocusGuard vs typical tools (just blockers/timers)
-- **Tech & Privacy** — Section highlighting event-driven architecture, local-first data processing, no keystroke logging, transparent privacy
-- **Footer** — Links, credits, GitHub repo link
+## Folder Structure
 
-## Page 2: Dashboard (with demo/mock data)
-An interactive analytics dashboard demonstrating what FocusGuard's data looks like:
+```text
+extension/
+  manifest.json              -- Manifest V3 config
+  background.js              -- Service worker (tracking engine, focus timer, blocking)
+  content.js                 -- Content script (overlay widget, block page injection)
+  popup/
+    popup.html               -- Extension popup UI
+    popup.css                -- Popup styles
+    popup.js                 -- Popup logic (stats, quick actions)
+  dashboard/
+    dashboard.html            -- Full dashboard page (opens in new tab)
+    dashboard.css             -- Dashboard styles
+    dashboard.js              -- Dashboard charts & logic
+  blocked/
+    blocked.html              -- Blocked site page (redirect target)
+    blocked.css               -- Block page styles
+    blocked.js                -- Block page logic (unlock tasks, timer, reflection)
+  utils/
+    storage.js                -- chrome.storage helpers
+    categories.js             -- Domain categorization engine
+    scoring.js                -- Productivity scoring algorithm
+    insights.js               -- Behavioral insights generator
+  icons/
+    icon16.png
+    icon48.png
+    icon128.png
+  assets/
+    styles-common.css          -- Shared styles
+```
 
-- **Today's Overview** — Total active time, focus vs distraction percentage, productivity score (0-100), current streak
-- **Domain Usage Breakdown** — Bar/pie chart showing time per domain, color-coded by category (Social, Education, Work, Entertainment, etc.)
-- **Daily Timeline** — Hourly activity heatmap or bar chart showing productivity patterns throughout the day
-- **Weekly Trends** — Bar chart comparing daily usage across the week, weekend vs weekday comparison
-- **Behavioral Insights Panel** — AI-style insight cards like "You're 35% more distracted after 10PM" and "YouTube consumes 62% of entertainment time"
-- **Focus Sessions Log** — Table/list showing completed focus sessions with duration, tasks completed, and success/failure status
-- **Distraction Loop Alerts** — Visual indicators of detected tab-switching loops
+## What Each File Does
 
-## Page 3: Focus Mode Demo
-An interactive demo page showing FocusGuard's focus mode UI:
+### 1. manifest.json (Manifest V3)
+- Permissions: `tabs`, `activeTab`, `storage`, `alarms`, `webNavigation`, `declarativeNetRequest`
+- Background service worker registration
+- Content script injection on all URLs
+- Dashboard and blocked page as extension pages
 
-- **Focus Timer** — A working countdown timer with start/pause controls
-- **Task Checklist** — Simple to-do list for focus session tasks
-- **Unlock Progress** — Visual progress bar showing requirements met (focus time, tasks done, interruptions)
-- **Motivational overlay** — Quote display and streak counter
+### 2. background.js — Tracking + Focus + Blocking Engine
+- **Smart Tracking**: Listens to `chrome.tabs.onActivated`, `chrome.tabs.onUpdated`, `chrome.windows.onFocusChanged`, and `chrome.idle.onStateChanged`
+- **5-minute threshold**: Only commits sessions >= 5 minutes
+- **Idle detection**: Pauses tracking after 60 seconds idle
+- **Distraction loop detection**: Monitors rapid domain switches (4+ domains in 10 minutes with repeated returns)
+- **Focus Mode timer**: Uses `chrome.alarms` for countdown
+- **Domain blocking**: Uses `chrome.declarativeNetRequest` to redirect blocked domains to `blocked.html`
+- **Daily limit enforcement**: Tracks per-domain time and blocks when limit is reached
+- **Scheduled blocks**: Checks time-based block rules
+- **Data structure**: Stores `DailyUsage` objects keyed by date in `chrome.storage.local`
 
-## Design & Style
-- Dark mode primary theme (tech/productivity feel) with light mode toggle
-- Clean, modern UI with subtle gradients and smooth animations
-- Color scheme: Deep navy/dark backgrounds with vibrant accent colors (green for productive, red for distracted, blue for focus)
-- Consistent use of charts (via Recharts) for data visualization
-- Responsive design for desktop and tablet viewing
+### 3. content.js — Floating Productivity Widget
+- Injects a small floating widget on every page showing:
+  - Current domain time today
+  - Total active time today
+  - Focus timer (if active)
+  - Quick block button
+- Auto-hides during focus mode
+- Draggable positioning
+
+### 4. popup/ — Extension Popup
+- Shows today's stats: active time, focus %, productivity score, streak
+- Quick actions: Start Focus Mode, Open Dashboard, Quick Block current site
+- Mini domain usage bars (top 5)
+- Focus mode controls (duration selector, start/stop)
+
+### 5. dashboard/ — Full Analytics Dashboard
+- Opens in a new tab (chrome-extension:// page)
+- **Today's Overview**: Cards with active time, focus %, score, streak
+- **Domain Usage**: Bar chart (built with Canvas API, no external libs)
+- **Category Breakdown**: Pie/donut chart
+- **Hourly Activity**: Stacked bar chart showing productive vs distracted
+- **Weekly Trends**: 7-day comparison bars
+- **Behavioral Insights**: Auto-generated insight cards
+- **Focus Sessions Log**: Table of completed sessions
+- **Distraction Loop Alerts**: Flagged loop events
+- **Settings panel**: Block list management, focus mode preferences, daily limits, scheduled blocks
+
+### 6. blocked/ — Block Page with Task-Based Unlock
+- Shows when user visits a blocked domain
+- Displays: site name, reason for block, motivational quote
+- **Task-Based Unlock Mode**:
+  - Progress bar with requirements (focus X min, complete Y tasks, fewer than Z interruptions)
+  - Task checklist
+  - Focus streak display
+  - Countdown timer
+- **Override option**: Type reason + 15-second reflection timer
+- Unlock validation logic matching your spec
+
+### 7. utils/categories.js — Domain Categorization
+- Auto-categorizes domains into: Social Media, Education, Entertainment, Work, News, Shopping, Other
+- Pattern-matching with keyword lists (e.g., youtube/netflix/twitch = Entertainment)
+- User can override categories in settings
+
+### 8. utils/scoring.js — Productivity Scoring
+- Weighted formula from your spec:
+  - Education time x 2
+  - Focus time x 2  
+  - Work time x 1.5
+  - Social media x -1.8
+  - Block bypass attempts x -3
+- Normalized to 0-100
+
+### 9. utils/insights.js — Behavioral Insights Engine
+- Time-of-day grouping analysis
+- Ratio comparison (e.g., "YouTube = 62% of entertainment")
+- Trend detection across days
+- Generates text-based insight cards
+
+## Technical Details
+
+- Pure vanilla JavaScript (no frameworks, no build step needed)
+- All CSS is custom (dark theme matching the web dashboard aesthetic)
+- Canvas API for charts in the dashboard (no external chart libraries)
+- All data stored in `chrome.storage.local` (privacy-first, local-only)
+- Event-driven architecture — no polling, uses Chrome event listeners
+- Service worker lifecycle handled properly for Manifest V3
+
+## How to Use After Download
+
+1. Download/clone the repo from GitHub
+2. Open Chrome, go to `chrome://extensions`
+3. Enable "Developer mode" (top right toggle)
+4. Click "Load unpacked"
+5. Select the `extension/` folder
+6. The extension icon appears in your toolbar — you're live
 
