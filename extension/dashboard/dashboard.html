@@ -8,133 +8,233 @@
   <link rel="stylesheet" href="dashboard.css" />
 </head>
 <body>
-  <div class="dashboard">
-    <header class="dash-header">
-      <div class="dash-logo">
-        <span>🛡️</span>
-        <h1>FocusGuard Dashboard</h1>
-      </div>
-      <div class="dash-tabs">
-        <button class="tab-btn active" data-tab="overview">Overview</button>
-        <button class="tab-btn" data-tab="insights">Insights</button>
-        <button class="tab-btn" data-tab="sessions">Sessions</button>
-        <button class="tab-btn" data-tab="settings">Settings</button>
-      </div>
-    </header>
-
-    <!-- Overview Tab -->
-    <div id="tab-overview" class="tab-content active">
-      <div class="overview-cards">
-        <div class="card stat-card-lg">
-          <span class="stat-label">Active Time</span>
-          <span class="stat-value-lg" id="d-active">0h 0m</span>
-        </div>
-        <div class="card stat-card-lg">
-          <span class="stat-label">Focus %</span>
-          <span class="stat-value-lg focus-c" id="d-focus">0%</span>
-        </div>
-        <div class="card stat-card-lg">
-          <span class="stat-label">Score</span>
-          <span class="stat-value-lg" id="d-score">0</span>
-          <span class="score-label" id="d-score-label"></span>
-        </div>
-        <div class="card stat-card-lg">
-          <span class="stat-label">Streak</span>
-          <span class="stat-value-lg streak-c" id="d-streak">🔥 0</span>
-        </div>
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar glass">
+      <div class="sidebar-header">
+        <svg class="shield-icon" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="url(#sGrad)" opacity="0.2"/>
+          <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" stroke="url(#sGrad)" stroke-width="1.5" fill="none"/>
+          <path d="M9 12l2 2 4-4" stroke="#5B8CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <defs><linearGradient id="sGrad" x1="3" y1="2" x2="21" y2="24"><stop offset="0%" stop-color="#5B8CFF"/><stop offset="100%" stop-color="#7C6AFF"/></linearGradient></defs>
+        </svg>
+        <h1 class="text-gradient">FocusGuard</h1>
       </div>
 
-      <div class="charts-row">
-        <div class="card chart-card">
-          <h3>Domain Usage</h3>
-          <canvas id="chart-domains" width="500" height="300"></canvas>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="overview">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="6" height="6" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="1" width="6" height="6" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="11" width="6" height="6" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="6" height="6" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
+          Overview
+        </button>
+        <button class="nav-item" data-tab="daily">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="3" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M2 7h14" stroke="currentColor" stroke-width="1.5"/><path d="M6 1v4M12 1v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Daily
+        </button>
+        <button class="nav-item" data-tab="weekly">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 14l3-4 3 2 4-6 4 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Weekly
+        </button>
+        <button class="nav-item" data-tab="domains">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M2 9h14M9 2c2 2.5 2.5 4.5 2.5 7S11 14 9 16c-2-2-2.5-4.5-2.5-7S7 4 9 2z" stroke="currentColor" stroke-width="1.2"/></svg>
+          Domains
+        </button>
+        <button class="nav-item" data-tab="sessions">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M9 5v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Focus Logs
+        </button>
+        <button class="nav-item" data-tab="insights">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2v2M14.5 3.5l-1.5 1.5M16 9h-2M14.5 14.5l-1.5-1.5M9 16v-2M3.5 14.5l1.5-1.5M2 9h2M3.5 3.5L5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="9" r="3" stroke="currentColor" stroke-width="1.5"/></svg>
+          Insights
+        </button>
+        <button class="nav-item" data-tab="settings">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M9 1v2M9 15v2M1 9h2M15 9h2M3.3 3.3l1.4 1.4M13.3 13.3l1.4 1.4M3.3 14.7l1.4-1.4M13.3 4.7l1.4-1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Settings
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-score">
+          <span class="sidebar-score-value" id="sidebar-score">0</span>
+          <span class="sidebar-score-label">Score</span>
         </div>
-        <div class="card chart-card">
-          <h3>Category Breakdown</h3>
-          <canvas id="chart-categories" width="300" height="300"></canvas>
+        <div class="sidebar-streak">
+          <span>🔥</span>
+          <span id="sidebar-streak">0</span>
+          <span class="sidebar-streak-label">day streak</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Overview -->
+      <div id="tab-overview" class="tab-content active">
+        <h2 class="page-title fade-up">Overview</h2>
+        <div class="stat-cards fade-up delay-1">
+          <div class="stat-card glass-card">
+            <span class="stat-card-label">Active Time</span>
+            <span class="stat-card-value" id="d-active">0h 0m</span>
+          </div>
+          <div class="stat-card glass-card">
+            <span class="stat-card-label">Focus %</span>
+            <span class="stat-card-value stat-accent" id="d-focus">0%</span>
+          </div>
+          <div class="stat-card glass-card">
+            <span class="stat-card-label">Score</span>
+            <div class="stat-score-wrap">
+              <svg class="stat-score-ring" viewBox="0 0 60 60">
+                <circle cx="30" cy="30" r="24" stroke="rgba(255,255,255,0.04)" stroke-width="4" fill="none"/>
+                <circle id="d-score-ring" cx="30" cy="30" r="24" stroke="url(#sGrad)" stroke-width="4" fill="none" 
+                  stroke-dasharray="151" stroke-dashoffset="151" stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1s var(--ease-out)"/>
+              </svg>
+              <span class="stat-card-value" id="d-score">0</span>
+            </div>
+            <span class="stat-score-label" id="d-score-label"></span>
+          </div>
+          <div class="stat-card glass-card">
+            <span class="stat-card-label">Streak</span>
+            <span class="stat-card-value stat-warning" id="d-streak">🔥 0</span>
+          </div>
+        </div>
+
+        <div class="charts-row fade-up delay-2">
+          <div class="chart-card glass-card">
+            <h3 class="chart-title">Domain Usage</h3>
+            <canvas id="chart-domains" height="280"></canvas>
+          </div>
+          <div class="chart-card glass-card">
+            <h3 class="chart-title">Categories</h3>
+            <div id="category-donut" class="category-donut-wrap"></div>
+          </div>
+        </div>
+
+        <div class="charts-row fade-up delay-3">
+          <div class="chart-card chart-wide glass-card">
+            <h3 class="chart-title">Hourly Activity</h3>
+            <canvas id="chart-hourly" height="220"></canvas>
+          </div>
+        </div>
+
+        <div class="charts-row fade-up delay-4">
+          <div class="chart-card chart-wide glass-card">
+            <h3 class="chart-title">Weekly Trends</h3>
+            <canvas id="chart-weekly" height="220"></canvas>
+          </div>
         </div>
       </div>
 
-      <div class="charts-row">
-        <div class="card chart-card wide">
-          <h3>Hourly Activity</h3>
-          <canvas id="chart-hourly" width="800" height="250"></canvas>
+      <!-- Daily -->
+      <div id="tab-daily" class="tab-content">
+        <h2 class="page-title">Daily Report</h2>
+        <div class="daily-summary glass-card fade-up">
+          <div class="daily-stat"><span class="daily-stat-label">Total Active</span><span class="daily-stat-value" id="daily-active">0h 0m</span></div>
+          <div class="daily-stat"><span class="daily-stat-label">Focus Time</span><span class="daily-stat-value" id="daily-focus">0h 0m</span></div>
+          <div class="daily-stat"><span class="daily-stat-label">Distracted</span><span class="daily-stat-value" id="daily-distracted">0h 0m</span></div>
+          <div class="daily-stat"><span class="daily-stat-label">Sessions</span><span class="daily-stat-value" id="daily-sessions">0</span></div>
+        </div>
+        <div class="glass-card fade-up delay-1" style="margin-top:16px;">
+          <h3 class="chart-title">Hourly Heatmap</h3>
+          <div class="heatmap-grid" id="heatmap-grid"></div>
+          <div class="heatmap-legend">
+            <span class="heatmap-legend-label">Low</span>
+            <div class="heatmap-legend-bar"></div>
+            <span class="heatmap-legend-label">High</span>
+          </div>
         </div>
       </div>
 
-      <div class="charts-row">
-        <div class="card chart-card wide">
-          <h3>Weekly Trends</h3>
-          <canvas id="chart-weekly" width="800" height="250"></canvas>
+      <!-- Weekly -->
+      <div id="tab-weekly" class="tab-content">
+        <h2 class="page-title">Weekly Report</h2>
+        <div class="weekly-patterns glass-card fade-up" id="weekly-patterns"></div>
+        <div class="glass-card fade-up delay-1" style="margin-top:16px;">
+          <h3 class="chart-title">7-Day Comparison</h3>
+          <canvas id="chart-weekly-detail" height="280"></canvas>
         </div>
       </div>
-    </div>
 
-    <!-- Insights Tab -->
-    <div id="tab-insights" class="tab-content">
-      <h2 class="tab-heading">Behavioral Insights</h2>
-      <div id="insights-list" class="insights-grid"></div>
-      <h2 class="tab-heading" style="margin-top:24px;">Distraction Loops</h2>
-      <div id="loops-list" class="loops-list"></div>
-    </div>
-
-    <!-- Sessions Tab -->
-    <div id="tab-sessions" class="tab-content">
-      <h2 class="tab-heading">Focus Sessions Log</h2>
-      <table class="sessions-table" id="sessions-table">
-        <thead>
-          <tr>
-            <th>Time</th>
-            <th>Duration</th>
-            <th>Tasks</th>
-            <th>Interruptions</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="sessions-body"></tbody>
-      </table>
-    </div>
-
-    <!-- Settings Tab -->
-    <div id="tab-settings" class="tab-content">
-      <h2 class="tab-heading">Settings</h2>
-
-      <div class="settings-section">
-        <h3>Blocked Domains</h3>
-        <div class="input-row">
-          <input type="text" id="input-block-domain" placeholder="e.g. instagram.com" />
-          <button id="btn-add-block" class="btn-sm">+ Add</button>
+      <!-- Domains -->
+      <div id="tab-domains" class="tab-content">
+        <h2 class="page-title">Domain Analysis</h2>
+        <div class="domains-controls fade-up">
+          <input type="text" id="domain-search" class="input domain-search" placeholder="Search domains..." />
         </div>
-        <div id="blocked-list" class="tag-list"></div>
-      </div>
-
-      <div class="settings-section">
-        <h3>Daily Limits</h3>
-        <div class="input-row">
-          <input type="text" id="input-limit-domain" placeholder="domain" />
-          <input type="number" id="input-limit-minutes" placeholder="min" min="1" max="480" style="width:70px;" />
-          <button id="btn-add-limit" class="btn-sm">+ Add</button>
+        <div class="glass-card fade-up delay-1" style="margin-top:12px;padding:0;overflow:hidden;">
+          <table class="domains-table" id="domains-table">
+            <thead>
+              <tr>
+                <th data-sort="domain">Domain</th>
+                <th data-sort="category">Category</th>
+                <th data-sort="time">Time</th>
+                <th data-sort="visits">Sessions</th>
+                <th>Blocked</th>
+              </tr>
+            </thead>
+            <tbody id="domains-body"></tbody>
+          </table>
         </div>
-        <div id="limits-list" class="tag-list"></div>
       </div>
 
-      <div class="settings-section">
-        <h3>Focus Defaults</h3>
-        <label class="setting-label">Default Duration (min)
-          <input type="number" id="input-focus-duration" min="5" max="120" value="25" />
-        </label>
-        <label class="setting-label">Unlock: Focus Minutes Required
-          <input type="number" id="input-unlock-focus" min="1" max="60" value="10" />
-        </label>
-        <label class="setting-label">Unlock: Tasks Required
-          <input type="number" id="input-unlock-tasks" min="0" max="10" value="2" />
-        </label>
-        <label class="setting-label">Unlock: Max Interruptions
-          <input type="number" id="input-unlock-interruptions" min="1" max="20" value="3" />
-        </label>
-        <button id="btn-save-settings" class="btn-primary-sm">Save Settings</button>
+      <!-- Sessions / Focus Logs -->
+      <div id="tab-sessions" class="tab-content">
+        <h2 class="page-title">Focus Sessions</h2>
+        <div class="sessions-grid" id="sessions-grid"></div>
       </div>
-    </div>
+
+      <!-- Insights -->
+      <div id="tab-insights" class="tab-content">
+        <h2 class="page-title">Behavioral Insights</h2>
+        <div id="insights-list" class="insights-grid"></div>
+        <h3 class="section-heading" style="margin-top:24px;">Distraction Loops</h3>
+        <div id="loops-list" class="loops-list"></div>
+      </div>
+
+      <!-- Settings -->
+      <div id="tab-settings" class="tab-content">
+        <h2 class="page-title">Settings</h2>
+
+        <div class="settings-group glass-card fade-up">
+          <h3 class="settings-group-title">Blocked Domains</h3>
+          <p class="settings-group-desc">Sites that will be blocked when visited.</p>
+          <div class="input-row">
+            <input type="text" id="input-block-domain" class="input" placeholder="e.g. instagram.com" />
+            <button id="btn-add-block" class="btn-primary">+ Add</button>
+          </div>
+          <div id="blocked-list" class="tag-list"></div>
+        </div>
+
+        <div class="settings-group glass-card fade-up delay-1">
+          <h3 class="settings-group-title">Daily Limits</h3>
+          <p class="settings-group-desc">Set maximum daily usage for specific domains.</p>
+          <div class="input-row">
+            <input type="text" id="input-limit-domain" class="input" placeholder="domain" />
+            <input type="number" id="input-limit-minutes" class="input" placeholder="min" min="1" max="480" style="width:80px;" />
+            <button id="btn-add-limit" class="btn-primary">+ Add</button>
+          </div>
+          <div id="limits-list" class="tag-list"></div>
+        </div>
+
+        <div class="settings-group glass-card fade-up delay-2">
+          <h3 class="settings-group-title">Focus Defaults</h3>
+          <p class="settings-group-desc">Configure default focus session behavior.</p>
+          <div class="settings-fields">
+            <label class="field-label">Default Duration (min)
+              <input type="number" id="input-focus-duration" class="input" min="5" max="120" value="25" />
+            </label>
+            <label class="field-label">Unlock: Focus Minutes Required
+              <input type="number" id="input-unlock-focus" class="input" min="1" max="60" value="10" />
+            </label>
+            <label class="field-label">Unlock: Tasks Required
+              <input type="number" id="input-unlock-tasks" class="input" min="0" max="10" value="2" />
+            </label>
+            <label class="field-label">Unlock: Max Interruptions
+              <input type="number" id="input-unlock-interruptions" class="input" min="1" max="20" value="3" />
+            </label>
+          </div>
+          <button id="btn-save-settings" class="btn-primary" style="margin-top:12px;">Save Settings</button>
+        </div>
+      </div>
+    </main>
   </div>
 
   <script src="../utils/storage.js"></script>

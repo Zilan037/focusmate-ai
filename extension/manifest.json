@@ -49,7 +49,15 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["blocked/blocked.html", "blocked/blocked.css", "blocked/blocked.js", "assets/styles-common.css"],
+      "resources": [
+        "blocked/blocked.html",
+        "blocked/blocked.css",
+        "blocked/blocked.js",
+        "onboarding/onboarding.html",
+        "onboarding/onboarding.css",
+        "onboarding/onboarding.js",
+        "assets/styles-common.css"
+      ],
       "matches": ["<all_urls>"]
     }
   ]
