@@ -1,6 +1,6 @@
 // insights.js — Behavioral insights generator
 
-const Insights = {
+export const Insights = {
   /**
    * Generate insight cards from usage data
    * @param {Object} todayData - Today's usage

@@ -1,6 +1,6 @@
 // scoring.js — Productivity scoring algorithm
 
-const Scoring = {
+export const Scoring = {
   /**
    * Calculate productivity score (0-100) for a day's usage data
    * 
