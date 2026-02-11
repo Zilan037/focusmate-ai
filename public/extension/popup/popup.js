@@ -1,4 +1,4 @@
-// popup.js — Premium extension popup logic
+// popup.js — Premium extension popup logic V2
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -6,9 +6,22 @@ let selectedDuration = 25;
 
 async function init() {
   await loadStats();
+  await loadInsight();
   setupListeners();
   await checkFocusState();
   updateDurHighlight();
+  setupThemeToggle();
+}
+
+// ─── Theme ───
+async function setupThemeToggle() {
+  const btn = document.getElementById("btn-theme");
+  btn.addEventListener("click", async () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    const next = current === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    await chrome.runtime.sendMessage({ action: "setTheme", theme: next });
+  });
 }
 
 // ─── Animated Number Counter ───
@@ -20,7 +33,7 @@ function animateNumber(el, target, duration = 600, suffix = "") {
   function tick(now) {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    const eased = 1 - Math.pow(1 - progress, 3);
     const current = Math.round(start + (target - start) * eased);
     el.textContent = current + suffix;
     if (progress < 1) requestAnimationFrame(tick);
@@ -48,13 +61,11 @@ async function loadStats() {
     const scoreEl = document.getElementById("stat-score");
     animateNumber(scoreEl, score);
     
-    // Update ring
     const ring = document.getElementById("score-ring");
     const circumference = 264;
     const offset = circumference - (score / 100) * circumference;
     ring.style.strokeDashoffset = offset;
     
-    // Score label
     const labelEl = document.getElementById("score-label");
     if (scoreData.label) {
       labelEl.textContent = scoreData.label.label;
@@ -69,16 +80,32 @@ async function loadStats() {
     // Streak
     const streakCount = streak.current || 0;
     document.getElementById("streak-count").textContent = streakCount;
-    const streakBadge = document.getElementById("streak-badge");
     if (streakCount > 0) {
-      streakBadge.classList.add("active");
+      document.getElementById("streak-badge").classList.add("active");
     }
+
+    // Ticker
+    const domainCount = Object.keys(usage.domains || {}).length;
+    const focusStr = formatTime(usage.focusTime || 0);
+    const tickerEl = document.getElementById("ticker-content");
+    tickerEl.innerHTML = `<span>${domainCount} sites visited</span> <span class="ticker-sep">·</span> <span>${focusStr} focused</span> <span class="ticker-sep">·</span> <span>Score: ${score}</span>`;
 
     // Domain bars
     renderDomainBars(usage.domains || {});
   } catch (e) {
     console.error("Failed to load stats:", e);
   }
+}
+
+// ─── Load Insight ───
+async function loadInsight() {
+  try {
+    const insight = await chrome.runtime.sendMessage({ action: "getTodayInsightSummary" });
+    if (insight) {
+      document.getElementById("insight-icon").textContent = insight.icon || "💡";
+      document.getElementById("insight-text").textContent = insight.text || "";
+    }
+  } catch (e) {}
 }
 
 // ─── Domain Bars ───
@@ -101,12 +128,18 @@ function renderDomainBars(domains) {
     const pct = Math.round(((info.time || 0) / maxTime) * 100);
     const color = Categories.getCategoryColor(info.category || "Other");
     const mins = Math.round(info.time || 0);
-    const letter = domain.charAt(0).toUpperCase();
 
     const bar = document.createElement("div");
     bar.className = "domain-bar";
+    
+    // Try favicon first, fallback to letter
+    const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+    const letter = domain.charAt(0).toUpperCase();
+    
     bar.innerHTML = `
-      <div class="domain-favicon" style="background:${color}">${letter}</div>
+      <div class="domain-favicon" style="background:${color}">
+        <img src="${faviconUrl}" onerror="this.style.display='none';this.parentElement.textContent='${letter}'" />
+      </div>
       <div class="domain-info">
         <span class="domain-name">${domain}</span>
         <div class="domain-bar-track">
@@ -134,11 +167,9 @@ function updateDurHighlight() {
 
 // ─── Listeners ───
 function setupListeners() {
-  // Dashboard buttons
   document.getElementById("btn-dashboard").addEventListener("click", openDashboard);
   document.getElementById("btn-dashboard-bottom").addEventListener("click", openDashboard);
 
-  // Duration selector
   document.querySelectorAll(".dur-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       document.querySelectorAll(".dur-btn").forEach((b) => b.classList.remove("active"));
@@ -148,19 +179,16 @@ function setupListeners() {
     });
   });
 
-  // Start focus
   document.getElementById("btn-start-focus").addEventListener("click", async () => {
     await chrome.runtime.sendMessage({ action: "startFocus", duration: selectedDuration, tasks: [] });
     await checkFocusState();
   });
 
-  // Pause focus
   document.getElementById("btn-pause-focus").addEventListener("click", async () => {
     await chrome.runtime.sendMessage({ action: "pauseFocus" });
     await checkFocusState();
   });
 
-  // Stop focus
   document.getElementById("btn-stop-focus").addEventListener("click", async () => {
     if (confirm("Stop focus session early?")) {
       await chrome.runtime.sendMessage({ action: "stopFocus" });
@@ -169,7 +197,6 @@ function setupListeners() {
     }
   });
 
-  // Block current site
   document.getElementById("btn-block-current").addEventListener("click", async () => {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -198,13 +225,13 @@ async function checkFocusState() {
   if (state.active) {
     inactiveEl.style.display = "none";
     activeEl.style.display = "block";
+    activeEl.classList.add("pulsing");
 
     const mins = Math.floor(state.remaining);
     const secs = Math.round((state.remaining % 1) * 60);
     document.getElementById("focus-timer").textContent =
       `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 
-    // Update focus ring
     const ring = document.getElementById("focus-ring");
     const pct = state.duration > 0 ? state.remaining / state.duration : 0;
     const offset = 264 * (1 - pct);
@@ -219,5 +246,6 @@ async function checkFocusState() {
   } else {
     inactiveEl.style.display = "block";
     activeEl.style.display = "none";
+    activeEl.classList.remove("pulsing");
   }
 }

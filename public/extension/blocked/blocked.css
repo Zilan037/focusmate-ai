@@ -1,4 +1,4 @@
-/* blocked.css — Cinematic intervention screen */
+/* blocked.css — Cinematic intervention screen V2 */
 
 body {
   min-height: 100vh;
@@ -9,16 +9,46 @@ body {
   overflow: hidden;
 }
 
-/* Animated background */
+/* Animated background with orbs */
 .blocked-bg {
   position: fixed;
   inset: 0;
-  background: radial-gradient(ellipse at 30% 20%, rgba(248,113,113,0.06) 0%, transparent 60%),
-              radial-gradient(ellipse at 70% 80%, rgba(91,140,255,0.04) 0%, transparent 60%),
-              var(--bg-deep);
-  animation: gradientShift 15s ease infinite;
-  background-size: 200% 200%;
+  background: var(--bg-deep);
   z-index: 0;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 8s ease-in-out infinite;
+}
+.orb-1 {
+  width: 300px;
+  height: 300px;
+  top: 10%;
+  left: 20%;
+  background: rgba(248, 113, 113, 0.08);
+  animation-duration: 10s;
+}
+.orb-2 {
+  width: 200px;
+  height: 200px;
+  bottom: 20%;
+  right: 15%;
+  background: rgba(91, 140, 255, 0.06);
+  animation-duration: 12s;
+  animation-delay: 2s;
+}
+.orb-3 {
+  width: 250px;
+  height: 250px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(251, 191, 36, 0.04);
+  animation-duration: 14s;
+  animation-delay: 4s;
 }
 
 .blocked-container {
@@ -34,9 +64,27 @@ body {
   gap: var(--sp-4);
 }
 
-/* Shield */
+/* Shield with rotating ring */
 .blocked-shield {
   filter: drop-shadow(0 0 30px rgba(248,113,113,0.2));
+}
+.shield-ring-wrap {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.shield-ring-anim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: rotateRing 20s linear infinite;
+}
+.shield-icon-blocked {
+  position: relative;
 }
 
 /* Title */
@@ -68,11 +116,26 @@ body {
   margin: 0;
 }
 
+/* Time on page */
+.time-on-page {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.time-on-page-value {
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Quote Card */
 .quote-card {
   text-align: left;
   border-left: 3px solid rgba(91, 140, 255, 0.3);
   width: 100%;
+  transition: opacity var(--duration-normal) var(--ease-out);
 }
 .quote-text {
   font-style: italic;
@@ -109,7 +172,6 @@ body {
   gap: var(--sp-3);
 }
 
-.req-item {}
 .req-header {
   display: flex;
   align-items: center;
@@ -137,22 +199,41 @@ body {
 }
 .req-item.met .req-label { color: var(--success); }
 .req-item.met .req-status { color: var(--success); }
-.req-item.met .req-icon { filter: none; }
+.req-item.met .req-icon::after {
+  content: " ✓";
+  color: var(--success);
+}
 
-/* Progress tracks */
+/* Progress tracks with shimmer */
 .req-track {
   height: 6px;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 3px;
   overflow: hidden;
 }
+[data-theme="light"] .req-track {
+  background: rgba(0, 0, 0, 0.04);
+}
 .req-fill {
   height: 100%;
   border-radius: 3px;
   transition: width 0.6s var(--ease-out);
+  position: relative;
+}
+.req-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+.req-item.met .req-fill::after {
+  display: none;
 }
 .req-fill-accent { background: var(--gradient-primary); }
 .req-fill-success { background: var(--gradient-success); }
+.req-fill-warning { background: var(--gradient-warning); }
 
 /* Unlock success */
 .unlock-success {
@@ -199,9 +280,7 @@ body {
 }
 
 /* Override */
-.override-section {
-  width: 100%;
-}
+.override-section { width: 100%; }
 .override-toggle {
   cursor: pointer;
   font-size: 12px;

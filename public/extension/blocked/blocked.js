@@ -1,4 +1,4 @@
-// blocked.js — Premium block page logic
+// blocked.js — Premium block page logic V2
 
 const quotes = [
   { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
@@ -8,7 +8,13 @@ const quotes = [
   { text: "You will never reach your destination if you stop and throw stones at every dog that barks.", author: "Winston Churchill" },
   { text: "The successful warrior is the average man, with laser-like focus.", author: "Bruce Lee" },
   { text: "Where focus goes, energy flows.", author: "Tony Robbins" },
+  { text: "Discipline is choosing between what you want now and what you want most.", author: "Abraham Lincoln" },
+  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+  { text: "Your future is created by what you do today, not tomorrow.", author: "Robert Kiyosaki" },
 ];
+
+let quoteIndex = 0;
+let pageStartTime = Date.now();
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -20,14 +26,37 @@ function init() {
   document.getElementById("blocked-domain").textContent = domain;
   document.getElementById("blocked-reason").textContent = reason;
 
-  const q = quotes[Math.floor(Math.random() * quotes.length)];
-  document.getElementById("quote-text").textContent = `"${q.text}"`;
-  document.querySelector(".quote-author").textContent = `— ${q.author}`;
+  // Random first quote
+  quoteIndex = Math.floor(Math.random() * quotes.length);
+  showQuote(quoteIndex);
+
+  // Auto-rotate quotes
+  setInterval(() => {
+    quoteIndex = (quoteIndex + 1) % quotes.length;
+    const quoteEl = document.getElementById("quote-text");
+    const authorEl = document.getElementById("quote-author");
+    quoteEl.style.opacity = "0";
+    authorEl.style.opacity = "0";
+    setTimeout(() => {
+      showQuote(quoteIndex);
+      quoteEl.style.opacity = "1";
+      authorEl.style.opacity = "1";
+    }, 300);
+  }, 10000);
+
+  // Time on page counter
+  setInterval(() => {
+    const elapsed = Math.floor((Date.now() - pageStartTime) / 1000);
+    const mins = Math.floor(elapsed / 60);
+    const secs = elapsed % 60;
+    document.getElementById("time-on-page").textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
+  }, 1000);
 
   checkRequirements();
   setInterval(checkRequirements, 5000);
 
   setupOverride(domain);
+  setupBreathing();
 
   document.getElementById("btn-go-back").addEventListener("click", () => {
     if (history.length > 1) {
@@ -44,30 +73,59 @@ function init() {
   });
 }
 
+function showQuote(index) {
+  const q = quotes[index];
+  document.getElementById("quote-text").textContent = `"${q.text}"`;
+  document.getElementById("quote-author").textContent = `— ${q.author}`;
+}
+
+// ─── Breathing Exercise ───
+function setupBreathing() {
+  const btn = document.getElementById("btn-breathe");
+  const overlay = document.getElementById("breathing-overlay");
+  const closeBtn = document.getElementById("btn-close-breathe");
+  const label = document.getElementById("breathing-label");
+
+  const phases = ["Breathe in...", "Hold...", "Breathe out...", "Hold..."];
+  let phaseIndex = 0;
+  let breathInterval = null;
+
+  btn.addEventListener("click", () => {
+    overlay.style.display = "flex";
+    phaseIndex = 0;
+    label.textContent = phases[0];
+    breathInterval = setInterval(() => {
+      phaseIndex = (phaseIndex + 1) % phases.length;
+      label.textContent = phases[phaseIndex];
+    }, 4000);
+  });
+
+  closeBtn.addEventListener("click", () => {
+    overlay.style.display = "none";
+    if (breathInterval) clearInterval(breathInterval);
+  });
+}
+
 async function checkRequirements() {
   try {
     const reqs = await chrome.runtime.sendMessage({ action: "checkUnlockRequirements" });
 
-    // Focus
     const focusPct = Math.min(100, (reqs.focusMinutes / reqs.focusRequired) * 100);
     document.getElementById("req-focus-status").textContent = `${reqs.focusMinutes}/${reqs.focusRequired} min`;
     document.getElementById("req-focus-bar").style.width = focusPct + "%";
     document.getElementById("req-focus").className = "req-item" + (reqs.focusMet ? " met" : "");
 
-    // Tasks
     const taskPct = Math.min(100, (reqs.tasksCompleted / reqs.tasksRequired) * 100);
     document.getElementById("req-tasks-status").textContent = `${reqs.tasksCompleted}/${reqs.tasksRequired}`;
     document.getElementById("req-tasks-bar").style.width = taskPct + "%";
     document.getElementById("req-tasks").className = "req-item" + (reqs.tasksMet ? " met" : "");
 
-    // Interruptions
     const intPct = reqs.interruptionsMet ? 100 : 0;
     document.getElementById("req-int-status").textContent = `${reqs.interruptions} (max ${reqs.maxInterruptions})`;
     document.getElementById("req-int-bar").style.width = intPct + "%";
     document.getElementById("req-int-bar").className = "req-fill " + (reqs.interruptionsMet ? "req-fill-accent" : "req-fill-warning");
     document.getElementById("req-interruptions").className = "req-item" + (reqs.interruptionsMet ? " met" : "");
 
-    // Unlock
     const successEl = document.getElementById("unlock-success");
     if (reqs.allMet && successEl.style.display === "none") {
       successEl.style.display = "block";
