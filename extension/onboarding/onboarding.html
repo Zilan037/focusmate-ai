@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Welcome to FocusGuard</title>
-  <script>
-    (async()=>{try{const{focusguard_theme:t}=await chrome.storage.local.get("focusguard_theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
-  </script>
+  <script src="../assets/theme-loader.js"></script>
   <link rel="stylesheet" href="../assets/styles-common.css" />
   <link rel="stylesheet" href="onboarding.css" />
 </head>
@@ -41,9 +39,9 @@
         <div class="step-content">
           <div class="welcome-shield">
             <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(91,140,255,0.15)" stroke="url(#oGrad)" stroke-width="1.2"/>
-              <path d="M9 12l2 2 4-4" stroke="#5B8CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <defs><linearGradient id="oGrad" x1="3" y1="2" x2="21" y2="24"><stop offset="0%" stop-color="#5B8CFF"/><stop offset="100%" stop-color="#7C6AFF"/></linearGradient></defs>
+              <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(37,99,235,0.15)" stroke="url(#oGrad)" stroke-width="1.2"/>
+              <path d="M9 12l2 2 4-4" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <defs><linearGradient id="oGrad" x1="3" y1="2" x2="21" y2="24"><stop offset="0%" stop-color="#2563EB"/><stop offset="100%" stop-color="#6366F1"/></linearGradient></defs>
             </svg>
           </div>
           <h1 class="text-gradient">Welcome to FocusGuard</h1>
@@ -162,8 +160,8 @@
         <div class="step-content">
           <div class="ready-check" id="ready-check">
             <svg width="60" height="60" viewBox="0 0 60 60">
-              <circle cx="30" cy="30" r="28" fill="rgba(52,211,153,0.1)" stroke="#34D399" stroke-width="2"/>
-              <path class="check-path" d="M20 30l6 6 14-14" stroke="#34D399" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="40" stroke-dashoffset="40"/>
+              <circle cx="30" cy="30" r="28" fill="rgba(16,185,129,0.1)" stroke="#10B981" stroke-width="2"/>
+              <path class="check-path" d="M20 30l6 6 14-14" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="40" stroke-dashoffset="40"/>
             </svg>
             <div class="confetti-container" id="confetti-container"></div>
           </div>
