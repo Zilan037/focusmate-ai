@@ -21,6 +21,7 @@ async function init() {
   setupDataManagement();
   setupQuickActions();
   setupBlocklistActions();
+  setupFocusMode();
   startAutoRefresh();
 }
 
@@ -121,6 +122,13 @@ function setupTabs() {
       if (navTitle) navTitle.textContent = label;
     });
   });
+
+  // Deep link from hash
+  const hash = location.hash.replace("#", "");
+  if (hash) {
+    const tabBtn = document.querySelector(`[data-tab="${hash}"]`);
+    if (tabBtn) tabBtn.click();
+  }
 }
 
 // ─── Sidebar Stats ───
@@ -300,12 +308,15 @@ async function loadOverview() {
 
 // ─── Quick Actions ───
 function setupQuickActions() {
-  document.getElementById("btn-quick-focus")?.addEventListener("click", async () => {
-    await chrome.runtime.sendMessage({ action: "startFocus", duration: 25, tasks: [] });
-    alert("Focus session started! 25 minutes.");
+  document.getElementById("btn-quick-focus")?.addEventListener("click", () => {
+    document.querySelector('[data-tab="focus"]')?.click();
   });
 
   document.getElementById("btn-quick-export")?.addEventListener("click", exportAllData);
+
+  document.getElementById("btn-streak-sessions")?.addEventListener("click", () => {
+    document.querySelector('[data-tab="sessions"]')?.click();
+  });
 }
 
 // ─── Canvas Helpers ───
@@ -722,7 +733,7 @@ function renderDomainsTable(domains, settings) {
   const visible = sorted.slice(0, domainShowCount);
   
   visible.forEach(([domain, info], i) => {
-    const isBlocked = (settings.blockedDomains || []).includes(domain);
+    const isBlocked = (settings.blockedDomains || []).some(b => (typeof b === "string" ? b : b.domain) === domain);
     const color = Categories.getCategoryColor(info.category || "Other");
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
     const pctOfTotal = totalTime > 0 ? Math.round((info.time / totalTime) * 100) : 0;
@@ -837,11 +848,11 @@ function renderBlocklistItems(settings) {
     return;
   }
 
-  blocked.forEach((domain, i) => {
+  blocked.forEach((entry, i) => {
+    const domain = typeof entry === "string" ? entry : entry.domain;
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-    const meta = settings.blockedDomainsMeta?.[domain] || {};
-    const dateAdded = meta.dateAdded ? new Date(meta.dateAdded).toLocaleDateString() : "—";
-    const enabled = meta.enabled !== false;
+    const dateAdded = (typeof entry === "object" && entry.addedAt) ? new Date(entry.addedAt).toLocaleDateString() : "—";
+    const enabled = typeof entry === "object" ? entry.enabled !== false : true;
     
     const item = document.createElement("div");
     item.className = "blocklist-item glass-card fade-up";
@@ -1168,6 +1179,217 @@ function setupDataManagement() {
       location.reload();
     }
   });
+}
+
+// ─── Focus Mode ───
+let focusTasks = [];
+let focusBlockedSites = [];
+let focusAllowedSites = [];
+let focusDuration = 25;
+let focusTimerInterval = null;
+
+function setupFocusMode() {
+  // Duration pills
+  document.querySelectorAll(".focus-dur-pill").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".focus-dur-pill").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      focusDuration = parseInt(btn.dataset.dur);
+    });
+  });
+
+  // Tasks
+  document.getElementById("btn-add-focus-task")?.addEventListener("click", addFocusTask);
+  document.getElementById("focus-task-input")?.addEventListener("keydown", e => { if (e.key === "Enter") addFocusTask(); });
+
+  // Block/Allow sites
+  document.getElementById("btn-add-focus-block")?.addEventListener("click", () => addFocusSite("block"));
+  document.getElementById("focus-block-input")?.addEventListener("keydown", e => { if (e.key === "Enter") addFocusSite("block"); });
+  document.getElementById("btn-add-focus-allow")?.addEventListener("click", () => addFocusSite("allow"));
+  document.getElementById("focus-allow-input")?.addEventListener("keydown", e => { if (e.key === "Enter") addFocusSite("allow"); });
+
+  // Deploy
+  document.getElementById("btn-deploy-focus")?.addEventListener("click", deployFocus);
+
+  // Pause/Stop
+  document.getElementById("btn-pause-focus")?.addEventListener("click", pauseFocus);
+  document.getElementById("btn-stop-focus")?.addEventListener("click", stopFocus);
+
+  // Load pre-blocked sites
+  loadFocusBlockedSites();
+
+  // Check if already active
+  checkFocusPhase();
+}
+
+async function loadFocusBlockedSites() {
+  try {
+    const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+    focusBlockedSites = (settings.blockedDomains || []).map(b => typeof b === "string" ? b : b.domain);
+    renderFocusSitePills();
+  } catch (e) {}
+}
+
+function addFocusTask() {
+  const input = document.getElementById("focus-task-input");
+  const text = input.value.trim();
+  if (!text) return;
+  focusTasks.push(text);
+  input.value = "";
+  renderFocusTasks();
+}
+
+function renderFocusTasks() {
+  const container = document.getElementById("focus-task-list");
+  container.innerHTML = "";
+  focusTasks.forEach((task, i) => {
+    const item = document.createElement("div");
+    item.className = "focus-task-setup-item";
+    item.innerHTML = `<span>${task}</span><button class="focus-task-remove" data-idx="${i}">✕</button>`;
+    item.querySelector("button").addEventListener("click", () => {
+      focusTasks.splice(i, 1);
+      renderFocusTasks();
+    });
+    container.appendChild(item);
+  });
+}
+
+function addFocusSite(type) {
+  const inputId = type === "block" ? "focus-block-input" : "focus-allow-input";
+  const input = document.getElementById(inputId);
+  const domain = input.value.trim().replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/.*$/, "").toLowerCase();
+  if (!domain) return;
+  if (type === "block" && !focusBlockedSites.includes(domain)) {
+    focusBlockedSites.push(domain);
+  } else if (type === "allow" && !focusAllowedSites.includes(domain)) {
+    focusAllowedSites.push(domain);
+  }
+  input.value = "";
+  renderFocusSitePills();
+}
+
+function renderFocusSitePills() {
+  const blockContainer = document.getElementById("focus-block-list");
+  const allowContainer = document.getElementById("focus-allow-list");
+  if (blockContainer) {
+    blockContainer.innerHTML = focusBlockedSites.map((s, i) =>
+      `<span class="focus-site-pill danger"><span>${s}</span><button data-idx="${i}" data-type="block">✕</button></span>`
+    ).join("");
+    blockContainer.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        focusBlockedSites.splice(parseInt(btn.dataset.idx), 1);
+        renderFocusSitePills();
+      });
+    });
+  }
+  if (allowContainer) {
+    allowContainer.innerHTML = focusAllowedSites.map((s, i) =>
+      `<span class="focus-site-pill success"><span>${s}</span><button data-idx="${i}" data-type="allow">✕</button></span>`
+    ).join("");
+    allowContainer.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        focusAllowedSites.splice(parseInt(btn.dataset.idx), 1);
+        renderFocusSitePills();
+      });
+    });
+  }
+}
+
+async function deployFocus() {
+  await chrome.runtime.sendMessage({
+    action: "startFocus",
+    duration: focusDuration,
+    tasks: focusTasks,
+  });
+  // Also block any additional sites user added
+  for (const domain of focusBlockedSites) {
+    await chrome.runtime.sendMessage({ action: "blockDomain", domain });
+  }
+  checkFocusPhase();
+}
+
+async function checkFocusPhase() {
+  const state = await chrome.runtime.sendMessage({ action: "getFocusState" });
+  const setupEl = document.getElementById("focus-setup");
+  const activeEl = document.getElementById("focus-active");
+
+  if (state.active) {
+    setupEl.style.display = "none";
+    activeEl.style.display = "block";
+    startFocusTimer(state);
+  } else {
+    setupEl.style.display = "block";
+    activeEl.style.display = "none";
+    if (focusTimerInterval) clearInterval(focusTimerInterval);
+  }
+}
+
+function startFocusTimer(state) {
+  if (focusTimerInterval) clearInterval(focusTimerInterval);
+
+  function updateTimer() {
+    chrome.runtime.sendMessage({ action: "getFocusState" }).then(s => {
+      if (!s.active) {
+        clearInterval(focusTimerInterval);
+        checkFocusPhase();
+        return;
+      }
+      const remaining = s.remaining || 0;
+      const duration = s.duration || 25;
+      const elapsed = duration - remaining;
+      const mins = Math.floor(remaining);
+      const secs = Math.round((remaining % 1) * 60);
+      document.getElementById("focus-timer-value").textContent =
+        `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+
+      const circumference = 565;
+      const pct = duration > 0 ? remaining / duration : 0;
+      document.getElementById("focus-ring-progress").style.strokeDashoffset = circumference * (1 - pct);
+
+      document.getElementById("focus-elapsed").textContent = elapsed + "m";
+      document.getElementById("focus-interruptions").textContent = s.interruptions || 0;
+
+      // Label
+      const label = document.getElementById("focus-timer-label");
+      if (s.paused) { label.textContent = "Paused"; label.style.color = "var(--warning)"; }
+      else { label.textContent = "Remaining"; label.style.color = ""; }
+
+      // Pause button
+      const pauseBtn = document.getElementById("btn-pause-focus");
+      pauseBtn.textContent = s.paused ? "▶ Resume" : "⏸ Pause";
+
+      // Tasks
+      const taskContainer = document.getElementById("focus-active-tasks");
+      taskContainer.innerHTML = "";
+      let doneCount = 0;
+      (s.tasks || []).forEach((task, i) => {
+        if (task.done) doneCount++;
+        const item = document.createElement("label");
+        item.className = "focus-active-task-item" + (task.done ? " done" : "");
+        item.innerHTML = `<div class="focus-active-check ${task.done ? "checked" : ""}"><span>${task.done ? "✓" : ""}</span></div><span>${task.text}</span>`;
+        item.addEventListener("click", async () => {
+          await chrome.runtime.sendMessage({ action: "toggleTask", taskIndex: i });
+        });
+        taskContainer.appendChild(item);
+      });
+      document.getElementById("focus-active-task-count").textContent = `${doneCount}/${(s.tasks || []).length} completed`;
+      document.getElementById("focus-tasks-done").textContent = `${doneCount}/${(s.tasks || []).length}`;
+    });
+  }
+
+  updateTimer();
+  focusTimerInterval = setInterval(updateTimer, 1000);
+}
+
+async function pauseFocus() {
+  await chrome.runtime.sendMessage({ action: "pauseFocus" });
+}
+
+async function stopFocus() {
+  if (confirm("Stop focus session early?")) {
+    await chrome.runtime.sendMessage({ action: "stopFocus" });
+    checkFocusPhase();
+  }
 }
 
 async function exportAllData() {

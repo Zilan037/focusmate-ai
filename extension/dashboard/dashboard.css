@@ -1541,6 +1541,182 @@ canvas {
   margin-bottom: var(--sp-4);
 }
 
+/* ─── Focus Mode ─── */
+.focus-phase { animation: fadeUp 0.35s var(--ease-out); }
+
+.focus-duration-pills {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.focus-dur-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--bg-glass-border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.focus-dur-pill:hover { border-color: rgba(37,99,235,0.3); }
+.focus-dur-pill.active {
+  background: #0F172A;
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 8px 20px rgba(15,23,42,0.15);
+}
+[data-theme="dark"] .focus-dur-pill.active,
+:root:not([data-theme="light"]) .focus-dur-pill.active {
+  background: #fff;
+  color: #0F172A;
+  box-shadow: 0 8px 20px rgba(255,255,255,0.05);
+}
+.dur-sub {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.focus-task-list { display: flex; flex-direction: column; gap: 8px; }
+.focus-task-setup-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--bg-glass);
+  border: 1px solid var(--bg-glass-border);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.focus-task-remove {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+  transition: color 0.2s;
+}
+.focus-task-remove:hover { color: var(--danger); }
+
+.focus-site-pills { display: flex; flex-wrap: wrap; gap: 8px; min-height: 24px; }
+.focus-site-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+.focus-site-pill.danger {
+  background: rgba(244,63,94,0.1);
+  border: 1px solid rgba(244,63,94,0.2);
+  color: var(--danger);
+}
+.focus-site-pill.success {
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.2);
+  color: var(--success);
+}
+.focus-site-pill button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  opacity: 0.6;
+}
+.focus-site-pill button:hover { opacity: 1; }
+
+/* Focus Timer */
+.focus-timer-wrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.focus-timer-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.focus-timer-text {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.focus-timer-value {
+  font-size: 48px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: #2563EB;
+  letter-spacing: -0.05em;
+}
+[data-theme="dark"] .focus-timer-value,
+:root:not([data-theme="light"]) .focus-timer-value {
+  color: #3B82F6;
+  text-shadow: 0 0 30px rgba(59,130,246,0.3);
+}
+.focus-timer-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.focus-active-task-list { display: flex; flex-direction: column; gap: 8px; }
+.focus-active-task-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: opacity 0.2s;
+}
+.focus-active-task-item.done {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+.focus-active-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid var(--bg-glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+.focus-active-check.checked {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 1100px) {
   .stat-cards { grid-template-columns: repeat(2, 1fr); }

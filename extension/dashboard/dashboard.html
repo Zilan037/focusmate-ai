@@ -61,6 +61,14 @@
         </div>
 
         <div class="nav-group">
+          <span class="nav-group-label">Intervention</span>
+          <button class="nav-item" data-tab="focus">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span class="nav-label">Focus Mode</span>
+          </button>
+        </div>
+
+        <div class="nav-group">
           <span class="nav-group-label">Security</span>
           <button class="nav-item" data-tab="blocklist">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
@@ -234,7 +242,7 @@
                   </div>
                   <div class="streak-card-divider"></div>
                   <p class="streak-card-quote">"Excellence is not an act, but a habit."</p>
-                  <button class="streak-card-link" onclick="document.querySelector('[data-tab=sessions]').click()">
+                  <button class="streak-card-link" id="btn-streak-sessions">
                     Session Logs
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                   </button>
@@ -456,6 +464,122 @@
               <label class="sched-day"><input type="checkbox" value="4" checked /> Thu</label>
               <label class="sched-day"><input type="checkbox" value="5" checked /> Fri</label>
               <label class="sched-day"><input type="checkbox" value="6" /> Sat</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Focus Mode -->
+        <div id="tab-focus" class="tab-content">
+          <!-- Setup Phase -->
+          <div id="focus-setup" class="focus-phase">
+            <div class="page-header-row">
+              <div class="page-header-left">
+                <p class="page-subtitle">Intervention System</p>
+                <h1 class="page-title">Focus Mode</h1>
+              </div>
+            </div>
+
+            <!-- Duration -->
+            <div class="premium-card fade-up" style="padding:32px;border-radius:28px;margin-bottom:20px;">
+              <h3 class="settings-group-title">Session Duration</h3>
+              <div class="focus-duration-pills" id="focus-dur-pills">
+                <button class="focus-dur-pill" data-dur="15">15m<span class="dur-sub">Sprint</span></button>
+                <button class="focus-dur-pill active" data-dur="25">25m<span class="dur-sub">Pomodoro</span></button>
+                <button class="focus-dur-pill" data-dur="45">45m<span class="dur-sub">Deep Work</span></button>
+                <button class="focus-dur-pill" data-dur="60">60m<span class="dur-sub">Marathon</span></button>
+              </div>
+            </div>
+
+            <!-- Tasks -->
+            <div class="premium-card fade-up delay-1" style="padding:32px;border-radius:28px;margin-bottom:20px;">
+              <h3 class="settings-group-title">Tasks to Complete</h3>
+              <div id="focus-task-list" class="focus-task-list"></div>
+              <div class="input-row" style="margin-top:12px;">
+                <input type="text" id="focus-task-input" class="input" placeholder="Add a task..." style="flex:1;" />
+                <button id="btn-add-focus-task" class="btn-primary btn-sm">+ Add</button>
+              </div>
+            </div>
+
+            <!-- Block & Allow Sites -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+              <div class="premium-card fade-up delay-2" style="padding:32px;border-radius:28px;">
+                <h3 class="settings-group-title" style="color:var(--danger);">🚫 Block Sites</h3>
+                <div id="focus-block-list" class="focus-site-pills"></div>
+                <div class="input-row" style="margin-top:12px;">
+                  <input type="text" id="focus-block-input" class="input" placeholder="e.g. tiktok.com" style="flex:1;" />
+                  <button id="btn-add-focus-block" class="btn-ghost btn-sm" style="color:var(--danger);border-color:rgba(244,63,94,0.2);">+ Block</button>
+                </div>
+              </div>
+              <div class="premium-card fade-up delay-2" style="padding:32px;border-radius:28px;">
+                <h3 class="settings-group-title" style="color:var(--success);">🌐 Allow Only</h3>
+                <div id="focus-allow-list" class="focus-site-pills"></div>
+                <div class="input-row" style="margin-top:12px;">
+                  <input type="text" id="focus-allow-input" class="input" placeholder="e.g. notion.so" style="flex:1;" />
+                  <button id="btn-add-focus-allow" class="btn-ghost btn-sm" style="color:var(--success);border-color:rgba(16,185,129,0.2);">+ Allow</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deploy -->
+            <button id="btn-deploy-focus" class="btn-deploy" style="width:100%;padding:18px;font-size:14px;border-radius:20px;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 14,8 3,15"/></svg>
+              Deploy Focus
+            </button>
+          </div>
+
+          <!-- Active Phase -->
+          <div id="focus-active" class="focus-phase" style="display:none;">
+            <div class="page-header-row">
+              <div class="page-header-left">
+                <p class="page-subtitle">Session In Progress</p>
+                <h1 class="page-title">Focus Mode — Active</h1>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+              <!-- Timer -->
+              <div class="premium-card" style="padding:40px;border-radius:28px;text-align:center;">
+                <div class="focus-timer-wrap">
+                  <svg class="focus-timer-ring" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="5"/>
+                    <circle id="focus-ring-progress" cx="100" cy="100" r="90" fill="none" stroke="url(#focusGrad)" stroke-width="5"
+                      stroke-dasharray="565" stroke-dashoffset="0" stroke-linecap="round"
+                      style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1s linear;"/>
+                    <defs><linearGradient id="focusGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2563EB"/><stop offset="100%" stop-color="#6366F1"/></linearGradient></defs>
+                  </svg>
+                  <div class="focus-timer-text">
+                    <span class="focus-timer-value" id="focus-timer-value">25:00</span>
+                    <span class="focus-timer-label" id="focus-timer-label">Remaining</span>
+                  </div>
+                </div>
+                <div style="display:flex;justify-content:center;gap:12px;margin-top:24px;">
+                  <button id="btn-pause-focus" class="btn-sync" style="padding:10px 24px;border-radius:16px;">⏸ Pause</button>
+                  <button id="btn-stop-focus" class="btn-ghost" style="padding:10px 24px;border-radius:16px;color:var(--danger);border-color:rgba(244,63,94,0.2);">⏹ Stop</button>
+                </div>
+              </div>
+
+              <!-- Tasks & Stats -->
+              <div style="display:flex;flex-direction:column;gap:20px;">
+                <div class="premium-card" style="padding:28px;border-radius:28px;">
+                  <h4 style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.15em;color:var(--text-muted);margin-bottom:16px;">Active Tasks</h4>
+                  <div id="focus-active-tasks" class="focus-active-task-list"></div>
+                  <div class="focus-task-count" id="focus-active-task-count" style="margin-top:12px;font-size:12px;font-weight:700;color:var(--text-muted);">0/0 completed</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                  <div class="premium-card" style="padding:20px;border-radius:20px;text-align:center;">
+                    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:8px;">Elapsed</div>
+                    <div id="focus-elapsed" style="font-size:22px;font-weight:900;font-family:var(--font-mono);">0m</div>
+                  </div>
+                  <div class="premium-card" style="padding:20px;border-radius:20px;text-align:center;">
+                    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:8px;">Tasks</div>
+                    <div id="focus-tasks-done" style="font-size:22px;font-weight:900;color:var(--success);">0/0</div>
+                  </div>
+                  <div class="premium-card" style="padding:20px;border-radius:20px;text-align:center;">
+                    <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:8px;">Breaks</div>
+                    <div id="focus-interruptions" style="font-size:22px;font-weight:900;">0</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
