@@ -1,4 +1,4 @@
-// content.js — Premium floating productivity widget V2
+// content.js — Premium floating productivity widget V3 with focus timer & tasks
 
 (function () {
   if (
@@ -12,34 +12,34 @@
   const WIDGET_ID = "focusguard-widget";
   if (document.getElementById(WIDGET_ID)) return;
 
-  // Get theme
   let currentTheme = "dark";
   try {
     chrome.storage.local.get("focusguard_theme", (result) => {
       currentTheme = result.focusguard_theme || "dark";
       applyWidgetTheme();
     });
-  } catch(e) {}
+  } catch (e) {}
 
   const widget = document.createElement("div");
   widget.id = WIDGET_ID;
   widget.innerHTML = `
     <div id="fg-bubble" class="fg-bubble">
       <svg class="fg-bubble-ring" viewBox="0 0 48 48">
-        <circle cx="24" cy="24" r="21" fill="none" stroke="rgba(91,140,255,0.15)" stroke-width="2"/>
-        <circle id="fg-bubble-progress" cx="24" cy="24" r="21" fill="none" stroke="#5B8CFF" stroke-width="2" 
+        <circle cx="24" cy="24" r="21" fill="none" stroke="rgba(37,99,235,0.15)" stroke-width="2"/>
+        <circle id="fg-bubble-progress" cx="24" cy="24" r="21" fill="none" stroke="#2563EB" stroke-width="2.5" 
           stroke-dasharray="132" stroke-dashoffset="132" stroke-linecap="round" 
           style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1s ease-out;"/>
       </svg>
       <svg class="fg-bubble-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(91,140,255,0.2)" stroke="#5B8CFF" stroke-width="1.5"/>
-        <path d="M9 12l2 2 4-4" stroke="#5B8CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(37,99,235,0.2)" stroke="#2563EB" stroke-width="1.5"/>
+        <path d="M9 12l2 2 4-4" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
+      <span id="fg-bubble-timer" class="fg-bubble-timer"></span>
     </div>
     <div id="fg-expanded" class="fg-expanded">
       <div id="fg-widget-header" class="fg-header">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(91,140,255,0.2)" stroke="#5B8CFF" stroke-width="1.5"/>
+          <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(37,99,235,0.2)" stroke="#2563EB" stroke-width="1.5"/>
         </svg>
         <span class="fg-title">FocusGuard</span>
         <button id="fg-minimize" class="fg-close">
@@ -47,18 +47,35 @@
         </button>
       </div>
       <div class="fg-body">
+        <!-- Focus Timer Section (shown during focus) -->
+        <div id="fg-focus-timer-section" class="fg-focus-timer-section" style="display:none;">
+          <div class="fg-timer-display" id="fg-timer-display">25:00</div>
+          <div class="fg-timer-label">Focus Session Active</div>
+        </div>
+        <!-- Task Checklist (shown during focus) -->
+        <div id="fg-tasks-section" class="fg-tasks-section" style="display:none;">
+          <div class="fg-section-label">TASKS</div>
+          <div id="fg-task-list" class="fg-task-list"></div>
+          <div class="fg-task-count" id="fg-task-count">0/0 done</div>
+        </div>
+        <!-- Allowed Sites Indicator -->
+        <div id="fg-allowed-section" class="fg-allowed-section" style="display:none;">
+          <div class="fg-section-label">ALLOWED ONLY</div>
+          <div id="fg-allowed-list" class="fg-allowed-list"></div>
+        </div>
+        <!-- Standard Stats -->
         <div class="fg-stat-row">
-          <span class="fg-dot" style="background:#5B8CFF"></span>
+          <span class="fg-dot" style="background:#2563EB"></span>
           <span class="fg-label">This site</span>
           <span class="fg-value" id="fg-domain-time">0m</span>
         </div>
         <div class="fg-stat-row">
-          <span class="fg-dot" style="background:#34D399"></span>
+          <span class="fg-dot" style="background:#10B981"></span>
           <span class="fg-label">Total today</span>
           <span class="fg-value" id="fg-total-time">0m</span>
         </div>
         <div id="fg-focus-section" class="fg-stat-row fg-focus-row" style="display:none;">
-          <span class="fg-dot" style="background:#FBBF24"></span>
+          <span class="fg-dot" style="background:#F59E0B"></span>
           <span class="fg-label">Focus</span>
           <span class="fg-value fg-focus-value" id="fg-focus-time">0m</span>
         </div>
@@ -77,15 +94,16 @@
   function getWidgetColors() {
     const isLight = currentTheme === "light";
     return {
-      bg: isLight ? "rgba(255, 255, 255, 0.9)" : "rgba(12, 12, 30, 0.85)",
+      bg: isLight ? "rgba(255, 255, 255, 0.92)" : "rgba(15, 23, 42, 0.88)",
       border: isLight ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.08)",
-      borderHover: isLight ? "rgba(91, 140, 255, 0.3)" : "rgba(91, 140, 255, 0.3)",
-      text: isLight ? "rgba(26, 26, 46, 0.7)" : "rgba(232, 236, 244, 0.7)",
-      textStrong: isLight ? "#1A1A2E" : "#E8ECF4",
-      textMuted: isLight ? "rgba(26, 26, 46, 0.5)" : "rgba(232, 236, 244, 0.5)",
+      borderHover: isLight ? "rgba(37, 99, 235, 0.3)" : "rgba(37, 99, 235, 0.3)",
+      text: isLight ? "#475569" : "#94A3B8",
+      textStrong: isLight ? "#0F172A" : "#F8FAFC",
+      textMuted: isLight ? "#94A3B8" : "#64748B",
       closeBg: isLight ? "rgba(0, 0, 0, 0.04)" : "rgba(255, 255, 255, 0.05)",
-      shadow: isLight ? "0 4px 24px rgba(0, 0, 0, 0.1)" : "0 4px 24px rgba(0, 0, 0, 0.4)",
-      shadowHover: isLight ? "0 4px 24px rgba(91, 140, 255, 0.15)" : "0 4px 24px rgba(91, 140, 255, 0.2)",
+      shadow: isLight ? "0 4px 24px rgba(0, 0, 0, 0.08)" : "0 4px 24px rgba(0, 0, 0, 0.4)",
+      shadowHover: isLight ? "0 4px 30px rgba(37, 99, 235, 0.15)" : "0 4px 30px rgba(37, 99, 235, 0.25)",
+      accentGlow: "0 0 20px rgba(37, 99, 235, 0.4)",
     };
   }
 
@@ -98,14 +116,14 @@
 
   function generateStyles(c) {
     return `
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap');
 
     #${WIDGET_ID} {
       position: fixed;
       bottom: 20px;
       right: 20px;
       z-index: 2147483647;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       user-select: none;
     }
 
@@ -132,6 +150,8 @@
     }
     .fg-bubble.fg-pulse {
       animation: fgPulse 2s ease-in-out infinite;
+      box-shadow: ${c.accentGlow};
+      border-color: rgba(37, 99, 235, 0.4);
     }
     .fg-bubble-ring {
       position: absolute;
@@ -139,18 +159,33 @@
       width: calc(100% + 4px);
       height: calc(100% + 4px);
     }
-    .fg-bubble-icon {
-      position: relative;
+    .fg-bubble-icon { position: relative; }
+    .fg-bubble-timer {
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 8px;
+      font-weight: 800;
+      color: #2563EB;
+      background: ${c.bg};
+      border: 1px solid rgba(37,99,235,0.2);
+      border-radius: 6px;
+      padding: 1px 4px;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+      display: none;
     }
+    .fg-bubble.fg-pulse .fg-bubble-timer { display: block; }
 
     .fg-expanded {
       display: none;
-      width: 230px;
+      width: 250px;
       background: ${c.bg};
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
       border: 1px solid ${c.border};
-      border-radius: 16px;
+      border-radius: 20px;
       box-shadow: ${c.shadow};
       overflow: hidden;
       animation: fgScaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -163,114 +198,122 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 10px 12px;
+      padding: 12px 14px;
       border-bottom: 1px solid ${c.border};
       cursor: move;
     }
     .fg-title {
       flex: 1;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 800;
       color: ${c.text};
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
     .fg-close {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      border: none;
-      background: ${c.closeBg};
-      border-radius: 6px;
-      color: ${c.textMuted};
-      cursor: pointer;
-      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border: none;
+      background: ${c.closeBg}; border-radius: 8px;
+      color: ${c.textMuted}; cursor: pointer; transition: all 0.2s;
     }
-    .fg-close:hover {
-      background: rgba(248, 113, 113, 0.15);
-      color: #F87171;
-    }
+    .fg-close:hover { background: rgba(244,63,94,0.15); color: #F43F5E; }
 
-    .fg-body {
-      padding: 10px 12px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+    .fg-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; }
 
-    .fg-stat-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 4px 0;
+    .fg-focus-timer-section {
+      text-align: center;
+      padding: 8px 0;
+      border-bottom: 1px solid ${c.border};
+      margin-bottom: 4px;
     }
-    .fg-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      flex-shrink: 0;
+    .fg-timer-display {
+      font-size: 28px;
+      font-weight: 900;
+      font-family: 'JetBrains Mono', monospace;
+      color: #2563EB;
+      letter-spacing: -0.05em;
+      text-shadow: 0 0 20px rgba(37,99,235,0.3);
     }
-    .fg-label {
-      flex: 1;
-      font-size: 11px;
-      color: ${c.textMuted};
-    }
-    .fg-value {
-      font-size: 12px;
+    .fg-timer-label {
+      font-size: 9px;
       font-weight: 700;
-      color: ${c.textStrong};
-      font-variant-numeric: tabular-nums;
+      color: ${c.textMuted};
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 2px;
     }
-    .fg-focus-value {
-      color: #5B8CFF;
-      text-shadow: 0 0 12px rgba(91, 140, 255, 0.4);
+
+    .fg-tasks-section {
+      padding: 6px 0;
+      border-bottom: 1px solid ${c.border};
+      margin-bottom: 4px;
     }
+    .fg-section-label {
+      font-size: 9px;
+      font-weight: 800;
+      color: ${c.textMuted};
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 6px;
+    }
+    .fg-task-list { display: flex; flex-direction: column; gap: 4px; }
+    .fg-task-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; color: ${c.text};
+      cursor: pointer; padding: 2px 0;
+    }
+    .fg-task-item.done { text-decoration: line-through; opacity: 0.5; }
+    .fg-task-check {
+      width: 14px; height: 14px; border-radius: 4px;
+      border: 1.5px solid ${c.textMuted};
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all 0.2s;
+    }
+    .fg-task-item.done .fg-task-check {
+      background: #10B981; border-color: #10B981;
+    }
+    .fg-task-count {
+      font-size: 10px; font-weight: 700; color: ${c.textMuted}; margin-top: 4px;
+    }
+
+    .fg-allowed-section {
+      padding: 6px 0;
+      border-bottom: 1px solid ${c.border};
+      margin-bottom: 4px;
+    }
+    .fg-allowed-list { display: flex; flex-wrap: wrap; gap: 4px; }
+    .fg-allowed-pill {
+      font-size: 9px; font-weight: 700; color: #10B981;
+      background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 8px; padding: 2px 6px;
+    }
+
+    .fg-stat-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+    .fg-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .fg-label { flex: 1; font-size: 11px; color: ${c.textMuted}; font-weight: 600; }
+    .fg-value { font-size: 12px; font-weight: 800; color: ${c.textStrong}; font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; }
+    .fg-focus-value { color: #2563EB; text-shadow: 0 0 12px rgba(37, 99, 235, 0.4); }
 
     .fg-focus-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      width: 100%;
-      padding: 7px;
-      background: linear-gradient(135deg, rgba(91,140,255,0.1), rgba(124,106,255,0.1));
-      border: 1px solid rgba(91,140,255,0.15);
-      border-radius: 10px;
-      color: #5B8CFF;
-      cursor: pointer;
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%; padding: 8px;
+      background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(99,102,241,0.1));
+      border: 1px solid rgba(37,99,235,0.15); border-radius: 12px;
+      color: #2563EB; cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700;
       transition: all 0.2s;
     }
-    .fg-focus-btn:hover {
-      background: linear-gradient(135deg, rgba(91,140,255,0.18), rgba(124,106,255,0.18));
-      border-color: rgba(91,140,255,0.3);
-    }
+    .fg-focus-btn:hover { background: linear-gradient(135deg, rgba(37,99,235,0.18), rgba(99,102,241,0.18)); border-color: rgba(37,99,235,0.3); }
 
     .fg-block-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      width: 100%;
-      margin-top: 2px;
-      padding: 7px;
-      background: rgba(248, 113, 113, 0.08);
-      border: 1px solid rgba(248, 113, 113, 0.12);
-      border-radius: 10px;
-      color: #F87171;
-      cursor: pointer;
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%; margin-top: 2px; padding: 8px;
+      background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.12);
+      border-radius: 12px; color: #F43F5E; cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700;
       transition: all 0.2s;
     }
-    .fg-block-btn:hover {
-      background: rgba(248, 113, 113, 0.15);
-      border-color: rgba(248, 113, 113, 0.25);
-    }
+    .fg-block-btn:hover { background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.25); }
 
     @keyframes fgScaleIn {
       from { opacity: 0; transform: scale(0.9) translateY(8px); }
@@ -278,15 +321,14 @@
     }
     @keyframes fgPulse {
       0%, 100% { box-shadow: ${c.shadow}; }
-      50% { box-shadow: ${c.shadowHover}; }
+      50% { box-shadow: ${c.accentGlow}; }
     }
   `;
   }
 
   const style = document.createElement("style");
   style.id = "fg-style";
-  const c = getWidgetColors();
-  style.textContent = generateStyles(c);
+  style.textContent = generateStyles(getWidgetColors());
 
   document.documentElement.appendChild(style);
   document.documentElement.appendChild(widget);
@@ -295,14 +337,8 @@
   const bubble = document.getElementById("fg-bubble");
   const minimizeBtn = document.getElementById("fg-minimize");
 
-  bubble.addEventListener("click", () => {
-    widget.classList.add("fg-open");
-  });
-
-  minimizeBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    widget.classList.remove("fg-open");
-  });
+  bubble.addEventListener("click", () => widget.classList.add("fg-open"));
+  minimizeBtn.addEventListener("click", (e) => { e.stopPropagation(); widget.classList.remove("fg-open"); });
 
   // ─── Dragging ───
   let isDragging = false;
@@ -327,10 +363,7 @@
   });
 
   document.addEventListener("mouseup", () => {
-    if (isDragging) {
-      isDragging = false;
-      widget.style.transition = "";
-    }
+    if (isDragging) { isDragging = false; widget.style.transition = ""; }
   });
 
   // ─── Data ───
@@ -342,6 +375,12 @@
     return `${h}h ${mins}m`;
   }
 
+  function formatTimer(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+
   async function updateWidget() {
     try {
       const domain = location.hostname.replace(/^www\./, "");
@@ -351,31 +390,87 @@
       document.getElementById("fg-domain-time").textContent = formatMinutes(usage?.domains?.[domain]?.time || 0);
       document.getElementById("fg-total-time").textContent = formatMinutes(usage?.totalActive || 0);
 
-      // Update bubble progress ring (focus percentage)
       const focusPct = usage?.totalActive > 0 ? (usage.focusTime / usage.totalActive) : 0;
       const progressRing = document.getElementById("fg-bubble-progress");
       if (progressRing) {
-        const circumference = 132;
-        progressRing.style.strokeDashoffset = circumference * (1 - focusPct);
+        progressRing.style.strokeDashoffset = 132 * (1 - focusPct);
       }
 
       const focusSection = document.getElementById("fg-focus-section");
       const quickFocusBtn = document.getElementById("fg-quick-focus");
+      const timerSection = document.getElementById("fg-focus-timer-section");
+      const tasksSection = document.getElementById("fg-tasks-section");
+      const allowedSection = document.getElementById("fg-allowed-section");
+      const bubbleTimer = document.getElementById("fg-bubble-timer");
+
       if (focusState?.active) {
         focusSection.style.display = "flex";
-        document.getElementById("fg-focus-time").textContent = focusState.remaining + "m left";
+        document.getElementById("fg-focus-time").textContent = (focusState.remaining || 0) + "m left";
         bubble.classList.add("fg-pulse");
         if (quickFocusBtn) quickFocusBtn.style.display = "none";
+
+        // Show timer in expanded view
+        if (timerSection) {
+          timerSection.style.display = "block";
+          const remainingSec = (focusState.remaining || 0) * 60;
+          document.getElementById("fg-timer-display").textContent = formatTimer(remainingSec);
+        }
+
+        // Show timer on bubble
+        if (bubbleTimer) {
+          bubbleTimer.textContent = (focusState.remaining || 0) + "m";
+        }
+
+        // Show tasks
+        if (tasksSection && focusState.tasks && focusState.tasks.length > 0) {
+          tasksSection.style.display = "block";
+          const taskList = document.getElementById("fg-task-list");
+          taskList.innerHTML = "";
+          let doneCount = 0;
+          focusState.tasks.forEach((task, i) => {
+            if (task.done) doneCount++;
+            const item = document.createElement("div");
+            item.className = "fg-task-item" + (task.done ? " done" : "");
+            item.innerHTML = `<div class="fg-task-check">${task.done ? "✓" : ""}</div><span>${task.text}</span>`;
+            item.addEventListener("click", async () => {
+              await chrome.runtime.sendMessage({ action: "toggleFocusTask", index: i });
+              updateWidget();
+            });
+            taskList.appendChild(item);
+          });
+          document.getElementById("fg-task-count").textContent = `${doneCount}/${focusState.tasks.length} done`;
+        } else if (tasksSection) {
+          tasksSection.style.display = "none";
+        }
+
+        // Show allowed sites
+        if (allowedSection && focusState.allowedSites && focusState.allowedSites.length > 0) {
+          allowedSection.style.display = "block";
+          const list = document.getElementById("fg-allowed-list");
+          list.innerHTML = "";
+          focusState.allowedSites.forEach((site) => {
+            const pill = document.createElement("span");
+            pill.className = "fg-allowed-pill";
+            pill.textContent = site;
+            list.appendChild(pill);
+          });
+        } else if (allowedSection) {
+          allowedSection.style.display = "none";
+        }
       } else {
         focusSection.style.display = "none";
         bubble.classList.remove("fg-pulse");
         if (quickFocusBtn) quickFocusBtn.style.display = "flex";
+        if (timerSection) timerSection.style.display = "none";
+        if (tasksSection) tasksSection.style.display = "none";
+        if (allowedSection) allowedSection.style.display = "none";
+        if (bubbleTimer) bubbleTimer.style.display = "none";
       }
     } catch (e) {}
   }
 
   updateWidget();
-  setInterval(updateWidget, 30000);
+  setInterval(updateWidget, 15000);
 
   // ─── Quick Focus ───
   document.getElementById("fg-quick-focus").addEventListener("click", async (e) => {

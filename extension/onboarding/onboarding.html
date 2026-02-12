@@ -14,7 +14,6 @@
     <div class="ob-orb ob-orb-2"></div>
   </div>
   <div class="onboarding">
-    <!-- Progress bar -->
     <div class="progress-bar-wrap">
       <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
     </div>
@@ -22,8 +21,6 @@
       <span class="progress-step" id="progress-step">Step 1 of 6</span>
       <span class="progress-pct" id="progress-pct">0%</span>
     </div>
-
-    <!-- Step Indicator -->
     <div class="step-dots">
       <div class="step-dot active" data-step="0"></div>
       <div class="step-dot" data-step="1"></div>
@@ -48,35 +45,31 @@
           <p class="welcome-sub">Your Behavioral Productivity OS</p>
           <p class="welcome-desc">Track browsing habits, block distractions, and build deep focus — all from your browser.</p>
           <div class="step-buttons">
-            <button class="btn-primary btn-lg" onclick="nextStep()">Get Started</button>
-            <button class="btn-ghost btn-sm" onclick="skipOnboarding()">Skip Setup</button>
+            <button class="btn-primary btn-lg" id="btn-get-started">Get Started</button>
+            <button class="btn-ghost btn-sm" id="btn-skip">Skip Setup</button>
           </div>
         </div>
       </div>
 
-      <!-- Step 2: Select Distracting Sites -->
+      <!-- Step 2: Select Sites -->
       <div class="step" data-step="1">
         <div class="step-content">
-          <div class="step-illustration">
-            <div class="illust-shield">🛡️</div>
-          </div>
+          <div class="step-illustration"><div class="illust-shield">🛡️</div></div>
           <h2>Select Distracting Sites</h2>
           <p class="step-desc">Choose sites you want to block during focus sessions.</p>
           <div class="sites-grid" id="sites-grid"></div>
           <div class="custom-site-row">
             <input type="text" id="custom-site" class="input" placeholder="Add custom domain..." />
-            <button class="btn-ghost" onclick="addCustomSite()">+ Add</button>
+            <button class="btn-ghost" id="btn-add-custom">+ Add</button>
           </div>
-          <button class="btn-primary btn-lg" onclick="nextStep()">Continue</button>
+          <button class="btn-primary btn-lg" id="btn-step1-next">Continue</button>
         </div>
       </div>
 
       <!-- Step 3: Daily Goal -->
       <div class="step" data-step="2">
         <div class="step-content">
-          <div class="step-illustration">
-            <div class="illust-target">🎯</div>
-          </div>
+          <div class="step-illustration"><div class="illust-target">🎯</div></div>
           <h2>Set Your Daily Goal</h2>
           <p class="step-desc">How many hours of focused work per day?</p>
           <div class="goal-display">
@@ -90,68 +83,60 @@
           </div>
           <input type="range" id="goal-slider" class="goal-slider" min="1" max="8" value="4" />
           <div class="goal-range"><span>1h</span><span>8h</span></div>
-          <button class="btn-primary btn-lg" onclick="nextStep()">Continue</button>
+          <button class="btn-primary btn-lg" id="btn-step2-next">Continue</button>
         </div>
       </div>
 
       <!-- Step 4: Focus Duration -->
       <div class="step" data-step="3">
         <div class="step-content">
-          <div class="step-illustration">
-            <div class="illust-timer">⏱️</div>
-          </div>
+          <div class="step-illustration"><div class="illust-timer">⏱️</div></div>
           <h2>Choose Focus Duration</h2>
           <p class="step-desc">Your default focus session length.</p>
-          <div class="focus-options">
-            <div class="focus-option" data-dur="15" onclick="selectDuration(this)">
+          <div class="focus-options" id="focus-options">
+            <div class="focus-option" data-dur="15">
               <span class="focus-option-time">15m</span>
               <span class="focus-option-desc">Quick sprint</span>
             </div>
-            <div class="focus-option selected" data-dur="25" onclick="selectDuration(this)">
+            <div class="focus-option selected" data-dur="25">
               <span class="focus-option-time">25m</span>
               <span class="focus-option-desc">Pomodoro</span>
             </div>
-            <div class="focus-option" data-dur="45" onclick="selectDuration(this)">
+            <div class="focus-option" data-dur="45">
               <span class="focus-option-time">45m</span>
               <span class="focus-option-desc">Deep work</span>
             </div>
-            <div class="focus-option" data-dur="60" onclick="selectDuration(this)">
+            <div class="focus-option" data-dur="60">
               <span class="focus-option-time">60m</span>
               <span class="focus-option-desc">Marathon</span>
             </div>
           </div>
-          <button class="btn-primary btn-lg" onclick="nextStep()">Continue</button>
+          <button class="btn-primary btn-lg" id="btn-step3-next">Continue</button>
         </div>
       </div>
 
-      <!-- Step 5: Choose Theme -->
+      <!-- Step 5: Theme -->
       <div class="step" data-step="4">
         <div class="step-content">
           <h2>Choose Your Theme</h2>
-          <p class="step-desc">Pick a look that suits you. You can change this anytime.</p>
+          <p class="step-desc">Pick a look that suits you.</p>
           <div class="theme-preview-options">
-            <div class="theme-preview-card selected" id="theme-dark-card" onclick="selectTheme('dark', this)">
+            <div class="theme-preview-card selected" id="theme-dark-card" data-theme-val="dark">
               <div class="theme-preview dark-preview">
                 <div class="tp-bar"></div>
-                <div class="tp-content">
-                  <div class="tp-circle"></div>
-                  <div class="tp-lines"><div></div><div></div><div></div></div>
-                </div>
+                <div class="tp-content"><div class="tp-circle"></div><div class="tp-lines"><div></div><div></div><div></div></div></div>
               </div>
               <span class="theme-preview-label">🌙 Dark</span>
             </div>
-            <div class="theme-preview-card" id="theme-light-card" onclick="selectTheme('light', this)">
+            <div class="theme-preview-card" id="theme-light-card" data-theme-val="light">
               <div class="theme-preview light-preview">
                 <div class="tp-bar"></div>
-                <div class="tp-content">
-                  <div class="tp-circle"></div>
-                  <div class="tp-lines"><div></div><div></div><div></div></div>
-                </div>
+                <div class="tp-content"><div class="tp-circle"></div><div class="tp-lines"><div></div><div></div><div></div></div></div>
               </div>
               <span class="theme-preview-label">☀️ Light</span>
             </div>
           </div>
-          <button class="btn-primary btn-lg" onclick="nextStep()">Continue</button>
+          <button class="btn-primary btn-lg" id="btn-step4-next">Continue</button>
         </div>
       </div>
 
@@ -173,7 +158,7 @@
             <div class="summary-row"><span>Focus duration</span><span id="summary-dur">25m</span></div>
             <div class="summary-row"><span>Theme</span><span id="summary-theme">Dark</span></div>
           </div>
-          <button class="btn-primary btn-lg" onclick="completeOnboarding()">Launch FocusGuard</button>
+          <button class="btn-primary btn-lg" id="btn-complete">Launch FocusGuard</button>
         </div>
       </div>
     </div>
