@@ -202,11 +202,10 @@ function setupListeners() {
     });
   });
 
-  document.getElementById("btn-start-focus").addEventListener("click", async () => {
-    const taskInput = document.getElementById("focus-tasks");
-    const tasks = taskInput.value.trim() ? taskInput.value.split(",").map(t => t.trim()).filter(Boolean) : [];
-    await chrome.runtime.sendMessage({ action: "startFocus", duration: selectedDuration, tasks });
-    await checkFocusState();
+  document.getElementById("btn-start-focus").addEventListener("click", () => {
+    // Open dashboard Focus Mode tab for full setup
+    chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/dashboard.html#focus") });
+    window.close();
   });
 
   document.getElementById("btn-pause-focus").addEventListener("click", async () => {

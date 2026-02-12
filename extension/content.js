@@ -83,6 +83,11 @@
           <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 14,8 3,15"/></svg>
           Focus 25m
         </button>
+        <!-- Blocked Sites (shown during focus) -->
+        <div id="fg-blocked-section" class="fg-blocked-section" style="display:none;">
+          <div class="fg-section-label">BLOCKED</div>
+          <div id="fg-blocked-list" class="fg-blocked-list"></div>
+        </div>
         <button id="fg-block-btn" class="fg-block-btn">
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/><line x1="3.5" y1="3.5" x2="10.5" y2="10.5" stroke="currentColor" stroke-width="1.5"/></svg>
           Block Site
@@ -288,6 +293,18 @@
       border-radius: 8px; padding: 2px 6px;
     }
 
+    .fg-blocked-section {
+      padding: 6px 0;
+      border-bottom: 1px solid ${c.border};
+      margin-bottom: 4px;
+    }
+    .fg-blocked-list { display: flex; flex-wrap: wrap; gap: 4px; }
+    .fg-blocked-pill {
+      font-size: 9px; font-weight: 700; color: #F43F5E;
+      background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2);
+      border-radius: 8px; padding: 2px 6px;
+    }
+
     .fg-stat-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
     .fg-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
     .fg-label { flex: 1; font-size: 11px; color: ${c.textMuted}; font-weight: 600; }
@@ -441,6 +458,34 @@
           document.getElementById("fg-task-count").textContent = `${doneCount}/${focusState.tasks.length} done`;
         } else if (tasksSection) {
           tasksSection.style.display = "none";
+        }
+
+        // Show blocked sites
+        const blockedSection = document.getElementById("fg-blocked-section");
+        try {
+          const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+          const blockedDomains = (settings.blockedDomains || []).map(b => typeof b === "string" ? b : b.domain);
+          if (blockedSection && blockedDomains.length > 0) {
+            blockedSection.style.display = "block";
+            const bList = document.getElementById("fg-blocked-list");
+            bList.innerHTML = "";
+            blockedDomains.slice(0, 6).forEach(site => {
+              const pill = document.createElement("span");
+              pill.className = "fg-blocked-pill";
+              pill.textContent = site;
+              bList.appendChild(pill);
+            });
+            if (blockedDomains.length > 6) {
+              const more = document.createElement("span");
+              more.className = "fg-blocked-pill";
+              more.textContent = `+${blockedDomains.length - 6}`;
+              bList.appendChild(more);
+            }
+          } else if (blockedSection) {
+            blockedSection.style.display = "none";
+          }
+        } catch (e) {
+          if (blockedSection) blockedSection.style.display = "none";
         }
 
         // Show allowed sites

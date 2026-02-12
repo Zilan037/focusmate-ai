@@ -3,10 +3,12 @@
 body {
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 40px 16px;
 }
 
 /* Animated background with orbs */
