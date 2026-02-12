@@ -1,139 +1,182 @@
 
 
-# FocusGuard Premium Dashboard Transformation
-
-## Issues to Fix
-
-### 1. Onboarding CSP Error (Critical)
-The inline `<script>` tag in `onboarding.html` (line 7-9) and `dashboard.html` (line 7-9) violates Chrome Extension's Content Security Policy which blocks inline scripts.
-
-**Fix:** Extract the theme-detection script into a separate file `extension/assets/theme-loader.js` and reference it with `<script src>` instead of inline code.
-
-### 2. Dashboard White Space
-The `.main-content` has `max-width: 1100px` which leaves empty space on the right. Remove the max-width constraint so content fills the available area.
-
-### 3. Font Size & Contrast
-Increase all font sizes across dashboard and popup. Boost text contrast by using stronger colors for primary/secondary text.
+# FocusGuard Complete Overhaul -- Landing, Focus Mode, Extension Fixes & Polish
 
 ---
 
-## Premium Design Transformation
+## Issue 1: Onboarding CSP Fix (Critical)
 
-Inspired by the reference code's aesthetic (Plus Jakarta Sans, premium-card with 28px radius, slate color system, uppercase tracking labels, large bold values), the following changes apply across **all dashboard sections and the popup**.
+The `onclick="..."` inline event handlers in `onboarding.html` and `blocked.html` still violate Chrome's Content Security Policy. The `<script src>` fix only solved the inline `<script>` block -- but every `onclick`, `onchange` attribute is also blocked.
 
-### Design System Overhaul (`styles-common.css`)
+**Fix**: Remove ALL inline event handlers from both `onboarding.html` and `blocked.html`. Replace with `addEventListener` calls in their respective `.js` files.
 
-- **Font**: Import `Plus Jakarta Sans` alongside Inter. Set as primary font.
-- **Card style**: New `.premium-card` class with `border-radius: 28px`, subtle shadow stack (3-layer), hover lift with shadow increase, light/dark aware backgrounds.
-- **Colors**: Strengthen text contrast:
-  - Dark: `--text-primary: #F8FAFC` (was `#E8ECF4`), `--text-secondary: #94A3B8` (was `#7A8BA7`)
-  - Light: `--text-primary: #0F172A` (was `#1A1A2E`), `--text-secondary: #475569` (was `#5A6478`)
-- **Shadows**: Multi-layer premium shadows matching the reference
-- **Label style**: All labels use `text-[10px] font-extrabold uppercase tracking-[0.15em]` pattern
-- **Value style**: Large values use `text-4xl font-extrabold tracking-tighter`
-
-### Dashboard CSS (`dashboard.css`)
-
-**Sidebar:**
-- Background: Light theme uses `#F1F5F9`, dark uses `rgba(15,23,42,0.5)`
-- Logo section: Inverted color icon block (dark bg in light mode, white bg in dark)
-- Nav items: `font-size: 14px`, `font-weight: 600`, rounded-xl, active state gets white/dark card with shadow + left dot indicator
-- Section group labels: `10px font-bold uppercase tracking-[0.15em]`
-- Bottom: Weekly goal progress card with progress bar
-- Width: 260px (was 240px)
-
-**Top Navbar (new):**
-- Sticky glassmorphic top bar with page title, status indicator ("Neural Monitoring Active" badge with pulsing green dot), dark mode toggle, and user area
-- Height: 80px
-
-**Main Content:**
-- Remove `max-width: 1100px`, add `max-width: 1440px` and center with `mx-auto`
-- Padding: `40px` all around
-- Page titles: `text-4xl font-black tracking-tight`
-- Section subtitles: `10px font-black uppercase tracking-[0.25em]` in accent color
-
-**Stat/Metric Cards:**
-- Use `.premium-card` style with `border-radius: 28px`, padding `28px`
-- Labels: `10px font-extrabold uppercase tracking-[0.15em]` in muted color
-- Values: `text-4xl font-extrabold tracking-tighter`
-- Trend badges: colored pill with up/down arrow
-- Each card gets a mini sparkline area (opacity 30%, full on hover)
-- Subtext: dot indicator + small text at bottom
-
-**Chart Cards:**
-- `border-radius: 36px`, padding `40px`
-- Chart titles: `text-xl font-black tracking-tight`
-- Chart subtitles: `13px font-bold` muted
-- Tab selectors: pill buttons in a rounded container
-
-**Streak Card (dark highlight):**
-- Full dark card (`bg-slate-900` / `bg-slate-800` in dark mode)
-- Large number `text-5xl font-black`
-- Badge: "Top 3% Globally"
-- Quote at bottom with arrow link
-- Decorative blur orb in background
-
-**Domain/Category Section:**
-- Progress bars for categories: thin `h-1.5` bars
-- Category names: `12px font-black uppercase`
-- Percentage values: `13px font-black`
-
-**All Other Tabs (Deep Stats, Daily, Domains, Sessions, Blocklist, Insights, Settings):**
-- Same premium-card styling applied consistently
-- All stat values enlarged
-- All labels use the uppercase tracking pattern
-- Table text size increased to `13-14px`
-- Settings cards get `28px` radius
-- Toggle switches enlarged
-
-### Dashboard HTML (`dashboard.html`)
-
-- Add top navbar bar between sidebar and main content
-- Update class names to use new premium styles
-- Add status indicators and action buttons in header
-
-### Dashboard JS (`dashboard.js`)
-
-- No major logic changes, just update any hardcoded font references in canvas drawing to use `'Plus Jakarta Sans'`
-- Increase canvas font sizes (labels from 9-10px to 11-12px)
-
-### Popup CSS (`popup.css`) & HTML
-
-- Apply same Plus Jakarta Sans font
-- Increase all font sizes by ~2px
-- Stat values: larger and bolder
-- Cards: larger radius, more padding
-- Better contrast on all text elements
-
-### Onboarding Files
-
-- Move inline script to external `theme-loader.js`
-- Apply Plus Jakarta Sans
-- Increase font sizes and contrast
+**Files:**
+- `extension/onboarding/onboarding.html` -- Remove all `onclick="..."` attributes, add `id` attributes instead
+- `extension/onboarding/onboarding.js` -- Add `addEventListener` for all buttons/interactions at `DOMContentLoaded`
+- `extension/blocked/blocked.html` -- Same treatment for override buttons
+- `extension/blocked/blocked.js` -- Add `addEventListener` bindings
 
 ---
 
-## Files Modified
+## Issue 2: Dashboard Sidebar Expand/Collapse Fix
 
-1. `extension/assets/theme-loader.js` -- **NEW** (extracted theme detection script)
-2. `extension/assets/styles-common.css` -- Font, colors, premium-card, contrast boost
-3. `extension/dashboard/dashboard.html` -- Remove inline script, add navbar, update classes
-4. `extension/dashboard/dashboard.css` -- Complete visual overhaul matching reference
-5. `extension/dashboard/dashboard.js` -- Update canvas font references and sizes
-6. `extension/popup/popup.html` -- Remove inline script, reference theme-loader.js
-7. `extension/popup/popup.css` -- Font sizes, contrast, premium styling
-8. `extension/onboarding/onboarding.html` -- Remove inline script, reference theme-loader.js
-9. `extension/onboarding/onboarding.css` -- Font sizes, contrast
-10. `extension/blocked/blocked.html` -- Remove inline script, reference theme-loader.js
+The collapse button toggles a CSS class but there is no way to expand again once collapsed since the brand text and labels are hidden.
+
+**Fix**: Ensure the collapse button remains visible and clickable in collapsed state. Add a tooltip-trigger or keep the hamburger icon accessible.
+
+**File:** `extension/dashboard/dashboard.js` -- Update the `btn-collapse` handler to properly toggle and ensure the button stays reachable in collapsed mode.
+
+---
+
+## Issue 3: Landing Page Premium Redesign
+
+Complete rewrite of `Landing.tsx` to match the extension dashboard's premium aesthetic (Plus Jakarta Sans, slate colors, 28px card radii, uppercase tracking labels, gradient accents).
+
+**New sections with populated data:**
+
+1. **Hero** -- "Neural Monitoring" badge, large title with gradient, subtitle with description, CTA buttons (Add to Chrome, View Dashboard, Try Focus Mode)
+
+2. **Live Dashboard Preview** -- A mock dashboard card showing populated stats: Score 87, Active 6.5h, Streak 12 days, 4 focus sessions. Styled exactly like the extension's metric cards with sparkline placeholders.
+
+3. **Core Features Grid** (6 cards) -- Same features but with premium-card styling (28px radius, hover lift, icon in gradient circle, uppercase label, description)
+
+4. **Focus Mode Showcase** -- Interactive demo preview showing timer UI, task list, blocked sites, unlock requirements -- all with populated mock data. Shows what a running focus session looks like.
+
+5. **Analytics Preview** -- Mock charts section showing weekly trends bar chart (using recharts), category donut, domain usage bars -- all with real populated data from mockData.ts
+
+6. **Blocked Page Preview** -- Shows the blocked page experience with shield icon, domain pill, reflection timer
+
+7. **How It Works** (4 steps) -- Premium step cards with numbered sequence
+
+8. **Comparison Table** -- FocusGuard vs Others with check/X marks
+
+9. **Tech and Privacy** (4 cards) -- Event-driven, no keystroke logging, local-first, transparent
+
+10. **Footer** -- Premium footer matching extension branding
+
+**Files:**
+- `src/pages/Landing.tsx` -- Complete rewrite
+- `src/index.css` -- Add Plus Jakarta Sans import, update font-family to match extension
+
+---
+
+## Issue 4: Focus Mode Transformation
+
+Complete rewrite of `FocusMode.tsx` to add:
+
+**Pre-Focus Setup Phase:**
+- Task input field (add/remove tasks dynamically)
+- Block websites input (add domains to block during session)
+- Allow websites input (whitelist-only mode: only these sites accessible)
+- Duration selector (15m, 25m, 45m, 60m pill buttons)
+- "Deploy Focus" button to start
+
+**Active Focus Phase:**
+- Large timer display (mono font, gradient glow)
+- Progress ring around timer
+- Task checklist with completion tracking
+- Blocked sites list display
+- Allowed sites list display
+- Pause/Stop buttons
+- Session stats (elapsed, tasks done, interruptions)
+- Motivational quote
+
+**Blocked Site Overlay (when visiting blocked URL during focus):**
+- Full-screen overlay matching the extension's blocked page design
+- Shield icon with animated ring
+- "Site Blocked" title with domain pill
+- Resist counter
+- Reflection timer
+- Quote card
+- "Go Back" button
+- This is simulated in the web app since we can't actually block -- it shows as a demo overlay when user clicks "Try visiting a blocked site" button
+
+**Unlock System:**
+- Progress bars for focus time, tasks completed, interruptions
+- Celebration animation when all requirements met
+
+**Files:**
+- `src/pages/FocusMode.tsx` -- Complete rewrite with all phases
+
+---
+
+## Issue 5: Content.js Overlay Enhancement
+
+Upgrade the floating widget for active focus mode:
+
+- When focus is active: bubble glows with pulsing animation, shows countdown timer text on bubble
+- Expanded view shows: countdown timer, task checklist with checkboxes, completion count
+- Add "Allowed Sites" indicator when in whitelist mode
+- Theme-aware styling using Plus Jakarta Sans
+
+**File:** `extension/content.js` -- Enhanced focus mode display
+
+---
+
+## Issue 6: Extension Dashboard UX Improvements
+
+- Increase all font sizes by 1-2px across all sections
+- Make settings inputs larger and more touch-friendly
+- Add empty state messages with icons for sections with no data
+- Improve blocklist item cards with better spacing
+- Make chart cards more readable with larger axis labels
+- Add hover tooltips on metric cards showing detail
+- Ensure all tabs animate smoothly on switch
+
+**Files:**
+- `extension/dashboard/dashboard.css` -- Font size and spacing tweaks
+- `extension/dashboard/dashboard.js` -- Empty states, UX improvements
+
+---
+
+## Issue 7: Website Dashboard Page Update
+
+Update `Dashboard.tsx` to match the premium aesthetic:
+- Use Plus Jakarta Sans
+- Premium card styling (28px radius, hover lift)
+- Uppercase tracking labels on all stat cards
+- Larger bold values with mono font
+- Better chart styling with gradient fills
+- Match the dark slate color scheme
+
+**File:** `src/pages/Dashboard.tsx` -- Styling update
+
+---
+
+## Issue 8: Navbar Update
+
+Update `Navbar.tsx` with premium styling:
+- Glassmorphic navbar with Plus Jakarta Sans
+- Status indicator ("Neural Monitoring Active" with pulsing dot)
+- Better active state styling
+- Streak badge in navbar
+
+**File:** `src/components/Navbar.tsx` -- Premium update
+
+---
 
 ## Implementation Order
 
-1. Create `theme-loader.js` (fixes CSP)
-2. Update all HTML files to use external script (fixes onboarding)
-3. Overhaul `styles-common.css` (new design tokens)
-4. Rewrite `dashboard.css` (premium transformation)
-5. Update `dashboard.html` (navbar + structure)
-6. Update `dashboard.js` (canvas fonts)
-7. Update popup files (consistency)
-8. Update onboarding/blocked files (consistency)
+1. `src/index.css` -- Add Plus Jakarta Sans, update design tokens
+2. `tailwind.config.ts` -- Add Plus Jakarta Sans to font family
+3. `src/components/Navbar.tsx` -- Premium navbar
+4. `src/pages/Landing.tsx` -- Complete premium landing with populated data
+5. `src/pages/FocusMode.tsx` -- Full focus mode with setup, active, blocked overlay
+6. `src/pages/Dashboard.tsx` -- Premium dashboard styling
+7. `extension/onboarding/onboarding.html` + `onboarding.js` -- Remove inline handlers, fix CSP
+8. `extension/blocked/blocked.html` + `blocked.js` -- Remove inline handlers
+9. `extension/dashboard/dashboard.js` -- Sidebar expand fix, UX improvements
+10. `extension/dashboard/dashboard.css` -- Font size and spacing tweaks
+11. `extension/content.js` -- Enhanced focus overlay with timer and tasks
+
+---
+
+## Technical Notes
+
+- All website pages (Landing, Focus, Dashboard) use React + Tailwind + Framer Motion + Recharts
+- Extension files use vanilla JS/CSS/HTML
+- Mock data from `src/data/mockData.ts` is used for populated dashboard previews on landing
+- Focus Mode blocked overlay is a simulated demo (not actual browser blocking)
+- The "allowed websites" feature stores a whitelist array in focus session state
+- No new dependencies needed
 
