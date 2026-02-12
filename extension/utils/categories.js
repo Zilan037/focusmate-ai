@@ -1,10 +1,11 @@
-// categories.js — Domain categorization engine
+// categories.js — Domain categorization engine V3
 
 const CategoryPatterns = {
   "Social Media": [
     "facebook.com", "instagram.com", "twitter.com", "x.com", "tiktok.com",
     "snapchat.com", "linkedin.com", "pinterest.com", "tumblr.com", "reddit.com",
     "discord.com", "mastodon.social", "threads.net", "bsky.app",
+    "whatsapp.com", "telegram.org", "signal.org", "wechat.com",
   ],
   Education: [
     "udemy.com", "coursera.org", "khanacademy.org", "edx.org", "brilliant.org",
@@ -12,12 +13,16 @@ const CategoryPatterns = {
     "codecademy.com", "freecodecamp.org", "leetcode.com", "hackerrank.com",
     "scholar.google.com", "wikipedia.org", "arxiv.org", "researchgate.net",
     "academia.edu", "mit.edu", "stanford.edu", "coursehero.com",
+    "pluralsight.com", "lynda.com", "treehouse.com", "datacamp.com",
+    "exercism.io", "codewars.com", "kaggle.com", "topcoder.com",
   ],
   Entertainment: [
     "youtube.com", "netflix.com", "twitch.tv", "hulu.com", "disneyplus.com",
     "hbomax.com", "primevideo.com", "spotify.com", "soundcloud.com",
     "crunchyroll.com", "funimation.com", "9gag.com", "imgur.com",
     "buzzfeed.com", "boredpanda.com", "dailymotion.com", "vimeo.com",
+    "tubi.tv", "peacocktv.com", "deezer.com", "pandora.com",
+    "apple.com/tv", "music.apple.com",
   ],
   Work: [
     "docs.google.com", "drive.google.com", "sheets.google.com", "slides.google.com",
@@ -28,17 +33,27 @@ const CategoryPatterns = {
     "console.cloud.google.com", "azure.microsoft.com",
     "mail.google.com", "outlook.com", "calendar.google.com",
     "dropbox.com", "airtable.com", "miro.com", "canva.com",
+    "linear.app", "clickup.com", "monday.com", "basecamp.com",
+    "confluence.atlassian.com", "loom.com", "krisp.ai",
+    "grammarly.com", "hemingwayapp.com", "excalidraw.com",
   ],
   News: [
     "cnn.com", "bbc.com", "nytimes.com", "theguardian.com", "reuters.com",
     "apnews.com", "washingtonpost.com", "wsj.com", "bloomberg.com",
     "techcrunch.com", "theverge.com", "arstechnica.com", "wired.com",
     "hackernews.com", "news.ycombinator.com",
+    "npr.org", "aljazeera.com", "ft.com", "economist.com",
   ],
   Shopping: [
     "amazon.com", "ebay.com", "walmart.com", "target.com", "etsy.com",
     "aliexpress.com", "shopify.com", "bestbuy.com", "newegg.com",
     "wish.com", "shein.com", "zappos.com", "wayfair.com",
+    "costco.com", "ikea.com", "homedepot.com", "lowes.com",
+  ],
+  Neutral: [
+    "google.com", "bing.com", "duckduckgo.com", "yahoo.com",
+    "weather.com", "maps.google.com", "translate.google.com",
+    "stackoverflow.com",
   ],
 };
 
@@ -65,12 +80,12 @@ const Categories = {
     }
 
     // Keyword-based fallback
-    if (/edu|learn|course|study|school|university|college|tutor/i.test(clean)) return "Education";
-    if (/news|journal|times|post|tribune|herald/i.test(clean)) return "News";
-    if (/shop|store|buy|deal|market|mall/i.test(clean)) return "Shopping";
-    if (/game|play|stream|watch|video|movie|music|listen/i.test(clean)) return "Entertainment";
-    if (/social|chat|meet|friend|connect|community/i.test(clean)) return "Social Media";
-    if (/work|project|task|manage|team|office|doc|code|dev/i.test(clean)) return "Work";
+    if (/edu|learn|course|study|school|university|college|tutor|academy/i.test(clean)) return "Education";
+    if (/news|journal|times|post|tribune|herald|gazette/i.test(clean)) return "News";
+    if (/shop|store|buy|deal|market|mall|cart|checkout/i.test(clean)) return "Shopping";
+    if (/game|play|stream|watch|video|movie|music|listen|anime/i.test(clean)) return "Entertainment";
+    if (/social|chat|meet|friend|connect|community|forum/i.test(clean)) return "Social Media";
+    if (/work|project|task|manage|team|office|doc|code|dev|api|deploy/i.test(clean)) return "Work";
 
     return "Other";
   },
@@ -83,6 +98,10 @@ const Categories = {
     return ["Social Media", "Entertainment", "Shopping"].includes(category);
   },
 
+  isNeutral(category) {
+    return ["Neutral", "News", "Other"].includes(category);
+  },
+
   getCategoryColor(category) {
     const colors = {
       Work: "#3b82f6",
@@ -91,13 +110,28 @@ const Categories = {
       "Social Media": "#ef4444",
       News: "#6366f1",
       Shopping: "#ec4899",
+      Neutral: "#94a3b8",
       Other: "#6b7280",
     };
     return colors[category] || colors.Other;
   },
 
+  getCategoryIcon(category) {
+    const icons = {
+      Work: "💼",
+      Education: "📚",
+      Entertainment: "🎬",
+      "Social Media": "💬",
+      News: "📰",
+      Shopping: "🛒",
+      Neutral: "🔘",
+      Other: "🌐",
+    };
+    return icons[category] || icons.Other;
+  },
+
   getAllCategories() {
-    return ["Work", "Education", "Entertainment", "Social Media", "News", "Shopping", "Other"];
+    return ["Work", "Education", "Entertainment", "Social Media", "News", "Shopping", "Neutral", "Other"];
   },
 };
 
