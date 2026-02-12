@@ -1,210 +1,139 @@
 
 
-# FocusGuard Extension V3 -- Advanced Upgrade
+# FocusGuard Premium Dashboard Transformation
 
-A comprehensive upgrade covering UI modernization, advanced features, detailed statistics, blocklist management, and overall user experience improvements across all extension pages.
+## Issues to Fix
 
----
+### 1. Onboarding CSP Error (Critical)
+The inline `<script>` tag in `onboarding.html` (line 7-9) and `dashboard.html` (line 7-9) violates Chrome Extension's Content Security Policy which blocks inline scripts.
 
-## Part 1: Enhanced Settings & Blocklist Management
+**Fix:** Extract the theme-detection script into a separate file `extension/assets/theme-loader.js` and reference it with `<script src>` instead of inline code.
 
-**Files: `dashboard/dashboard.html`, `dashboard.js`, `dashboard.css`**
+### 2. Dashboard White Space
+The `.main-content` has `max-width: 1100px` which leaves empty space on the right. Remove the max-width constraint so content fills the available area.
 
-**Blocked Domains -- Full CRUD UI:**
-- Replace simple tag list with a proper table/list showing each blocked domain with:
-  - Favicon + domain name
-  - Date added (stored in settings)
-  - Toggle switch to temporarily disable/enable blocking
-  - Delete button with smooth remove animation (slide-out + fade)
-  - "Block All" / "Unblock All" bulk actions
-- Add search/filter input above the blocked list
-- Add "Import blocklist" (paste comma-separated domains) and "Export blocklist" buttons
-
-**Daily Limits -- Better Management:**
-- Show each limit as a card with:
-  - Domain favicon + name
-  - Limit value (editable inline)
-  - Progress bar showing today's usage vs limit
-  - Delete button
-- Sort by usage percentage (closest to limit first)
-
-**New Settings Sections:**
-- **Notifications**: Toggle for desktop notifications on focus complete, distraction loops, daily limit warnings
-- **Scheduled Blocks**: UI to add/edit/delete time-based blocking schedules (days of week checkboxes, start/end time pickers)
-- **Category Overrides**: Let users reassign a domain's category (dropdown with all categories)
+### 3. Font Size & Contrast
+Increase all font sizes across dashboard and popup. Boost text contrast by using stronger colors for primary/secondary text.
 
 ---
 
-## Part 2: Detailed Statistics & Analytics
+## Premium Design Transformation
 
-**Files: `dashboard/dashboard.html`, `dashboard.js`, `dashboard.css`**
+Inspired by the reference code's aesthetic (Plus Jakarta Sans, premium-card with 28px radius, slate color system, uppercase tracking labels, large bold values), the following changes apply across **all dashboard sections and the popup**.
 
-**Overview Page Enhancements:**
-- Add "Today vs Yesterday vs Weekly Avg" comparison row below stat cards
-- Add "Productivity Timeline" -- a horizontal bar showing productive/distracted/idle segments for each hour
-- Add "Top 3 Productive Sites" and "Top 3 Distracting Sites" mini-cards with favicons and time
-- Add "Sessions Completed Today" counter with a mini progress ring
+### Design System Overhaul (`styles-common.css`)
 
-**New "Deep Stats" Tab (replaces or extends Weekly):**
-- **30-Day Trend Chart**: Line chart showing daily scores over the last 30 days
-- **Category Time Breakdown by Day**: Stacked bar chart showing time per category per day (7 days)
-- **Average Session Length**: Card showing average focus session duration trend
-- **Distraction Frequency**: Chart showing number of distraction loops per day
-- **Peak Productivity Windows**: Analysis showing which 2-hour blocks are most productive
-- **Site Visit Frequency**: Bar chart showing how many times each site was visited (not just time)
-- **Weekly Summary Card**: Total hours tracked, total focus sessions, best score, worst score, avg score
+- **Font**: Import `Plus Jakarta Sans` alongside Inter. Set as primary font.
+- **Card style**: New `.premium-card` class with `border-radius: 28px`, subtle shadow stack (3-layer), hover lift with shadow increase, light/dark aware backgrounds.
+- **Colors**: Strengthen text contrast:
+  - Dark: `--text-primary: #F8FAFC` (was `#E8ECF4`), `--text-secondary: #94A3B8` (was `#7A8BA7`)
+  - Light: `--text-primary: #0F172A` (was `#1A1A2E`), `--text-secondary: #475569` (was `#5A6478`)
+- **Shadows**: Multi-layer premium shadows matching the reference
+- **Label style**: All labels use `text-[10px] font-extrabold uppercase tracking-[0.15em]` pattern
+- **Value style**: Large values use `text-4xl font-extrabold tracking-tighter`
 
-**Domain Analysis Enhancements:**
-- Add 7-day sparkline mini-chart for each domain (tiny canvas showing usage trend)
-- Add "First visit" and "Last visit" time columns
-- Add percentage of total time column
-- Color-code rows by category (subtle left border)
-- Add pagination or "Show more" for long lists
+### Dashboard CSS (`dashboard.css`)
 
----
+**Sidebar:**
+- Background: Light theme uses `#F1F5F9`, dark uses `rgba(15,23,42,0.5)`
+- Logo section: Inverted color icon block (dark bg in light mode, white bg in dark)
+- Nav items: `font-size: 14px`, `font-weight: 600`, rounded-xl, active state gets white/dark card with shadow + left dot indicator
+- Section group labels: `10px font-bold uppercase tracking-[0.15em]`
+- Bottom: Weekly goal progress card with progress bar
+- Width: 260px (was 240px)
 
-## Part 3: UI Modernization & Premium Polish
+**Top Navbar (new):**
+- Sticky glassmorphic top bar with page title, status indicator ("Neural Monitoring Active" badge with pulsing green dot), dark mode toggle, and user area
+- Height: 80px
 
-**Files: `styles-common.css`, all page CSS files**
+**Main Content:**
+- Remove `max-width: 1100px`, add `max-width: 1440px` and center with `mx-auto`
+- Padding: `40px` all around
+- Page titles: `text-4xl font-black tracking-tight`
+- Section subtitles: `10px font-black uppercase tracking-[0.25em]` in accent color
 
-**Design System Additions:**
-- Add CSS custom property `--radius-xs: 4px` for small elements
-- Add `--font-mono: 'JetBrains Mono', 'SF Mono', monospace` for timer/number displays
-- Add subtle noise texture overlay on body background (CSS only, using SVG data URI)
-- Add `--transition-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55)` for playful interactions
+**Stat/Metric Cards:**
+- Use `.premium-card` style with `border-radius: 28px`, padding `28px`
+- Labels: `10px font-extrabold uppercase tracking-[0.15em]` in muted color
+- Values: `text-4xl font-extrabold tracking-tighter`
+- Trend badges: colored pill with up/down arrow
+- Each card gets a mini sparkline area (opacity 30%, full on hover)
+- Subtext: dot indicator + small text at bottom
 
-**Popup Upgrades:**
-- Redesign score section with a gradient border card effect
-- Add micro-interaction: score ring draws on load with easing
-- Add "Quick Block" button that shows current tab's domain pre-filled
-- Add skeleton loading states while data loads (pulsing placeholder bars)
-- Smooth number transitions on all stats (already partially done, improve easing)
-- Add a subtle bottom sheet "pull up" indicator for scrollable content
+**Chart Cards:**
+- `border-radius: 36px`, padding `40px`
+- Chart titles: `text-xl font-black tracking-tight`
+- Chart subtitles: `13px font-bold` muted
+- Tab selectors: pill buttons in a rounded container
 
-**Dashboard Upgrades:**
-- Add breadcrumb-style page indicator at top of main content
-- Sidebar nav items get tooltip on hover when collapsed
-- Add "Last updated: X seconds ago" indicator with auto-refresh
-- Charts get loading skeleton states
-- Add smooth page transition when switching tabs (slide + fade)
-- Table rows get alternating subtle background shading
-- Add "Fullscreen" button on chart cards to view enlarged
-- Mobile responsive: bottom tab bar with icons when sidebar hidden
+**Streak Card (dark highlight):**
+- Full dark card (`bg-slate-900` / `bg-slate-800` in dark mode)
+- Large number `text-5xl font-black`
+- Badge: "Top 3% Globally"
+- Quote at bottom with arrow link
+- Decorative blur orb in background
 
-**Blocked Page Upgrades:**
-- Add ambient sound toggle (optional rain/focus sounds via Web Audio API oscillator)
-- Make the override section collapsible (hidden by default, "I need to access this" link reveals it)
-- Add motivational progress: "You've resisted X sites today"
+**Domain/Category Section:**
+- Progress bars for categories: thin `h-1.5` bars
+- Category names: `12px font-black uppercase`
+- Percentage values: `13px font-black`
 
----
+**All Other Tabs (Deep Stats, Daily, Domains, Sessions, Blocklist, Insights, Settings):**
+- Same premium-card styling applied consistently
+- All stat values enlarged
+- All labels use the uppercase tracking pattern
+- Table text size increased to `13-14px`
+- Settings cards get `28px` radius
+- Toggle switches enlarged
 
-## Part 4: Advanced Features
+### Dashboard HTML (`dashboard.html`)
 
-**Files: `background.js`, `dashboard/dashboard.js`, `popup/popup.js`**
+- Add top navbar bar between sidebar and main content
+- Update class names to use new premium styles
+- Add status indicators and action buttons in header
 
-**Pomodoro Timer Enhancement:**
-- Add task input field before starting focus (comma-separated tasks)
-- Show task checklist during active focus in popup
-- Add break timer after focus completes (5-minute short break, 15-minute long break after 4 sessions)
-- Track pomodoro cycle count (focus + break = 1 pomodoro)
+### Dashboard JS (`dashboard.js`)
 
-**Smart Notifications (background.js):**
-- Desktop notification when focus session completes
-- Warning notification at 80% of daily limit
-- Notification when distraction loop detected
-- All notifications toggleable in settings
+- No major logic changes, just update any hardcoded font references in canvas drawing to use `'Plus Jakarta Sans'`
+- Increase canvas font sizes (labels from 9-10px to 11-12px)
 
-**Goal Setting & Tracking:**
-- Daily focus goal (hours) -- configurable in settings
-- Visual progress toward daily goal on popup and dashboard
-- "Goal streak" -- consecutive days meeting the goal
-- Weekly goal summary
+### Popup CSS (`popup.css`) & HTML
 
-**Keyboard Shortcuts:**
-- `Alt+Shift+F` to start/stop focus mode
-- `Alt+Shift+B` to block current site
-- Register via `chrome.commands` in manifest
+- Apply same Plus Jakarta Sans font
+- Increase all font sizes by ~2px
+- Stat values: larger and bolder
+- Cards: larger radius, more padding
+- Better contrast on all text elements
 
-**Auto-Categorization Improvement (categories.js):**
-- Add more domain patterns for better auto-detection
-- Add "Neutral" category for sites that are neither productive nor distracting
-- User overrides persist and take priority
+### Onboarding Files
 
----
-
-## Part 5: Onboarding Improvements
-
-**Files: `onboarding/onboarding.html`, `onboarding.css`, `onboarding.js`**
-
-- Add a "Welcome back" screen if user reopens onboarding after completing it
-- Add animated illustrations (CSS-only) for each step
-- Add a progress percentage indicator (e.g., "Step 2 of 6 -- 33%")
-- Add a "Skip" button that sets sensible defaults
+- Move inline script to external `theme-loader.js`
+- Apply Plus Jakarta Sans
+- Increase font sizes and contrast
 
 ---
 
-## Part 6: Background.js New Message Handlers
+## Files Modified
 
-- `getDetailedStats` -- returns 30-day trend data for deep stats tab
-- `getDomainHistory` -- returns 7-day history for a specific domain (for sparklines)
-- `setDailyGoal` / `getDailyGoal` -- goal management
-- `getGoalProgress` -- today's progress toward goal
-- `updateBlockedDomain` -- toggle enabled/disabled for individual blocked domain
-- `bulkBlockDomains` / `bulkUnblockDomains` -- batch operations
-- `getScheduledBlocks` / `saveScheduledBlock` / `deleteScheduledBlock`
-- `setCategoryOverride` -- assign custom category to domain
-
----
-
-## Part 7: Manifest Updates
-
-**File: `extension/manifest.json`**
-
-- Add `notifications` permission for desktop notifications
-- Add `commands` section for keyboard shortcuts:
-  ```
-  "commands": {
-    "toggle-focus": {
-      "suggested_key": { "default": "Alt+Shift+F" },
-      "description": "Toggle Focus Mode"
-    },
-    "block-current": {
-      "suggested_key": { "default": "Alt+Shift+B" },
-      "description": "Block Current Site"
-    }
-  }
-  ```
-
----
-
-## Part 8: Sync to Public
-
-All modified files copied to `public/extension/` for download and testing.
-
----
+1. `extension/assets/theme-loader.js` -- **NEW** (extracted theme detection script)
+2. `extension/assets/styles-common.css` -- Font, colors, premium-card, contrast boost
+3. `extension/dashboard/dashboard.html` -- Remove inline script, add navbar, update classes
+4. `extension/dashboard/dashboard.css` -- Complete visual overhaul matching reference
+5. `extension/dashboard/dashboard.js` -- Update canvas font references and sizes
+6. `extension/popup/popup.html` -- Remove inline script, reference theme-loader.js
+7. `extension/popup/popup.css` -- Font sizes, contrast, premium styling
+8. `extension/onboarding/onboarding.html` -- Remove inline script, reference theme-loader.js
+9. `extension/onboarding/onboarding.css` -- Font sizes, contrast
+10. `extension/blocked/blocked.html` -- Remove inline script, reference theme-loader.js
 
 ## Implementation Order
 
-1. `styles-common.css` -- New design tokens and utilities
-2. `manifest.json` -- Permissions and commands
-3. `background.js` -- New message handlers, notifications, commands
-4. `utils/categories.js` -- Extended categorization
-5. `popup/` -- UI upgrades, task input, goal progress
-6. `dashboard/` -- Full overhaul (largest change): blocklist management, deep stats, scheduled blocks, category overrides
-7. `blocked/` -- Collapsible override, resist counter
-8. `onboarding/` -- Progress indicator, skip button
-9. `content.js` -- Minor widget improvements
-10. Copy all to `public/extension/`
-
----
-
-## Technical Notes
-
-- All data remains local via `chrome.storage.local` -- no backend
-- Sparklines use inline `<canvas>` elements (50x20px)
-- Notifications use `chrome.notifications.create()` API
-- Keyboard shortcuts use `chrome.commands.onCommand` listener
-- 30-day data uses existing `Storage.getLastNDays(30)` method
-- Scheduled blocks stored as array in settings object
-- No new external dependencies -- pure vanilla JS/CSS/HTML
+1. Create `theme-loader.js` (fixes CSP)
+2. Update all HTML files to use external script (fixes onboarding)
+3. Overhaul `styles-common.css` (new design tokens)
+4. Rewrite `dashboard.css` (premium transformation)
+5. Update `dashboard.html` (navbar + structure)
+6. Update `dashboard.js` (canvas fonts)
+7. Update popup files (consistency)
+8. Update onboarding/blocked files (consistency)
 
