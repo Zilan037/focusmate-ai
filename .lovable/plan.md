@@ -1,260 +1,210 @@
 
 
-# FocusGuard Ultimate Premium UI Overhaul
+# FocusGuard Extension V3 -- Advanced Upgrade
 
-A complete visual and feature upgrade across all extension pages -- popup, dashboard, blocked page, onboarding, and floating widget -- plus light mode support and new advanced features. All changes stay within the `extension/` folder and are synced to `public/extension/`.
-
----
-
-## Part 1: Light/Dark Theme System
-
-**File: `extension/assets/styles-common.css`**
-
-Add a `[data-theme="light"]` selector that overrides all CSS variables:
-
-- `--bg-deep: #F5F7FA`, `--bg-primary: #FFFFFF`, `--bg-card: #F0F2F5`
-- `--bg-glass: rgba(255, 255, 255, 0.7)`, `--bg-glass-border: rgba(0, 0, 0, 0.06)`
-- `--text-primary: #1A1A2E`, `--text-secondary: #5A6478`, `--text-muted: #8A95A8`
-- Accent colors stay the same for brand consistency
-- Shadows become lighter: `--shadow-md: 0 4px 16px rgba(0,0,0,0.06)`
-- Scrollbar thumb adjusts for light backgrounds
-
-Add a `.theme-toggle` button component (sun/moon icon swap with CSS transition).
-
-**All HTML files** get `<script>` at top of `<head>` that reads `focusguard_theme` from `chrome.storage.local` and applies `data-theme` attribute before paint (prevents flash).
+A comprehensive upgrade covering UI modernization, advanced features, detailed statistics, blocklist management, and overall user experience improvements across all extension pages.
 
 ---
 
-## Part 2: Design System Enhancements
+## Part 1: Enhanced Settings & Blocklist Management
 
-**File: `extension/assets/styles-common.css`**
+**Files: `dashboard/dashboard.html`, `dashboard.js`, `dashboard.css`**
 
-New additions to the existing design system:
+**Blocked Domains -- Full CRUD UI:**
+- Replace simple tag list with a proper table/list showing each blocked domain with:
+  - Favicon + domain name
+  - Date added (stored in settings)
+  - Toggle switch to temporarily disable/enable blocking
+  - Delete button with smooth remove animation (slide-out + fade)
+  - "Block All" / "Unblock All" bulk actions
+- Add search/filter input above the blocked list
+- Add "Import blocklist" (paste comma-separated domains) and "Export blocklist" buttons
 
-- Add `--accent-violet: #7C6AFF` and `--accent-violet-glow` variables
-- Add `--gradient-glass: linear-gradient(135deg, rgba(91,140,255,0.05), rgba(124,106,255,0.05))` for subtle card backgrounds
-- New keyframes:
-  - `@keyframes float` (gentle Y oscillation for decorative elements)
-  - `@keyframes borderGlow` (animated border color cycling)
-  - `@keyframes countUp` (number counter effect)
-  - `@keyframes slideUp` / `@keyframes slideDown` for smooth panel reveals
-- New utility classes:
-  - `.card-hover-lift` (translateY(-2px) + shadow increase on hover)
-  - `.number-mono` (tabular-nums, font-weight 800)
-  - `.section-header` (consistent section header style)
-  - `.empty-illustration` (better empty state with SVG illustration)
-- Enhanced `.glass-card`: Add subtle inner gradient highlight at top edge
-- Add `.glass-card-interactive` variant with hover lift and border glow
-- Improved toggle switch with smoother animation and better sizing
+**Daily Limits -- Better Management:**
+- Show each limit as a card with:
+  - Domain favicon + name
+  - Limit value (editable inline)
+  - Progress bar showing today's usage vs limit
+  - Delete button
+- Sort by usage percentage (closest to limit first)
 
----
-
-## Part 3: Popup -- Premium Command Center V2
-
-**Files: `extension/popup/popup.html`, `popup.css`, `popup.js`**
-
-### New Features
-- **Theme toggle button** in header (sun/moon icon)
-- **Today's insight card** below score: Shows one auto-generated behavioral insight in a compact card (e.g., "You've been 23% more focused than yesterday")
-- **Quick stats ticker** at the very top: scrolling micro-stats line ("4 sites visited | 2h focused | Score: 78")
-
-### Visual Upgrades
-- Score ring gets animated gradient stroke (shifts colors smoothly)
-- Score number uses animated counter with overshoot spring effect
-- Stat pills get subtle gradient backgrounds based on their category color
-- Domain bars get real favicon attempts via `https://www.google.com/s2/favicons?domain=X&sz=32` with fallback to letter circle
-- Focus Mode section gets a pulsing border animation when active
-- Duration selector pills get a morphing blob background that slides between options (not just translateX of a box)
-- Quick action buttons get icon-only hover tooltip style with descriptive labels
-- Add subtle particle/dot decorative elements in the background (CSS-only radial gradients)
-- Popup width stays 360px but gets slightly taller padding for breathing room
-
-### CSS Changes
-- Add CSS `background-attachment: fixed` subtle gradient mesh on body
-- Improved spacing using `gap` properties
-- Better focus states (visible outlines for accessibility)
-- Smooth transitions on all interactive elements
-
-### JS Changes
-- Add theme toggle handler that saves to `chrome.storage.local` and applies immediately
-- Fetch one insight from background and display in compact card
-- Favicon loading with `onerror` fallback
+**New Settings Sections:**
+- **Notifications**: Toggle for desktop notifications on focus complete, distraction loops, daily limit warnings
+- **Scheduled Blocks**: UI to add/edit/delete time-based blocking schedules (days of week checkboxes, start/end time pickers)
+- **Category Overrides**: Let users reassign a domain's category (dropdown with all categories)
 
 ---
 
-## Part 4: Dashboard -- Premium Analytics V2
+## Part 2: Detailed Statistics & Analytics
 
-**Files: `extension/dashboard/dashboard.html`, `dashboard.css`, `dashboard.js`**
+**Files: `dashboard/dashboard.html`, `dashboard.js`, `dashboard.css`**
 
-### New Sidebar Features
-- **Theme toggle** at bottom of sidebar (above score/streak)
-- **Collapse/expand sidebar** button (hamburger icon) -- sidebar collapses to icon-only 60px width
-- Active nav item gets an animated gradient indicator bar (not just static color)
-- Nav items get subtle icon color matching their section purpose
+**Overview Page Enhancements:**
+- Add "Today vs Yesterday vs Weekly Avg" comparison row below stat cards
+- Add "Productivity Timeline" -- a horizontal bar showing productive/distracted/idle segments for each hour
+- Add "Top 3 Productive Sites" and "Top 3 Distracting Sites" mini-cards with favicons and time
+- Add "Sessions Completed Today" counter with a mini progress ring
 
-### New Dashboard Pages/Sections
+**New "Deep Stats" Tab (replaces or extends Weekly):**
+- **30-Day Trend Chart**: Line chart showing daily scores over the last 30 days
+- **Category Time Breakdown by Day**: Stacked bar chart showing time per category per day (7 days)
+- **Average Session Length**: Card showing average focus session duration trend
+- **Distraction Frequency**: Chart showing number of distraction loops per day
+- **Peak Productivity Windows**: Analysis showing which 2-hour blocks are most productive
+- **Site Visit Frequency**: Bar chart showing how many times each site was visited (not just time)
+- **Weekly Summary Card**: Total hours tracked, total focus sessions, best score, worst score, avg score
 
-**Overview Page Upgrades:**
-- Stat cards get animated gradient borders that pulse subtly
-- Score card gets a larger ring with gradient stroke and particle burst animation on load
-- Add "Compared to yesterday" percentage badges on each stat card (green up arrow / red down arrow + percentage)
-- Category donut chart: Add hover tooltips showing exact time + percentage
-- Hourly activity chart: Add a "peak productivity" indicator marker on the highest productive hour
-- Add a "Quick Actions" row at bottom: Start Focus, Block Site, Export Data buttons
-
-**Daily Report Upgrades:**
-- Add date picker navigation (prev/next day arrows + date display)
-- Heatmap cells get tooltips on hover showing exact activity breakdown
-- Add a "Daily Timeline" -- vertical timeline showing site visits as colored dots on a line
-- Session cards below the heatmap
-
-**Weekly Report Upgrades:**
-- Add "This Week vs Last Week" comparison bars
-- Pattern detection cards get icons and colored borders
-- Add "Best Hour" and "Worst Hour" analysis cards
-
-**Domains Page Upgrades:**
-- Add favicon images for each domain row
-- Add sparkline mini-charts showing time trend for each domain (last 7 days, tiny canvas)
-- Category pills get matching colored backgrounds
-- Add "Export as CSV" button
-
-**Focus Logs Upgrades:**
-- Session cards get a visual timeline bar showing how much of the planned time was completed
-- Add task completion dots (filled/unfilled circles)
-- Better empty state with illustration SVG and "Start your first session" CTA
-
-**Insights Page Upgrades:**
-- Insight cards get category-specific icons (lightbulb for tips, chart for data, warning for alerts)
-- Add animated entry for each card (staggered fade-up)
-- Distraction loop cards get a visual domain chain showing the loop path
-
-**Settings Page Upgrades:**
-- Add **Theme** section at top with light/dark toggle
-- Add **Data Management** section: Export All Data (JSON), Import Data, Clear All Data (with confirmation)
-- Add **About** section: Version number, links
-- Blocked domain tags get a nicer pill design with smooth remove animation
-- Daily limit items show a mini progress bar of today's usage
-- Toggle switches for: Widget enabled, Strict mode, Notifications
-- All settings sections get collapsible accordion behavior
-
-### CSS Changes
-- Sidebar collapse animation: `width` transition from 240px to 60px, labels fade out, icons center
-- Card hover effects: `transform: translateY(-2px)` + `box-shadow` increase
-- Table row hover: subtle left border accent appears
-- Canvas backgrounds: match theme (transparent for dark, slight fill for light)
-- Better responsive breakpoints: sidebar becomes bottom nav on mobile
-- Smooth page transitions between tabs (opacity + translateY)
-
-### JS Changes
-- Add `animateNumber` to all numeric displays
-- Add date navigation for daily report
-- Add sparkline drawing function for domain rows
-- Add CSV export function
-- Add JSON data export/import functions
-- Add theme toggle handler
-- Sidebar collapse toggle with localStorage persistence
-- Tooltip rendering for charts (canvas overlay)
+**Domain Analysis Enhancements:**
+- Add 7-day sparkline mini-chart for each domain (tiny canvas showing usage trend)
+- Add "First visit" and "Last visit" time columns
+- Add percentage of total time column
+- Color-code rows by category (subtle left border)
+- Add pagination or "Show more" for long lists
 
 ---
 
-## Part 5: Blocked Page -- Enhanced Cinematic Experience
+## Part 3: UI Modernization & Premium Polish
 
-**Files: `extension/blocked/blocked.html`, `blocked.css`, `blocked.js`**
+**Files: `styles-common.css`, all page CSS files**
 
-### Visual Upgrades
-- Background: Add animated CSS gradient orbs (floating colored circles with blur)
-- Shield icon: Add rotating ring animation around it
-- Quote card: Add auto-rotating quotes (new quote every 10 seconds with fade transition)
-- Unlock requirements: Progress bars get animated shimmer effect while incomplete
-- Met requirements: Checkmark icon animates in (SVG stroke-dashoffset animation)
-- Override reflection timer: Gets a breathing animation on the ring
-- Add a "Time on this page" counter showing how long they've been on the blocked page
+**Design System Additions:**
+- Add CSS custom property `--radius-xs: 4px` for small elements
+- Add `--font-mono: 'JetBrains Mono', 'SF Mono', monospace` for timer/number displays
+- Add subtle noise texture overlay on body background (CSS only, using SVG data URI)
+- Add `--transition-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55)` for playful interactions
 
-### New Features
-- **Breathing exercise option**: "Take a breath" button that opens a 30-second guided breathing animation (expanding/contracting circle) as an alternative activity
-- Theme support (reads from storage)
+**Popup Upgrades:**
+- Redesign score section with a gradient border card effect
+- Add micro-interaction: score ring draws on load with easing
+- Add "Quick Block" button that shows current tab's domain pre-filled
+- Add skeleton loading states while data loads (pulsing placeholder bars)
+- Smooth number transitions on all stats (already partially done, improve easing)
+- Add a subtle bottom sheet "pull up" indicator for scrollable content
 
----
+**Dashboard Upgrades:**
+- Add breadcrumb-style page indicator at top of main content
+- Sidebar nav items get tooltip on hover when collapsed
+- Add "Last updated: X seconds ago" indicator with auto-refresh
+- Charts get loading skeleton states
+- Add smooth page transition when switching tabs (slide + fade)
+- Table rows get alternating subtle background shading
+- Add "Fullscreen" button on chart cards to view enlarged
+- Mobile responsive: bottom tab bar with icons when sidebar hidden
 
-## Part 6: Floating Widget -- Smarter Bubble
-
-**File: `extension/content.js`**
-
-### Visual Upgrades
-- Minimized bubble: Gets a micro progress ring around it showing today's focus percentage
-- Expanded panel: Gets theme-aware styling
-- Stats rows: Get mini colored bar indicators next to values
-- Block button: Smoother hover animation
-
-### New Features
-- **Quick focus start**: Add a "Focus 25m" mini button in expanded view
-- Widget auto-hides during focus mode (only shows timer bubble)
-- Theme-aware: reads `focusguard_theme` and applies light/dark styling
-
----
-
-## Part 7: Onboarding -- Polish Pass
-
-**Files: `extension/onboarding/onboarding.html`, `onboarding.css`, `onboarding.js`**
-
-### Visual Upgrades
-- Step transitions: Use `translateX` slide animation instead of simple fade
-- Site cards: Add real favicon attempts
-- Goal slider: Add visual bar showing "Beginner / Intermediate / Expert" labels at different positions
-- Ready screen: Add confetti CSS animation on the checkmark
-- Theme-aware styling
-
-### New Step
-- Add Step 3.5 (between goal and duration): **Choose Theme** -- light/dark toggle preview with live preview of how the extension looks
+**Blocked Page Upgrades:**
+- Add ambient sound toggle (optional rain/focus sounds via Web Audio API oscillator)
+- Make the override section collapsible (hidden by default, "I need to access this" link reveals it)
+- Add motivational progress: "You've resisted X sites today"
 
 ---
 
-## Part 8: Background.js Additions
+## Part 4: Advanced Features
 
-**File: `extension/background.js`**
+**Files: `background.js`, `dashboard/dashboard.js`, `popup/popup.js`**
 
-- Add `getTheme` message handler (returns stored theme or "dark" default)
-- Add `setTheme` message handler (saves to storage)
-- Add `exportData` message handler (collects all storage data into JSON)
-- Add `importData` message handler (validates and writes data)
-- Add `getComparisonStats` message handler (compares today vs yesterday for stat cards)
-- Add `getTodayInsightSummary` handler (returns one compact insight text for popup)
+**Pomodoro Timer Enhancement:**
+- Add task input field before starting focus (comma-separated tasks)
+- Show task checklist during active focus in popup
+- Add break timer after focus completes (5-minute short break, 15-minute long break after 4 sessions)
+- Track pomodoro cycle count (focus + break = 1 pomodoro)
+
+**Smart Notifications (background.js):**
+- Desktop notification when focus session completes
+- Warning notification at 80% of daily limit
+- Notification when distraction loop detected
+- All notifications toggleable in settings
+
+**Goal Setting & Tracking:**
+- Daily focus goal (hours) -- configurable in settings
+- Visual progress toward daily goal on popup and dashboard
+- "Goal streak" -- consecutive days meeting the goal
+- Weekly goal summary
+
+**Keyboard Shortcuts:**
+- `Alt+Shift+F` to start/stop focus mode
+- `Alt+Shift+B` to block current site
+- Register via `chrome.commands` in manifest
+
+**Auto-Categorization Improvement (categories.js):**
+- Add more domain patterns for better auto-detection
+- Add "Neutral" category for sites that are neither productive nor distracting
+- User overrides persist and take priority
 
 ---
 
-## Part 9: Manifest Update
+## Part 5: Onboarding Improvements
+
+**Files: `onboarding/onboarding.html`, `onboarding.css`, `onboarding.js`**
+
+- Add a "Welcome back" screen if user reopens onboarding after completing it
+- Add animated illustrations (CSS-only) for each step
+- Add a progress percentage indicator (e.g., "Step 2 of 6 -- 33%")
+- Add a "Skip" button that sets sensible defaults
+
+---
+
+## Part 6: Background.js New Message Handlers
+
+- `getDetailedStats` -- returns 30-day trend data for deep stats tab
+- `getDomainHistory` -- returns 7-day history for a specific domain (for sparklines)
+- `setDailyGoal` / `getDailyGoal` -- goal management
+- `getGoalProgress` -- today's progress toward goal
+- `updateBlockedDomain` -- toggle enabled/disabled for individual blocked domain
+- `bulkBlockDomains` / `bulkUnblockDomains` -- batch operations
+- `getScheduledBlocks` / `saveScheduledBlock` / `deleteScheduledBlock`
+- `setCategoryOverride` -- assign custom category to domain
+
+---
+
+## Part 7: Manifest Updates
 
 **File: `extension/manifest.json`**
 
-- No structural changes needed, just ensure all new resources are accessible
+- Add `notifications` permission for desktop notifications
+- Add `commands` section for keyboard shortcuts:
+  ```
+  "commands": {
+    "toggle-focus": {
+      "suggested_key": { "default": "Alt+Shift+F" },
+      "description": "Toggle Focus Mode"
+    },
+    "block-current": {
+      "suggested_key": { "default": "Alt+Shift+B" },
+      "description": "Block Current Site"
+    }
+  }
+  ```
 
 ---
 
-## Part 10: Sync to Public
+## Part 8: Sync to Public
 
-All modified files are copied to `public/extension/` so the user can download and test.
+All modified files copied to `public/extension/` for download and testing.
 
 ---
 
 ## Implementation Order
 
-1. `styles-common.css` -- Theme system + design tokens
-2. `background.js` -- New message handlers
-3. `popup/` -- Popup premium V2
-4. `dashboard/` -- Full dashboard overhaul (largest change)
-5. `blocked/` -- Cinematic upgrades
-6. `content.js` -- Widget improvements
-7. `onboarding/` -- Polish + theme step
-8. Copy all to `public/extension/`
+1. `styles-common.css` -- New design tokens and utilities
+2. `manifest.json` -- Permissions and commands
+3. `background.js` -- New message handlers, notifications, commands
+4. `utils/categories.js` -- Extended categorization
+5. `popup/` -- UI upgrades, task input, goal progress
+6. `dashboard/` -- Full overhaul (largest change): blocklist management, deep stats, scheduled blocks, category overrides
+7. `blocked/` -- Collapsible override, resist counter
+8. `onboarding/` -- Progress indicator, skip button
+9. `content.js` -- Minor widget improvements
+10. Copy all to `public/extension/`
+
+---
 
 ## Technical Notes
 
-- Theme detection script placed in `<head>` of every HTML page to prevent flash of wrong theme
-- All CSS uses `var()` references so theme switching is instant
-- No new dependencies -- pure CSS/JS
-- Favicon loading uses Google's public API with graceful fallback
-- Data export creates downloadable JSON blob
-- Sparklines use tiny inline `<canvas>` elements (50x20px)
-- Breathing exercise is pure CSS animation (no JS timer needed for the visual)
+- All data remains local via `chrome.storage.local` -- no backend
+- Sparklines use inline `<canvas>` elements (50x20px)
+- Notifications use `chrome.notifications.create()` API
+- Keyboard shortcuts use `chrome.commands.onCommand` listener
+- 30-day data uses existing `Storage.getLastNDays(30)` method
+- Scheduled blocks stored as array in settings object
+- No new external dependencies -- pure vanilla JS/CSS/HTML
 
