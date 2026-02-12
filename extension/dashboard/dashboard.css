@@ -1734,3 +1734,40 @@ canvas {
   .peak-windows { grid-template-columns: 1fr; }
   .top-navbar { padding: 0 20px; }
 }
+
+/* ─── Quick Category Grid ─── */
+.quick-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+.quick-cat-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--bg-glass-border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.quick-cat-btn:hover {
+  border-color: rgba(37,99,235,0.3);
+  background: rgba(37,99,235,0.04);
+  transform: translateY(-2px);
+}
+.quick-cat-btn.danger {
+  border-color: rgba(244,63,94,0.15);
+}
+.quick-cat-btn.danger:hover {
+  border-color: rgba(244,63,94,0.3);
+  background: rgba(244,63,94,0.04);
+}
+.quick-cat-icon { font-size: 24px; }
+.quick-cat-label { font-size: 12px; font-weight: 800; }
+.quick-cat-count { font-size: 10px; font-weight: 700; color: var(--text-muted); }
+.quick-cat-btn:disabled { cursor: not-allowed; }

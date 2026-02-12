@@ -184,7 +184,6 @@ async function recordDistractionLoop(domains) {
   chrome.action.setBadgeBackgroundColor({ color: "#ef4444" });
   setTimeout(() => chrome.action.setBadgeText({ text: "" }), 30000);
 
-  // Send notification if enabled
   await sendNotification("distraction", "Distraction Loop Detected", "You're rapidly switching between distracting sites. Stay focused!");
 }
 
@@ -213,18 +212,71 @@ async function sendNotification(type, title, message) {
 // ─── Blocking Engine ───
 async function checkBlocking(domain, tabId) {
   const settings = await Storage.getSettings();
+  const focusState = await Storage.getFocusState();
 
-  // Check individual blocked domains (with enabled check)
-  const blockedDomains = settings.blockedDomains || [];
-  for (const blocked of blockedDomains) {
-    const blockedDomain = typeof blocked === "object" ? blocked.domain : blocked;
-    const isEnabled = typeof blocked === "object" ? blocked.enabled !== false : true;
-    if (isEnabled && blockedDomain === domain) {
-      redirectToBlocked(tabId, domain, "Domain is on your block list");
+  // ── 1. Focus Mode Active — strictest rules ──
+  if (focusState.active) {
+    const allowedSites = focusState.allowedSites || [];
+    const blockedSites = focusState.blockedSites || [];
+
+    // Skip extension pages
+    if (domain.endsWith("chrome-extension")) return;
+
+    // WHITELIST MODE: If any allowed sites are set, ONLY those are permitted
+    if (allowedSites.length > 0) {
+      const isAllowed = allowedSites.some(s => domain === s || domain.endsWith("." + s));
+      if (!isAllowed) {
+        redirectToBlocked(tabId, domain, "Not in your Allowed Sites list — only whitelisted sites can be accessed during Focus Mode");
+        return;
+      }
+      // Allowed — don't block
+      return;
+    }
+
+    // BLACKLIST MODE: Block explicitly listed sites + distraction categories
+    if (blockedSites.length > 0) {
+      const isBlocked = blockedSites.some(s => domain === s || domain.endsWith("." + s));
+      if (isBlocked) {
+        redirectToBlocked(tabId, domain, "This site is on your Focus Mode block list");
+        return;
+      }
+    }
+
+    // Block standard distractions during focus
+    const category = Categories.categorize(domain, settings.categoryOverrides);
+    if (Categories.isDistraction(category)) {
+      redirectToBlocked(tabId, domain, `Focus Mode active — ${category} sites are blocked`);
+      return;
+    }
+
+    // Block dangerous categories during focus
+    if (Categories.isDangerous(category)) {
+      redirectToBlocked(tabId, domain, `Focus Mode active — ${category} content is blocked`);
       return;
     }
   }
 
+  // ── 2. Always block dangerous categories if strict mode is on ──
+  if (settings.strictSafetyMode !== false) {
+    const category = Categories.categorize(domain, settings.categoryOverrides);
+    if (Categories.isDangerous(category)) {
+      redirectToBlocked(tabId, domain, `${category} content is blocked by Safety Mode`);
+      return;
+    }
+  }
+
+  // ── 3. Check individual blocked domains ──
+  const blockedDomains = settings.blockedDomains || [];
+  for (const blocked of blockedDomains) {
+    const blockedDomain = typeof blocked === "object" ? blocked.domain : blocked;
+    const isEnabled = typeof blocked === "object" ? blocked.enabled !== false : true;
+    if (isEnabled && (domain === blockedDomain || domain.endsWith("." + blockedDomain))) {
+      redirectToBlocked(tabId, domain, "This site is on your block list");
+      return;
+    }
+  }
+
+  // ── 4. Scheduled blocks ──
   const now = new Date();
   const currentDay = now.getDay();
   const currentTime = now.getHours() * 60 + now.getMinutes();
@@ -242,21 +294,11 @@ async function checkBlocking(domain, tabId) {
       }
     }
   }
-
-  const focusState = await Storage.getFocusState();
-  if (focusState.active) {
-    const category = Categories.categorize(domain, settings.categoryOverrides);
-    if (Categories.isDistraction(category)) {
-      redirectToBlocked(tabId, domain, "Focus mode is active — stay focused!");
-      return;
-    }
-  }
 }
 
 async function checkDailyLimit(domain, totalMinutes, settings) {
   const limit = settings.dailyLimits[domain];
   if (limit) {
-    // 80% warning
     if (totalMinutes >= limit * 0.8 && totalMinutes < limit) {
       await sendNotification("daily_limit", "Daily Limit Warning", `You've used 80% of your ${limit}min limit for ${domain}`);
     }
@@ -312,7 +354,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
-async function startFocusMode(duration, tasks = []) {
+async function startFocusMode(duration, tasks = [], blockedSites = [], allowedSites = []) {
   const state = {
     active: true,
     startTime: Date.now(),
@@ -321,6 +363,8 @@ async function startFocusMode(duration, tasks = []) {
     tasks: tasks.map((t, i) => ({ id: i, text: t, done: false })),
     interruptions: 0,
     paused: false,
+    blockedSites: blockedSites || [],
+    allowedSites: allowedSites || [],
   };
   await Storage.saveFocusState(state);
   chrome.alarms.create("focus_tick", { periodInMinutes: 1 });
@@ -355,6 +399,7 @@ async function completeFocusSession(state, status) {
   await Storage.saveFocusState({
     active: false, startTime: null, duration: 0, remaining: 0,
     tasks: [], interruptions: 0, paused: false,
+    blockedSites: [], allowedSites: [],
   });
 
   chrome.alarms.clear("focus_tick");
@@ -364,7 +409,6 @@ async function completeFocusSession(state, status) {
     await Storage.updateStreak();
     await sendNotification("focus_complete", "Focus Session Complete! 🎯", `You completed ${elapsed} minutes of focused work.`);
     
-    // Start break timer (Pomodoro)
     const pomodoroCount = await Storage.get("focusguard_pomodoro_count") || 0;
     const newCount = pomodoroCount + 1;
     await Storage.set("focusguard_pomodoro_count", newCount);
@@ -433,7 +477,7 @@ async function handleMessage(msg) {
       return await Storage.getFocusState();
 
     case "startFocus":
-      await startFocusMode(msg.duration, msg.tasks || []);
+      await startFocusMode(msg.duration, msg.tasks || [], msg.blockedSites || [], msg.allowedSites || []);
       return { success: true };
 
     case "stopFocus":
@@ -530,6 +574,40 @@ async function handleMessage(msg) {
       });
       await Storage.saveSettings(se);
       return { success: true };
+    }
+
+    case "toggleAllBlockedDomains": {
+      const toggleSettings = await Storage.getSettings();
+      const enabled = msg.enabled;
+      toggleSettings.blockedDomains = (toggleSettings.blockedDomains || []).map(b => {
+        if (typeof b === "string") {
+          return { domain: b, enabled, addedAt: new Date().toISOString() };
+        }
+        return { ...b, enabled };
+      });
+      await Storage.saveSettings(toggleSettings);
+      return { success: true };
+    }
+
+    case "toggleStrictSafetyMode": {
+      const safetySettings = await Storage.getSettings();
+      safetySettings.strictSafetyMode = msg.enabled;
+      await Storage.saveSettings(safetySettings);
+      return { success: true };
+    }
+
+    case "quickBlockCategory": {
+      const qSettings = await Storage.getSettings();
+      const qBl = qSettings.blockedDomains || [];
+      const defaults = Categories.getDistractionDefaults();
+      const categoryDomains = defaults[msg.category] || [];
+      categoryDomains.forEach(d => {
+        const exists = qBl.some(b => (typeof b === "string" ? b : b.domain) === d);
+        if (!exists) qBl.push({ domain: d, enabled: true, addedAt: new Date().toISOString() });
+      });
+      qSettings.blockedDomains = qBl;
+      await Storage.saveSettings(qSettings);
+      return { success: true, added: categoryDomains.length };
     }
 
     case "recordBypass": {

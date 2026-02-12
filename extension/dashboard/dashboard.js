@@ -904,13 +904,13 @@ function setupBlocklistActions() {
   });
 
   document.getElementById("btn-enable-all")?.addEventListener("click", async () => {
-    await chrome.runtime.sendMessage({ action: "bulkBlockDomains", enabled: true });
+    await chrome.runtime.sendMessage({ action: "toggleAllBlockedDomains", enabled: true });
     const updated = await chrome.runtime.sendMessage({ action: "getSettings" });
     renderBlocklistItems(updated);
   });
 
   document.getElementById("btn-disable-all")?.addEventListener("click", async () => {
-    await chrome.runtime.sendMessage({ action: "bulkBlockDomains", enabled: false });
+    await chrome.runtime.sendMessage({ action: "toggleAllBlockedDomains", enabled: false });
     const updated = await chrome.runtime.sendMessage({ action: "getSettings" });
     renderBlocklistItems(updated);
   });
@@ -919,22 +919,50 @@ function setupBlocklistActions() {
     const domains = prompt("Paste comma-separated domains to import:");
     if (domains) {
       const list = domains.split(",").map(d => d.trim().replace(/^www\./, "").toLowerCase()).filter(Boolean);
-      list.forEach(async (domain) => {
-        await chrome.runtime.sendMessage({ action: "blockDomain", domain });
-      });
-      setTimeout(async () => {
+      chrome.runtime.sendMessage({ action: "bulkBlockDomains", domains: list }).then(async () => {
         const updated = await chrome.runtime.sendMessage({ action: "getSettings" });
         renderBlocklistItems(updated);
-      }, 500);
+      });
     }
   });
 
   document.getElementById("btn-export-blocklist")?.addEventListener("click", async () => {
     const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
-    const domains = settings.blockedDomains || [];
+    const domains = (settings.blockedDomains || []).map(b => typeof b === "string" ? b : b.domain);
     const text = domains.join(", ");
     navigator.clipboard.writeText(text).then(() => alert("Blocklist copied to clipboard!"));
   });
+
+  // Quick Block Categories
+  document.querySelectorAll(".quick-cat-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const category = btn.dataset.category;
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+      const result = await chrome.runtime.sendMessage({ action: "quickBlockCategory", category });
+      btn.textContent = `✓ ${result.added || 0} added`;
+      btn.style.background = "rgba(16,185,129,0.15)";
+      btn.style.color = "var(--success)";
+      btn.style.borderColor = "rgba(16,185,129,0.3)";
+      setTimeout(async () => {
+        const updated = await chrome.runtime.sendMessage({ action: "getSettings" });
+        renderBlocklistItems(updated);
+      }, 500);
+    });
+  });
+
+  // Strict Safety Mode toggle
+  const safetyToggle = document.getElementById("toggle-strict-safety");
+  if (safetyToggle) {
+    chrome.runtime.sendMessage({ action: "getSettings" }).then(settings => {
+      const isOn = settings.strictSafetyMode !== false;
+      safetyToggle.classList.toggle("active", isOn);
+    });
+    safetyToggle.addEventListener("click", async () => {
+      safetyToggle.classList.toggle("active");
+      await chrome.runtime.sendMessage({ action: "toggleStrictSafetyMode", enabled: safetyToggle.classList.contains("active") });
+    });
+  }
 
   document.getElementById("btn-add-schedule")?.addEventListener("click", async () => {
     const domain = document.getElementById("sched-domain").value.trim();
@@ -1300,11 +1328,9 @@ async function deployFocus() {
     action: "startFocus",
     duration: focusDuration,
     tasks: focusTasks,
+    blockedSites: focusBlockedSites,
+    allowedSites: focusAllowedSites,
   });
-  // Also block any additional sites user added
-  for (const domain of focusBlockedSites) {
-    await chrome.runtime.sendMessage({ action: "blockDomain", domain });
-  }
   checkFocusPhase();
 }
 
