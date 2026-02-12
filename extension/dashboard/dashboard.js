@@ -115,9 +115,10 @@ function setupTabs() {
       const tabId = "tab-" + btn.dataset.tab;
       document.getElementById(tabId).classList.add("active");
       
-      // Update breadcrumb
+      // Update navbar title
       const label = btn.querySelector(".nav-label").textContent;
-      document.getElementById("breadcrumb-current").textContent = label;
+      const navTitle = document.getElementById("navbar-title");
+      if (navTitle) navTitle.textContent = label;
     });
   });
 }
@@ -150,24 +151,26 @@ function setComparison(id, data) {
 
 // ─── Comparison Row (Today vs Yesterday vs Avg) ───
 async function loadComparisonRow() {
+  // Comparison row elements removed in V4 layout - data now shown inline
   try {
     const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
     const weekData = await chrome.runtime.sendMessage({ action: "getWeekUsage" });
     const scoreData = await chrome.runtime.sendMessage({ action: "getScore" });
     
-    document.getElementById("cmp-today-time").textContent = formatTime(usage.totalActive || 0);
-    document.getElementById("cmp-today-score").textContent = scoreData.score || 0;
+    const el = (id) => document.getElementById(id);
+    if (el("cmp-today-time")) el("cmp-today-time").textContent = formatTime(usage.totalActive || 0);
+    if (el("cmp-today-score")) el("cmp-today-score").textContent = scoreData.score || 0;
     
     if (weekData && weekData.length > 0) {
       const yesterday = weekData[0];
-      document.getElementById("cmp-yest-time").textContent = formatTime(yesterday.data.totalActive || 0);
-      document.getElementById("cmp-yest-score").textContent = yesterday.data.score || 0;
+      if (el("cmp-yest-time")) el("cmp-yest-time").textContent = formatTime(yesterday.data.totalActive || 0);
+      if (el("cmp-yest-score")) el("cmp-yest-score").textContent = yesterday.data.score || 0;
       
       const days = weekData.slice(0, 7);
       const avgActive = days.reduce((s, d) => s + (d.data.totalActive || 0), 0) / days.length;
       const avgScore = Math.round(days.reduce((s, d) => s + (d.data.score || 0), 0) / days.length);
-      document.getElementById("cmp-avg-time").textContent = formatTime(avgActive);
-      document.getElementById("cmp-avg-score").textContent = avgScore;
+      if (el("cmp-avg-time")) el("cmp-avg-time").textContent = formatTime(avgActive);
+      if (el("cmp-avg-score")) el("cmp-avg-score").textContent = avgScore;
     }
   } catch (e) {}
 }
@@ -195,18 +198,40 @@ async function loadTopSites() {
 
 function renderTopList(containerId, entries, color) {
   const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  const isProductive = containerId === "top-productive";
+  const sectionLabel = isProductive ? "PRODUCTIVE" : "DISTRACTING";
+  const dotColor = isProductive ? "#10B981" : "#F43F5E";
+  
   if (entries.length === 0) {
-    container.innerHTML = '<div class="empty-state" style="padding:8px;">No data yet</div>';
+    container.innerHTML = `<div class="section-header">${sectionLabel}</div><div class="empty-state" style="padding:8px;">No data yet</div>`;
     return;
   }
-  container.innerHTML = entries.map(([domain, info]) => {
-    const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
-    return `<div class="top-site-item">
-      <img src="${faviconUrl}" class="top-site-favicon" onerror="this.style.display='none'" />
-      <span class="top-site-name">${domain}</span>
-      <span class="top-site-time">${Math.round(info.time || 0)}m</span>
+  
+  const totalTime = entries.reduce((s, [, info]) => s + (info.time || 0), 0) || 1;
+  
+  let html = `<div class="section-header">${sectionLabel}</div>`;
+  entries.forEach(([domain, info]) => {
+    const pct = Math.round(((info.time || 0) / totalTime) * 100);
+    const barColor = isProductive ? "#10B981" : "#F43F5E";
+    html += `<div class="cog-asset-item">
+      <div class="cog-asset-header">
+        <div class="cog-asset-left">
+          <span class="cog-asset-dot" style="background:${dotColor}"></span>
+          <div>
+            <span class="cog-asset-name">${domain}</span>
+            <span class="cog-asset-sub">${Math.round(info.time || 0)}m</span>
+          </div>
+        </div>
+        <span class="cog-asset-pct">${pct}%</span>
+      </div>
+      <div class="cog-asset-bar">
+        <div class="cog-asset-fill" style="width:${pct}%;background:${barColor}"></div>
+      </div>
     </div>`;
-  }).join("");
+  });
+  container.innerHTML = html;
 }
 
 // ─── Overview ───
@@ -238,6 +263,24 @@ async function loadOverview() {
   }
 
   document.getElementById("d-streak").textContent = `🔥 ${streak.current || 0}`;
+  
+  // Streak highlight card
+  const streakVal = document.getElementById("streak-card-value");
+  if (streakVal) streakVal.innerHTML = `${streak.current || 0} <span class="streak-card-unit">Days</span>`;
+  
+  // Sidebar goal
+  try {
+    const goalData = await chrome.runtime.sendMessage({ action: "getGoalProgress" });
+    if (goalData) {
+      const pct = Math.min(100, Math.round((goalData.current / goalData.goal) * 100));
+      const goalFill = document.getElementById("sidebar-goal-fill");
+      const goalText = document.getElementById("sidebar-goal-text");
+      const goalPct = document.getElementById("sidebar-goal-pct");
+      if (goalFill) goalFill.style.width = pct + "%";
+      if (goalText) goalText.textContent = `${Math.round(goalData.current)} / ${goalData.goal * 7} Hours`;
+      if (goalPct) goalPct.textContent = pct + "%";
+    }
+  } catch (e) {}
 
   // Peak hour
   const hourly = usage.hourlyActivity || [];
