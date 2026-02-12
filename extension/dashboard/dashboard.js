@@ -285,9 +285,9 @@ function getCtx(id) {
 function getChartColors() {
   const isLight = document.documentElement.getAttribute("data-theme") === "light";
   return {
-    text: isLight ? "#5A6478" : "#7A8BA7",
-    textMuted: isLight ? "#8A95A8" : "#4A5568",
-    gridLine: isLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.03)",
+    text: isLight ? "#475569" : "#94A3B8",
+    textMuted: isLight ? "#94A3B8" : "#64748B",
+    gridLine: isLight ? "#F1F5F9" : "#334155",
     barBg: isLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.04)",
   };
 }
@@ -324,7 +324,7 @@ function drawDomainChart(domains) {
     const color = Categories.getCategoryColor(info.category || "Other");
 
     ctx.fillStyle = colors.text;
-    ctx.font = "12px Inter, sans-serif";
+    ctx.font = "800 12px 'Plus Jakarta Sans', sans-serif";
     ctx.textAlign = "right";
     ctx.fillText(domain.length > 18 ? domain.slice(0, 18) + "…" : domain, labelW - 12, y + barH / 2 + 4);
 
@@ -338,7 +338,7 @@ function drawDomainChart(domains) {
 
     ctx.fillStyle = colors.text;
     ctx.textAlign = "left";
-    ctx.font = "11px Inter, sans-serif";
+    ctx.font = "700 12px 'Plus Jakarta Sans', sans-serif";
     ctx.fillText(Math.round(info.time) + "m", labelW + barW + 10, y + barH / 2 + 4);
   });
 }
@@ -443,7 +443,7 @@ function drawHourlyChart(hourly) {
 
     if (i % 3 === 0) {
       ctx.fillStyle = colors.textMuted;
-      ctx.font = "9px Inter, sans-serif";
+      ctx.font = "800 10px 'Plus Jakarta Sans', sans-serif";
       ctx.textAlign = "center";
       ctx.fillText(i + ":00", x + barW / 2, h - 8);
     }
@@ -488,12 +488,12 @@ function drawWeeklyChart(weekData) {
 
     const dayName = new Date(day.date).toLocaleDateString("en", { weekday: "short" });
     ctx.fillStyle = colors.text;
-    ctx.font = "11px Inter, sans-serif";
+    ctx.font = "800 11px 'Plus Jakarta Sans', sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(dayName, x + barW, h - 8);
 
-    ctx.fillStyle = "#5B8CFF";
-    ctx.font = "10px Inter, sans-serif";
+    ctx.fillStyle = "#2563EB";
+    ctx.font = "800 10px 'Plus Jakarta Sans', sans-serif";
     ctx.fillText(day.data.score || 0, x + barW, padding.top + chartH - Math.max(prodH, distH) - 8);
   });
 }
@@ -548,7 +548,7 @@ function draw30DayChart(days) {
     ctx.stroke();
     
     ctx.fillStyle = colors.textMuted;
-    ctx.font = "9px Inter, sans-serif";
+    ctx.font = "800 10px 'Plus Jakarta Sans', sans-serif";
     ctx.textAlign = "right";
     ctx.fillText(100 - i * 25, padding.left - 8, y + 3);
   }

@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Site Blocked — FocusGuard</title>
-  <script>
-    (async()=>{try{const{focusguard_theme:t}=await chrome.storage.local.get("focusguard_theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}})();
-  </script>
+  <script src="../assets/theme-loader.js"></script>
   <link rel="stylesheet" href="../assets/styles-common.css" />
   <link rel="stylesheet" href="blocked.css" />
 </head>
@@ -24,20 +22,20 @@
           <circle cx="50" cy="50" r="46" fill="none" stroke="url(#ringGrad)" stroke-width="1" stroke-dasharray="6 4" />
           <defs>
             <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#F87171" />
-              <stop offset="50%" stop-color="#FBBF24" />
-              <stop offset="100%" stop-color="#F87171" />
+              <stop offset="0%" stop-color="#F43F5E" />
+              <stop offset="50%" stop-color="#F59E0B" />
+              <stop offset="100%" stop-color="#F43F5E" />
             </linearGradient>
           </defs>
         </svg>
         <svg class="shield-icon-blocked" width="60" height="60" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(248,113,113,0.1)" stroke="url(#dangerGrad)" stroke-width="1.2"/>
-          <line x1="8" y1="8" x2="16" y2="16" stroke="#F87171" stroke-width="2" stroke-linecap="round"/>
-          <line x1="16" y1="8" x2="8" y2="16" stroke="#F87171" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(244,63,94,0.1)" stroke="url(#dangerGrad)" stroke-width="1.2"/>
+          <line x1="8" y1="8" x2="16" y2="16" stroke="#F43F5E" stroke-width="2" stroke-linecap="round"/>
+          <line x1="16" y1="8" x2="8" y2="16" stroke="#F43F5E" stroke-width="2" stroke-linecap="round"/>
           <defs>
             <linearGradient id="dangerGrad" x1="3" y1="2" x2="21" y2="24">
-              <stop offset="0%" stop-color="#F87171"/>
-              <stop offset="100%" stop-color="#FBBF24"/>
+              <stop offset="0%" stop-color="#F43F5E"/>
+              <stop offset="100%" stop-color="#F59E0B"/>
             </linearGradient>
           </defs>
         </svg>
@@ -125,7 +123,7 @@
         <summary class="override-toggle">Override (not recommended)</summary>
         <div class="override-content glass-card">
           <p class="override-warning">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L1 13h12L7 1z" stroke="#FBBF24" stroke-width="1.2" fill="none"/><line x1="7" y1="5" x2="7" y2="9" stroke="#FBBF24" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="11" r="0.5" fill="#FBBF24"/></svg>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L1 13h12L7 1z" stroke="#F59E0B" stroke-width="1.2" fill="none"/><line x1="7" y1="5" x2="7" y2="9" stroke="#F59E0B" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="11" r="0.5" fill="#F59E0B"/></svg>
             Overriding lowers your productivity score.
           </p>
           <label class="override-label">Why do you need access?</label>
@@ -136,7 +134,7 @@
               <svg class="reflection-ring" viewBox="0 0 40 40">
                 <circle cx="20" cy="20" r="17" stroke="rgba(255,255,255,0.05)" stroke-width="3" fill="none"/>
                 <circle class="reflection-ring-fill" id="reflection-ring" cx="20" cy="20" r="17" 
-                  stroke-dasharray="107" stroke-dashoffset="107" stroke-width="3" fill="none" stroke="#FBBF24" stroke-linecap="round"/>
+                  stroke-dasharray="107" stroke-dashoffset="107" stroke-width="3" fill="none" stroke="#F59E0B" stroke-linecap="round"/>
               </svg>
             </div>
           </div>
