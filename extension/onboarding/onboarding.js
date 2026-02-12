@@ -1,4 +1,4 @@
-// onboarding.js — Premium onboarding wizard V2
+// onboarding.js — FocusGuard V3 Premium onboarding
 
 const COMMON_SITES = [
   { name: "YouTube", icon: "📺", domain: "youtube.com" },
@@ -13,15 +13,34 @@ const COMMON_SITES = [
 ];
 
 let currentStep = 0;
+const totalSteps = 6;
 let selectedSites = [];
 let dailyGoal = 4;
 let focusDuration = 25;
 let selectedTheme = "dark";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  // Check if already completed
+  try {
+    const result = await chrome.storage.local.get("focusguard_onboarded");
+    if (result.focusguard_onboarded) {
+      // Show welcome back
+      document.querySelector('.step[data-step="0"] h1').textContent = "Welcome Back!";
+      document.querySelector('.welcome-desc').textContent = "Your settings are already configured. Want to update them?";
+    }
+  } catch (e) {}
+  
   renderSitesGrid();
   setupGoalSlider();
+  updateProgress();
 });
+
+function updateProgress() {
+  const pct = Math.round((currentStep / (totalSteps - 1)) * 100);
+  document.getElementById("progress-bar").style.width = pct + "%";
+  document.getElementById("progress-step").textContent = `Step ${currentStep + 1} of ${totalSteps}`;
+  document.getElementById("progress-pct").textContent = pct + "%";
+}
 
 function renderSitesGrid() {
   const grid = document.getElementById("sites-grid");
@@ -81,7 +100,6 @@ function setupGoalSlider() {
     dailyGoal = parseInt(slider.value);
     display.textContent = dailyGoal;
     
-    // Highlight appropriate label
     labels.forEach((l, i) => {
       if ((dailyGoal <= 3 && i === 0) || (dailyGoal <= 5 && dailyGoal > 3 && i === 1) || (dailyGoal > 5 && i === 2)) {
         l.style.color = "var(--accent)";
@@ -111,7 +129,6 @@ function selectTheme(theme, el) {
 }
 
 function nextStep() {
-  // Mark current dot
   document.querySelector(`.step-dot[data-step="${currentStep}"]`).classList.remove("active");
   document.querySelector(`.step-dot[data-step="${currentStep}"]`).classList.add("completed");
 
@@ -122,16 +139,24 @@ function nextStep() {
   document.querySelectorAll(".step").forEach((s) => s.classList.remove("active"));
   document.querySelector(`.step[data-step="${currentStep}"]`).classList.add("active");
 
-  // Update summary on last step
+  updateProgress();
+
   if (currentStep === 5) {
     document.getElementById("summary-sites").textContent = selectedSites.length;
     document.getElementById("summary-goal").textContent = dailyGoal + "h";
     document.getElementById("summary-dur").textContent = focusDuration + "m";
     document.getElementById("summary-theme").textContent = selectedTheme === "dark" ? "🌙 Dark" : "☀️ Light";
-
-    // Trigger confetti
     setTimeout(spawnConfetti, 400);
   }
+}
+
+function skipOnboarding() {
+  // Set sensible defaults
+  selectedSites = ["youtube.com", "instagram.com", "x.com", "tiktok.com", "reddit.com"];
+  dailyGoal = 4;
+  focusDuration = 25;
+  selectedTheme = "dark";
+  completeOnboarding();
 }
 
 function spawnConfetti() {
@@ -165,6 +190,8 @@ async function completeOnboarding() {
         blockedSites: selectedSites,
       },
     });
+    
+    await chrome.storage.local.set({ focusguard_onboarded: true });
   } catch (e) {
     console.error("Onboarding save error:", e);
   }
