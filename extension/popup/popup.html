@@ -90,6 +90,22 @@
       </div>
     </div>
 
+    <!-- Daily Goal Progress -->
+    <div class="goal-progress glass-card fade-up delay-1" id="goal-section">
+      <div class="goal-header">
+        <span class="goal-icon">🎯</span>
+        <span class="goal-title">Daily Goal</span>
+        <span class="goal-streak-badge" id="goal-streak">0 day streak</span>
+      </div>
+      <div class="goal-bar-wrap">
+        <div class="goal-bar-fill" id="goal-bar" style="width:0%"></div>
+      </div>
+      <div class="goal-meta">
+        <span id="goal-progress-text">0h / 4h focused</span>
+        <span id="goal-pct">0%</span>
+      </div>
+    </div>
+
     <!-- Insight Card -->
     <div class="insight-card glass-card fade-up delay-2" id="insight-card">
       <span class="insight-icon" id="insight-icon">💡</span>
@@ -100,6 +116,10 @@
     <section class="section fade-up delay-3">
       <h2 class="section-title">Focus Mode</h2>
       <div id="focus-inactive" class="focus-controls">
+        <!-- Task input -->
+        <div class="focus-task-input">
+          <input type="text" id="focus-tasks" class="input" placeholder="Tasks (comma separated)..." />
+        </div>
         <div class="duration-selector">
           <div class="dur-track">
             <div class="dur-highlight" id="dur-highlight"></div>
@@ -123,6 +143,12 @@
           </svg>
           <div class="focus-timer" id="focus-timer">25:00</div>
         </div>
+        <!-- Task checklist during focus -->
+        <div class="focus-tasks-list" id="focus-tasks-list"></div>
+        <div class="focus-session-meta">
+          <span class="pomodoro-count" id="pomodoro-count">🍅 0</span>
+          <span class="focus-status-label" id="focus-status-label">Focusing</span>
+        </div>
         <div class="focus-actions">
           <button id="btn-pause-focus" class="btn-focus-action">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg>
@@ -137,7 +163,12 @@
     <!-- Top Sites -->
     <section class="section fade-up delay-4">
       <h2 class="section-title">Top Sites</h2>
-      <div id="domain-bars" class="domain-bars"></div>
+      <div id="domain-bars" class="domain-bars">
+        <!-- Skeleton loading -->
+        <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:60%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:80%;border-radius:2px;"></div></div></div>
+        <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:45%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:55%;border-radius:2px;"></div></div></div>
+        <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:35%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:40%;border-radius:2px;"></div></div></div>
+      </div>
     </section>
 
     <!-- Quick Actions -->
@@ -150,6 +181,13 @@
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 11V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5 11V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M11 11V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         Dashboard
       </button>
+    </div>
+
+    <!-- Keyboard Shortcuts Hint -->
+    <div class="shortcuts-hint fade-up delay-6">
+      <span class="shortcut-key">Alt+Shift+F</span> Focus
+      <span class="shortcut-sep">·</span>
+      <span class="shortcut-key">Alt+Shift+B</span> Block
     </div>
   </div>
 

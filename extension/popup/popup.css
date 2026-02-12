@@ -1,7 +1,7 @@
-/* popup.css — Premium Command Center V2 */
+/* popup.css — FocusGuard V3 Premium Command Center */
 
 body {
-  width: 360px;
+  width: 380px;
   min-height: 480px;
   margin: 0;
   overflow-x: hidden;
@@ -123,6 +123,21 @@ body {
   padding: var(--sp-5) var(--sp-4);
   gap: var(--sp-4);
   background: var(--gradient-glass);
+  border: 1px solid var(--bg-glass-border);
+  position: relative;
+  overflow: hidden;
+}
+.score-hero::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--radius-lg);
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(91,140,255,0.2), rgba(124,106,255,0.15), rgba(52,211,153,0.1));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 .score-ring-container {
   position: relative;
@@ -147,7 +162,7 @@ body {
   stroke: url(#scoreGrad);
   stroke-width: 6;
   stroke-linecap: round;
-  transition: stroke-dashoffset 1s var(--ease-out);
+  transition: stroke-dashoffset 1.2s var(--ease-out);
 }
 .score-inner {
   position: absolute;
@@ -164,6 +179,7 @@ body {
   font-weight: 800;
   line-height: 1;
   letter-spacing: -1px;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 .score-label {
@@ -214,7 +230,64 @@ body {
   font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+}
+
+/* ─── Goal Progress ─── */
+.goal-progress {
+  padding: var(--sp-3) var(--sp-4);
+}
+.goal-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+.goal-icon { font-size: 14px; }
+.goal-title {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.goal-streak-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--warning);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(251,191,36,0.1);
+}
+.goal-bar-wrap {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: var(--sp-1);
+}
+[data-theme="light"] .goal-bar-wrap {
+  background: rgba(0, 0, 0, 0.04);
+}
+.goal-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gradient-primary);
+  transition: width 0.8s var(--ease-out);
+}
+.goal-bar-fill.goal-complete {
+  background: var(--gradient-success);
+}
+.goal-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+#goal-pct {
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--font-mono);
 }
 
 /* ─── Insight Card ─── */
@@ -252,6 +325,16 @@ body {
   letter-spacing: 1px;
 }
 
+/* ─── Focus Task Input ─── */
+.focus-task-input {
+  margin-bottom: var(--sp-2);
+}
+.focus-task-input .input {
+  width: 100%;
+  font-size: 12px;
+  padding: var(--sp-2) var(--sp-3);
+}
+
 /* ─── Duration Selector ─── */
 .focus-controls { text-align: center; }
 
@@ -287,7 +370,7 @@ body {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -308,7 +391,7 @@ body {
   border-radius: var(--radius-md);
   background: var(--gradient-primary);
   color: #fff;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -359,10 +442,58 @@ body {
   transform: translate(-50%, -50%);
   font-size: 22px;
   font-weight: 700;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   color: var(--accent);
   text-shadow: 0 0 20px var(--accent-glow);
 }
+
+/* Focus Tasks List */
+.focus-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--sp-2);
+  text-align: left;
+}
+.focus-task-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px 0;
+}
+.focus-task-item input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.focus-task-item input:checked + span {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Focus Session Meta */
+.focus-session-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-2);
+  font-size: 11px;
+}
+.pomodoro-count {
+  font-weight: 700;
+  color: var(--danger);
+}
+.focus-status-label {
+  font-weight: 600;
+  color: var(--accent);
+}
+
 .focus-actions {
   display: flex;
   gap: var(--sp-2);
@@ -432,6 +563,11 @@ body {
   flex: 1;
   min-width: 0;
 }
+.domain-name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 .domain-name {
   font-size: 12px;
   font-weight: 600;
@@ -439,7 +575,10 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: block;
+}
+.domain-cat-icon {
+  font-size: 10px;
+  flex-shrink: 0;
 }
 .domain-bar-track {
   height: 4px;
@@ -460,8 +599,17 @@ body {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
+}
+
+/* Skeleton loading rows */
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
 }
 
 /* ─── Quick Actions ─── */
@@ -480,7 +628,7 @@ body {
   background: var(--bg-glass);
   border: 1px solid var(--bg-glass-border);
   color: var(--text-secondary);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -497,6 +645,33 @@ body {
   background: var(--danger-dim);
   border-color: rgba(248, 113, 113, 0.2);
   color: var(--danger);
+}
+
+/* ─── Keyboard Shortcuts Hint ─── */
+.shortcuts-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 9px;
+  color: var(--text-muted);
+  padding-top: var(--sp-1);
+}
+.shortcut-key {
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--bg-glass-border);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+[data-theme="light"] .shortcut-key {
+  background: rgba(0,0,0,0.04);
+}
+.shortcut-sep {
+  color: var(--bg-glass-border-hover);
 }
 
 /* ─── Empty State ─── */

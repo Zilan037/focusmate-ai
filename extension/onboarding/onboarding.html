@@ -16,6 +16,15 @@
     <div class="ob-orb ob-orb-2"></div>
   </div>
   <div class="onboarding">
+    <!-- Progress bar -->
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div class="progress-info">
+      <span class="progress-step" id="progress-step">Step 1 of 6</span>
+      <span class="progress-pct" id="progress-pct">0%</span>
+    </div>
+
     <!-- Step Indicator -->
     <div class="step-dots">
       <div class="step-dot active" data-step="0"></div>
@@ -40,13 +49,19 @@
           <h1 class="text-gradient">Welcome to FocusGuard</h1>
           <p class="welcome-sub">Your Behavioral Productivity OS</p>
           <p class="welcome-desc">Track browsing habits, block distractions, and build deep focus — all from your browser.</p>
-          <button class="btn-primary btn-lg" onclick="nextStep()">Get Started</button>
+          <div class="step-buttons">
+            <button class="btn-primary btn-lg" onclick="nextStep()">Get Started</button>
+            <button class="btn-ghost btn-sm" onclick="skipOnboarding()">Skip Setup</button>
+          </div>
         </div>
       </div>
 
       <!-- Step 2: Select Distracting Sites -->
       <div class="step" data-step="1">
         <div class="step-content">
+          <div class="step-illustration">
+            <div class="illust-shield">🛡️</div>
+          </div>
           <h2>Select Distracting Sites</h2>
           <p class="step-desc">Choose sites you want to block during focus sessions.</p>
           <div class="sites-grid" id="sites-grid"></div>
@@ -61,6 +76,9 @@
       <!-- Step 3: Daily Goal -->
       <div class="step" data-step="2">
         <div class="step-content">
+          <div class="step-illustration">
+            <div class="illust-target">🎯</div>
+          </div>
           <h2>Set Your Daily Goal</h2>
           <p class="step-desc">How many hours of focused work per day?</p>
           <div class="goal-display">
@@ -81,6 +99,9 @@
       <!-- Step 4: Focus Duration -->
       <div class="step" data-step="3">
         <div class="step-content">
+          <div class="step-illustration">
+            <div class="illust-timer">⏱️</div>
+          </div>
           <h2>Choose Focus Duration</h2>
           <p class="step-desc">Your default focus session length.</p>
           <div class="focus-options">

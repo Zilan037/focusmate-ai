@@ -50,6 +50,12 @@
     </div>
     <p class="blocked-reason fade-up delay-2" id="blocked-reason">This site is on your block list.</p>
 
+    <!-- Resist Counter -->
+    <div class="resist-counter fade-up delay-2" id="resist-counter">
+      <span class="resist-icon">💪</span>
+      <span class="resist-text">You've resisted <strong id="resist-count">0</strong> sites today</span>
+    </div>
+
     <!-- Time on page -->
     <div class="time-on-page fade-up delay-2">
       <span class="time-on-page-label">Time on this page:</span>
@@ -67,50 +73,53 @@
       🫁 Take a Breath
     </button>
 
-    <!-- Unlock Requirements -->
-    <div class="unlock-card glass-card fade-up delay-3">
-      <h2 class="unlock-title">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="2" stroke="#5B8CFF" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0v2" stroke="#5B8CFF" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Unlock Requirements
-      </h2>
-      <div class="unlock-reqs">
-        <div class="req-item" id="req-focus">
-          <div class="req-header">
-            <span class="req-icon">⏱</span>
-            <span class="req-label">Focus time</span>
-            <span class="req-status" id="req-focus-status">0/10 min</span>
+    <!-- Unlock Requirements (collapsible) -->
+    <div class="unlock-section fade-up delay-3">
+      <button class="unlock-reveal-btn" id="btn-reveal-unlock">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        I need to access this site
+      </button>
+      <div class="unlock-card glass-card" id="unlock-card" style="display:none;">
+        <h2 class="unlock-title">Unlock Requirements</h2>
+        <div class="unlock-reqs">
+          <div class="req-item" id="req-focus">
+            <div class="req-header">
+              <span class="req-icon">⏱</span>
+              <span class="req-label">Focus time</span>
+              <span class="req-status" id="req-focus-status">0/10 min</span>
+            </div>
+            <div class="req-track"><div class="req-fill req-fill-accent" id="req-focus-bar" style="width:0%"></div></div>
           </div>
-          <div class="req-track"><div class="req-fill req-fill-accent" id="req-focus-bar" style="width:0%"></div></div>
-        </div>
-        <div class="req-item" id="req-tasks">
-          <div class="req-header">
-            <span class="req-icon">✓</span>
-            <span class="req-label">Tasks completed</span>
-            <span class="req-status" id="req-tasks-status">0/2</span>
+          <div class="req-item" id="req-tasks">
+            <div class="req-header">
+              <span class="req-icon">✓</span>
+              <span class="req-label">Tasks completed</span>
+              <span class="req-status" id="req-tasks-status">0/2</span>
+            </div>
+            <div class="req-track"><div class="req-fill req-fill-success" id="req-tasks-bar" style="width:0%"></div></div>
           </div>
-          <div class="req-track"><div class="req-fill req-fill-success" id="req-tasks-bar" style="width:0%"></div></div>
-        </div>
-        <div class="req-item" id="req-interruptions">
-          <div class="req-header">
-            <span class="req-icon">🔕</span>
-            <span class="req-label">Interruptions</span>
-            <span class="req-status" id="req-int-status">0 (max 3)</span>
+          <div class="req-item" id="req-interruptions">
+            <div class="req-header">
+              <span class="req-icon">🔕</span>
+              <span class="req-label">Interruptions</span>
+              <span class="req-status" id="req-int-status">0 (max 3)</span>
+            </div>
+            <div class="req-track"><div class="req-fill req-fill-accent" id="req-int-bar" style="width:100%"></div></div>
           </div>
-          <div class="req-track"><div class="req-fill req-fill-accent" id="req-int-bar" style="width:100%"></div></div>
         </div>
-      </div>
 
-      <div id="unlock-success" class="unlock-success" style="display:none;">
-        <div class="success-burst" id="success-burst"></div>
-        <h3 class="success-text">Requirements Met!</h3>
-        <button id="btn-unlock" class="btn-unlock">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-          Access Site
-        </button>
+        <div id="unlock-success" class="unlock-success" style="display:none;">
+          <div class="success-burst" id="success-burst"></div>
+          <h3 class="success-text">Requirements Met!</h3>
+          <button id="btn-unlock" class="btn-unlock">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 016 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Access Site
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Override -->
+    <!-- Override (collapsible, hidden by default) -->
     <div class="override-section fade-up delay-4">
       <details>
         <summary class="override-toggle">Override (not recommended)</summary>

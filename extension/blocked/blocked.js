@@ -1,4 +1,4 @@
-// blocked.js — Premium block page logic V2
+// blocked.js — FocusGuard V3 Premium block page
 
 const quotes = [
   { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
@@ -52,11 +52,15 @@ function init() {
     document.getElementById("time-on-page").textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
   }, 1000);
 
+  // Resist counter
+  loadResistCount();
+
   checkRequirements();
   setInterval(checkRequirements, 5000);
 
   setupOverride(domain);
   setupBreathing();
+  setupUnlockReveal();
 
   document.getElementById("btn-go-back").addEventListener("click", () => {
     if (history.length > 1) {
@@ -77,6 +81,35 @@ function showQuote(index) {
   const q = quotes[index];
   document.getElementById("quote-text").textContent = `"${q.text}"`;
   document.getElementById("quote-author").textContent = `— ${q.author}`;
+}
+
+// ─── Resist Counter ───
+async function loadResistCount() {
+  try {
+    const result = await chrome.storage.local.get("focusguard_resist_count");
+    const data = result.focusguard_resist_count || {};
+    const today = new Date().toISOString().split("T")[0];
+    const count = data[today] || 0;
+    document.getElementById("resist-count").textContent = count;
+    
+    // Increment
+    data[today] = count + 1;
+    await chrome.storage.local.set({ focusguard_resist_count: data });
+    document.getElementById("resist-count").textContent = data[today];
+  } catch (e) {}
+}
+
+// ─── Unlock Reveal ───
+function setupUnlockReveal() {
+  const btn = document.getElementById("btn-reveal-unlock");
+  const card = document.getElementById("unlock-card");
+  btn.addEventListener("click", () => {
+    if (card.style.display === "none") {
+      card.style.display = "block";
+      card.classList.add("scale-in");
+      btn.style.display = "none";
+    }
+  });
 }
 
 // ─── Breathing Exercise ───

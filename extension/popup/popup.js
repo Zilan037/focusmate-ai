@@ -1,4 +1,4 @@
-// popup.js — Premium extension popup logic V2
+// popup.js — FocusGuard V3 Premium popup
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -6,6 +6,7 @@ let selectedDuration = 25;
 
 async function init() {
   await loadStats();
+  await loadGoalProgress();
   await loadInsight();
   setupListeners();
   await checkFocusState();
@@ -97,6 +98,24 @@ async function loadStats() {
   }
 }
 
+// ─── Goal Progress ───
+async function loadGoalProgress() {
+  try {
+    const goalData = await chrome.runtime.sendMessage({ action: "getGoalProgress" });
+    if (goalData) {
+      const pct = Math.min(100, Math.round((goalData.current / goalData.goal) * 100));
+      document.getElementById("goal-bar").style.width = pct + "%";
+      document.getElementById("goal-progress-text").textContent = `${formatTime(goalData.current * 60)} / ${goalData.goal}h focused`;
+      document.getElementById("goal-pct").textContent = pct + "%";
+      document.getElementById("goal-streak").textContent = (goalData.streak || 0) + " day streak";
+      
+      if (pct >= 100) {
+        document.getElementById("goal-bar").classList.add("goal-complete");
+      }
+    }
+  } catch (e) {}
+}
+
 // ─── Load Insight ───
 async function loadInsight() {
   try {
@@ -124,15 +143,16 @@ function renderDomainBars(domains) {
 
   const maxTime = sorted[0][1].time || 1;
 
-  sorted.forEach(([domain, info]) => {
+  sorted.forEach(([domain, info], i) => {
     const pct = Math.round(((info.time || 0) / maxTime) * 100);
     const color = Categories.getCategoryColor(info.category || "Other");
     const mins = Math.round(info.time || 0);
+    const catIcon = Categories.getCategoryIcon ? Categories.getCategoryIcon(info.category || "Other") : "🌐";
 
     const bar = document.createElement("div");
-    bar.className = "domain-bar";
+    bar.className = "domain-bar fade-up";
+    bar.style.animationDelay = `${i * 60}ms`;
     
-    // Try favicon first, fallback to letter
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
     const letter = domain.charAt(0).toUpperCase();
     
@@ -141,7 +161,10 @@ function renderDomainBars(domains) {
         <img src="${faviconUrl}" onerror="this.style.display='none';this.parentElement.textContent='${letter}'" />
       </div>
       <div class="domain-info">
-        <span class="domain-name">${domain}</span>
+        <div class="domain-name-row">
+          <span class="domain-name">${domain}</span>
+          <span class="domain-cat-icon" title="${info.category || 'Other'}">${catIcon}</span>
+        </div>
         <div class="domain-bar-track">
           <div class="domain-bar-fill" style="width:${pct}%;background:${color};"></div>
         </div>
@@ -180,7 +203,9 @@ function setupListeners() {
   });
 
   document.getElementById("btn-start-focus").addEventListener("click", async () => {
-    await chrome.runtime.sendMessage({ action: "startFocus", duration: selectedDuration, tasks: [] });
+    const taskInput = document.getElementById("focus-tasks");
+    const tasks = taskInput.value.trim() ? taskInput.value.split(",").map(t => t.trim()).filter(Boolean) : [];
+    await chrome.runtime.sendMessage({ action: "startFocus", duration: selectedDuration, tasks });
     await checkFocusState();
   });
 
@@ -236,6 +261,39 @@ async function checkFocusState() {
     const pct = state.duration > 0 ? state.remaining / state.duration : 0;
     const offset = 264 * (1 - pct);
     ring.style.strokeDashoffset = offset;
+
+    // Status label
+    const statusLabel = document.getElementById("focus-status-label");
+    if (state.paused) {
+      statusLabel.textContent = "Paused";
+      statusLabel.style.color = "var(--warning)";
+    } else if (state.onBreak) {
+      statusLabel.textContent = "On Break";
+      statusLabel.style.color = "var(--success)";
+    } else {
+      statusLabel.textContent = "Focusing";
+      statusLabel.style.color = "var(--accent)";
+    }
+
+    // Pomodoro count
+    const pomodoroEl = document.getElementById("pomodoro-count");
+    pomodoroEl.textContent = `🍅 ${state.pomodoroCount || 0}`;
+
+    // Task checklist
+    const tasksList = document.getElementById("focus-tasks-list");
+    tasksList.innerHTML = "";
+    if (state.tasks && state.tasks.length > 0) {
+      state.tasks.forEach((task, i) => {
+        const item = document.createElement("label");
+        item.className = "focus-task-item";
+        const checked = task.completed ? "checked" : "";
+        item.innerHTML = `<input type="checkbox" ${checked} data-index="${i}" /><span>${task.name || task}</span>`;
+        item.querySelector("input").addEventListener("change", async (e) => {
+          await chrome.runtime.sendMessage({ action: "toggleFocusTask", index: i, completed: e.target.checked });
+        });
+        tasksList.appendChild(item);
+      });
+    }
 
     const pauseBtn = document.getElementById("btn-pause-focus");
     if (state.paused) {

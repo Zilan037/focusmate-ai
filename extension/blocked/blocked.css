@@ -1,4 +1,4 @@
-/* blocked.css — Cinematic intervention screen V2 */
+/* blocked.css — FocusGuard V3 Cinematic Block Page */
 
 body {
   min-height: 100vh;
@@ -107,13 +107,34 @@ body {
   font-size: 14px;
   font-weight: 600;
   color: var(--danger);
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-family: var(--font-mono);
 }
 
 .blocked-reason {
   font-size: 14px;
   color: var(--text-secondary);
   margin: 0;
+}
+
+/* Resist Counter */
+.resist-counter {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-pill);
+  background: var(--success-dim);
+  border: 1px solid rgba(52,211,153,0.15);
+}
+.resist-icon { font-size: 16px; }
+.resist-text {
+  font-size: 12px;
+  color: var(--success);
+  font-weight: 500;
+}
+.resist-text strong {
+  font-weight: 800;
+  font-family: var(--font-mono);
 }
 
 /* Time on page */
@@ -127,6 +148,7 @@ body {
 .time-on-page-value {
   font-weight: 700;
   color: var(--text-secondary);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -150,10 +172,36 @@ body {
   color: var(--text-muted);
 }
 
+/* Unlock Section */
+.unlock-section { width: 100%; }
+.unlock-reveal-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-3);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.unlock-reveal-btn:hover {
+  background: var(--bg-glass);
+  color: var(--text-secondary);
+  border-color: var(--bg-glass-border-hover);
+}
+
 /* Unlock Card */
 .unlock-card {
   width: 100%;
   text-align: left;
+  margin-top: var(--sp-3);
 }
 .unlock-title {
   display: flex;
@@ -194,6 +242,7 @@ body {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   transition: color 0.3s;
 }
@@ -267,7 +316,7 @@ body {
   background: var(--gradient-success);
   border: none;
   color: #fff;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -350,7 +399,7 @@ body {
   background: var(--danger-dim);
   border: 1px solid rgba(248, 113, 113, 0.15);
   color: var(--danger);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
