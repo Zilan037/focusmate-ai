@@ -1,4 +1,4 @@
-// onboarding.js — FocusGuard V3 Premium onboarding
+// onboarding.js — FocusGuard V3 Premium onboarding (CSP-safe)
 
 const COMMON_SITES = [
   { name: "YouTube", icon: "📺", domain: "youtube.com" },
@@ -20,20 +20,55 @@ let focusDuration = 25;
 let selectedTheme = "dark";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Check if already completed
   try {
     const result = await chrome.storage.local.get("focusguard_onboarded");
     if (result.focusguard_onboarded) {
-      // Show welcome back
       document.querySelector('.step[data-step="0"] h1').textContent = "Welcome Back!";
       document.querySelector('.welcome-desc').textContent = "Your settings are already configured. Want to update them?";
     }
   } catch (e) {}
-  
+
   renderSitesGrid();
   setupGoalSlider();
   updateProgress();
+  bindEventListeners();
 });
+
+function bindEventListeners() {
+  // Step 0
+  document.getElementById("btn-get-started").addEventListener("click", nextStep);
+  document.getElementById("btn-skip").addEventListener("click", skipOnboarding);
+
+  // Step 1
+  document.getElementById("btn-add-custom").addEventListener("click", addCustomSite);
+  document.getElementById("btn-step1-next").addEventListener("click", nextStep);
+
+  // Step 2
+  document.getElementById("btn-step2-next").addEventListener("click", nextStep);
+
+  // Step 3 - focus duration options
+  document.querySelectorAll("#focus-options .focus-option").forEach((el) => {
+    el.addEventListener("click", () => selectDuration(el));
+  });
+  document.getElementById("btn-step3-next").addEventListener("click", nextStep);
+
+  // Step 4 - theme cards
+  document.getElementById("theme-dark-card").addEventListener("click", function () {
+    selectTheme("dark", this);
+  });
+  document.getElementById("theme-light-card").addEventListener("click", function () {
+    selectTheme("light", this);
+  });
+  document.getElementById("btn-step4-next").addEventListener("click", nextStep);
+
+  // Step 5
+  document.getElementById("btn-complete").addEventListener("click", completeOnboarding);
+
+  // Custom site enter key
+  document.getElementById("custom-site").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") addCustomSite();
+  });
+}
 
 function updateProgress() {
   const pct = Math.round((currentStep / (totalSteps - 1)) * 100);
@@ -95,11 +130,11 @@ function setupGoalSlider() {
   const slider = document.getElementById("goal-slider");
   const display = document.getElementById("goal-number");
   const labels = document.querySelectorAll(".goal-label-item");
-  
+
   slider.addEventListener("input", () => {
     dailyGoal = parseInt(slider.value);
     display.textContent = dailyGoal;
-    
+
     labels.forEach((l, i) => {
       if ((dailyGoal <= 3 && i === 0) || (dailyGoal <= 5 && dailyGoal > 3 && i === 1) || (dailyGoal > 5 && i === 2)) {
         l.style.color = "var(--accent)";
@@ -120,12 +155,12 @@ function selectDuration(el) {
 
 function selectTheme(theme, el) {
   selectedTheme = theme;
-  document.querySelectorAll(".theme-preview-card").forEach(c => c.classList.remove("selected"));
+  document.querySelectorAll(".theme-preview-card").forEach((c) => c.classList.remove("selected"));
   el.classList.add("selected");
   document.documentElement.setAttribute("data-theme", theme);
   try {
     chrome.runtime.sendMessage({ action: "setTheme", theme });
-  } catch(e) {}
+  } catch (e) {}
 }
 
 function nextStep() {
@@ -135,7 +170,6 @@ function nextStep() {
   currentStep++;
 
   document.querySelector(`.step-dot[data-step="${currentStep}"]`).classList.add("active");
-
   document.querySelectorAll(".step").forEach((s) => s.classList.remove("active"));
   document.querySelector(`.step[data-step="${currentStep}"]`).classList.add("active");
 
@@ -151,7 +185,6 @@ function nextStep() {
 }
 
 function skipOnboarding() {
-  // Set sensible defaults
   selectedSites = ["youtube.com", "instagram.com", "x.com", "tiktok.com", "reddit.com"];
   dailyGoal = 4;
   focusDuration = 25;
@@ -162,7 +195,7 @@ function skipOnboarding() {
 function spawnConfetti() {
   const container = document.getElementById("confetti-container");
   const colors = ["#5B8CFF", "#7C6AFF", "#34D399", "#FBBF24", "#F87171"];
-  
+
   for (let i = 0; i < 20; i++) {
     const piece = document.createElement("div");
     piece.className = "confetti-piece";
@@ -190,7 +223,7 @@ async function completeOnboarding() {
         blockedSites: selectedSites,
       },
     });
-    
+
     await chrome.storage.local.set({ focusguard_onboarded: true });
   } catch (e) {
     console.error("Onboarding save error:", e);

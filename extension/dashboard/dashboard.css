@@ -92,11 +92,27 @@ body {
 .dashboard-layout.collapsed .sidebar-brand,
 .dashboard-layout.collapsed .nav-label,
 .dashboard-layout.collapsed .nav-group-label,
-.dashboard-layout.collapsed .sidebar-goal-card {
+.dashboard-layout.collapsed .sidebar-goal-card,
+.dashboard-layout.collapsed .sidebar-subtitle {
   opacity: 0;
   width: 0;
   overflow: hidden;
   white-space: nowrap;
+}
+.dashboard-layout.collapsed .sidebar-header {
+  justify-content: center;
+  padding: 0;
+}
+.dashboard-layout.collapsed .sidebar-logo-block {
+  width: 32px;
+  height: 32px;
+}
+.dashboard-layout.collapsed .sidebar-collapse-btn {
+  margin: var(--sp-2) auto 0;
+}
+.dashboard-layout.collapsed .nav-item {
+  justify-content: center;
+  padding: 10px;
 }
 
 .sidebar-collapse-btn {
