@@ -50,10 +50,63 @@ const CategoryPatterns = {
     "wish.com", "shein.com", "zappos.com", "wayfair.com",
     "costco.com", "ikea.com", "homedepot.com", "lowes.com",
   ],
+  Adult: [
+    "pornhub.com", "xvideos.com", "xnxx.com", "xhamster.com", "redtube.com",
+    "youporn.com", "tube8.com", "spankbang.com", "eporner.com", "beeg.com",
+    "brazzers.com", "chaturbate.com", "livejasmin.com", "stripchat.com",
+    "bongacams.com", "cam4.com", "myfreecams.com", "onlyfans.com",
+    "fansly.com", "manyvids.com", "clips4sale.com",
+    "porntrex.com", "hqporner.com", "daftsex.com", "4tube.com",
+    "tnaflix.com", "drtuber.com", "txxx.com", "hclips.com",
+    "pornone.com", "fuq.com", "youjizz.com", "motherless.com",
+    "rule34.xxx", "e-hentai.org", "nhentai.net", "hanime.tv",
+    "8muses.com", "literotica.com", "nifty.org",
+  ],
+  Gambling: [
+    "bet365.com", "draftkings.com", "fanduel.com", "betmgm.com",
+    "caesars.com", "pointsbet.com", "bovada.lv", "betonline.ag",
+    "pokerstars.com", "888poker.com", "partypoker.com", "wsop.com",
+    "betway.com", "williamhill.com", "ladbrokes.com", "paddypower.com",
+    "bwin.com", "unibet.com", "betfair.com", "pinnacle.com",
+    "1xbet.com", "22bet.com", "stake.com", "roobet.com",
+    "casumo.com", "leovegas.com", "betsson.com", "mrgreen.com",
+    "jackpotcity.com", "spinpalace.com", "royalvegas.com",
+    "slotomania.com", "doubledown.com", "bitstarz.com",
+    "fortunejack.com", "cloudbet.com", "sportsbet.io",
+    "mybookie.ag", "sportsbetting.ag", "betrivers.com",
+  ],
   Neutral: [
     "google.com", "bing.com", "duckduckgo.com", "yahoo.com",
     "weather.com", "maps.google.com", "translate.google.com",
     "stackoverflow.com",
+  ],
+};
+
+// Default distraction domain lists for quick-add
+const DistractionDefaults = {
+  "Social Media": [
+    "facebook.com", "instagram.com", "twitter.com", "x.com", "tiktok.com",
+    "snapchat.com", "reddit.com", "discord.com", "threads.net", "pinterest.com",
+    "tumblr.com", "bsky.app",
+  ],
+  Entertainment: [
+    "youtube.com", "netflix.com", "twitch.tv", "hulu.com", "disneyplus.com",
+    "spotify.com", "9gag.com", "imgur.com", "buzzfeed.com", "dailymotion.com",
+    "tubi.tv", "soundcloud.com",
+  ],
+  Shopping: [
+    "amazon.com", "ebay.com", "walmart.com", "etsy.com", "aliexpress.com",
+    "shein.com", "wish.com", "wayfair.com",
+  ],
+  Adult: [
+    "pornhub.com", "xvideos.com", "xnxx.com", "xhamster.com", "redtube.com",
+    "onlyfans.com", "chaturbate.com", "stripchat.com", "livejasmin.com",
+    "fansly.com", "spankbang.com", "youporn.com",
+  ],
+  Gambling: [
+    "bet365.com", "draftkings.com", "fanduel.com", "betmgm.com",
+    "pokerstars.com", "stake.com", "roobet.com", "bovada.lv",
+    "1xbet.com", "22bet.com", "betway.com", "casumo.com",
   ],
 };
 
@@ -80,12 +133,15 @@ const Categories = {
     }
 
     // Keyword-based fallback
+    if (/porn|xxx|nsfw|hentai|adult|sex|nude|naked|erotic|fetish|cam(girl|boy|show)|livecam|18\+/i.test(clean)) return "Adult";
+    if (/bet|casino|gambl|poker|slots?|jackpot|wager|bookie|sportsbook|lottery|lotto|roulette|blackjack/i.test(clean)) return "Gambling";
     if (/edu|learn|course|study|school|university|college|tutor|academy/i.test(clean)) return "Education";
     if (/news|journal|times|post|tribune|herald|gazette/i.test(clean)) return "News";
     if (/shop|store|buy|deal|market|mall|cart|checkout/i.test(clean)) return "Shopping";
     if (/game|play|stream|watch|video|movie|music|listen|anime/i.test(clean)) return "Entertainment";
     if (/social|chat|meet|friend|connect|community|forum/i.test(clean)) return "Social Media";
     if (/work|project|task|manage|team|office|doc|code|dev|api|deploy/i.test(clean)) return "Work";
+    if (/scam|phish|spam|malware|trojan|virus|hack/i.test(clean)) return "Adult"; // Treat scam sites as blocked too
 
     return "Other";
   },
@@ -96,6 +152,10 @@ const Categories = {
 
   isDistraction(category) {
     return ["Social Media", "Entertainment", "Shopping"].includes(category);
+  },
+
+  isDangerous(category) {
+    return ["Adult", "Gambling"].includes(category);
   },
 
   isNeutral(category) {
@@ -110,6 +170,8 @@ const Categories = {
       "Social Media": "#ef4444",
       News: "#6366f1",
       Shopping: "#ec4899",
+      Adult: "#dc2626",
+      Gambling: "#b91c1c",
       Neutral: "#94a3b8",
       Other: "#6b7280",
     };
@@ -124,6 +186,8 @@ const Categories = {
       "Social Media": "💬",
       News: "📰",
       Shopping: "🛒",
+      Adult: "🔞",
+      Gambling: "🎰",
       Neutral: "🔘",
       Other: "🌐",
     };
@@ -131,10 +195,15 @@ const Categories = {
   },
 
   getAllCategories() {
-    return ["Work", "Education", "Entertainment", "Social Media", "News", "Shopping", "Neutral", "Other"];
+    return ["Work", "Education", "Entertainment", "Social Media", "News", "Shopping", "Adult", "Gambling", "Neutral", "Other"];
+  },
+
+  getDistractionDefaults() {
+    return DistractionDefaults;
   },
 };
 
 if (typeof globalThis !== "undefined") {
   globalThis.Categories = Categories;
+  globalThis.DistractionDefaults = DistractionDefaults;
 }

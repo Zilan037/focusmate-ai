@@ -428,14 +428,56 @@
             </div>
           </div>
 
-          <div class="premium-card blocklist-add fade-up" style="border-radius:28px;">
+          <!-- Safety Mode Toggle -->
+          <div class="premium-card fade-up" style="padding:24px 32px;border-radius:28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <h3 class="settings-group-title" style="margin-bottom:2px;">🛡️ Strict Safety Mode</h3>
+              <p class="settings-group-desc" style="margin-bottom:0;">Automatically blocks Adult (18+), Gambling, Scam & Spam sites at all times.</p>
+            </div>
+            <div class="toggle active" id="toggle-strict-safety"></div>
+          </div>
+
+          <!-- Quick Add Categories -->
+          <div class="premium-card fade-up delay-1" style="padding:32px;border-radius:28px;margin-bottom:20px;">
+            <h3 class="settings-group-title">⚡ Quick Block Categories</h3>
+            <p class="settings-group-desc">One-click block entire categories. Adds all default domains to your block list.</p>
+            <div class="quick-category-grid" id="quick-category-grid">
+              <button class="quick-cat-btn" data-category="Social Media">
+                <span class="quick-cat-icon">💬</span>
+                <span class="quick-cat-label">Social Media</span>
+                <span class="quick-cat-count">12 sites</span>
+              </button>
+              <button class="quick-cat-btn" data-category="Entertainment">
+                <span class="quick-cat-icon">🎬</span>
+                <span class="quick-cat-label">Entertainment</span>
+                <span class="quick-cat-count">12 sites</span>
+              </button>
+              <button class="quick-cat-btn" data-category="Shopping">
+                <span class="quick-cat-icon">🛒</span>
+                <span class="quick-cat-label">Shopping</span>
+                <span class="quick-cat-count">8 sites</span>
+              </button>
+              <button class="quick-cat-btn danger" data-category="Adult">
+                <span class="quick-cat-icon">🔞</span>
+                <span class="quick-cat-label">Adult (18+)</span>
+                <span class="quick-cat-count">12 sites</span>
+              </button>
+              <button class="quick-cat-btn danger" data-category="Gambling">
+                <span class="quick-cat-icon">🎰</span>
+                <span class="quick-cat-label">Gambling</span>
+                <span class="quick-cat-count">12 sites</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="premium-card blocklist-add fade-up delay-1" style="border-radius:28px;">
             <div class="input-row">
               <input type="text" id="input-block-domain" class="input" placeholder="e.g. instagram.com" style="flex:1;" />
               <button id="btn-add-block" class="btn-primary">+ Block</button>
             </div>
           </div>
 
-          <div class="blocklist-bulk fade-up delay-1">
+          <div class="blocklist-bulk fade-up delay-2">
             <span class="blocklist-count" id="blocklist-count">0 domains blocked</span>
             <div class="blocklist-bulk-actions">
               <input type="text" id="blocklist-search" class="input" placeholder="Filter..." style="width:180px;" />
@@ -446,7 +488,7 @@
 
           <div class="blocklist-items" id="blocklist-items"></div>
 
-          <div class="premium-card fade-up delay-2" style="margin-top:24px;padding:40px;border-radius:36px;">
+          <div class="premium-card fade-up delay-3" style="margin-top:24px;padding:40px;border-radius:36px;">
             <h3 class="settings-group-title">⏰ Scheduled Blocks</h3>
             <p class="settings-group-desc">Automatically block sites during specific times.</p>
             <div class="schedule-list" id="schedule-list"></div>
@@ -501,22 +543,23 @@
             </div>
 
             <!-- Block & Allow Sites -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
-              <div class="premium-card fade-up delay-2" style="padding:32px;border-radius:28px;">
-                <h3 class="settings-group-title" style="color:var(--danger);">🚫 Block Sites</h3>
-                <div id="focus-block-list" class="focus-site-pills"></div>
-                <div class="input-row" style="margin-top:12px;">
-                  <input type="text" id="focus-block-input" class="input" placeholder="e.g. tiktok.com" style="flex:1;" />
-                  <button id="btn-add-focus-block" class="btn-ghost btn-sm" style="color:var(--danger);border-color:rgba(244,63,94,0.2);">+ Block</button>
-                </div>
+            <div class="premium-card fade-up delay-2" style="padding:32px;border-radius:28px;margin-bottom:20px;background:rgba(244,63,94,0.03);border:1px solid rgba(244,63,94,0.08);">
+              <h3 class="settings-group-title" style="color:var(--danger);">🚫 Block Sites During Focus</h3>
+              <p class="settings-group-desc">These sites will be blocked while Focus Mode is active. Your existing block list is automatically included.</p>
+              <div id="focus-block-list" class="focus-site-pills"></div>
+              <div class="input-row" style="margin-top:12px;">
+                <input type="text" id="focus-block-input" class="input" placeholder="e.g. tiktok.com" style="flex:1;" />
+                <button id="btn-add-focus-block" class="btn-ghost btn-sm" style="color:var(--danger);border-color:rgba(244,63,94,0.2);">+ Block</button>
               </div>
-              <div class="premium-card fade-up delay-2" style="padding:32px;border-radius:28px;">
-                <h3 class="settings-group-title" style="color:var(--success);">🌐 Allow Only</h3>
-                <div id="focus-allow-list" class="focus-site-pills"></div>
-                <div class="input-row" style="margin-top:12px;">
-                  <input type="text" id="focus-allow-input" class="input" placeholder="e.g. notion.so" style="flex:1;" />
-                  <button id="btn-add-focus-allow" class="btn-ghost btn-sm" style="color:var(--success);border-color:rgba(16,185,129,0.2);">+ Allow</button>
-                </div>
+            </div>
+
+            <div class="premium-card fade-up delay-2" style="padding:32px;border-radius:28px;margin-bottom:20px;background:rgba(16,185,129,0.03);border:1px solid rgba(16,185,129,0.08);">
+              <h3 class="settings-group-title" style="color:var(--success);">🌐 Allow Only (Strict Whitelist)</h3>
+              <p class="settings-group-desc"><strong>⚠️ If you add ANY site here, ONLY these sites can be visited.</strong> Everything else will be blocked. Leave empty to use the block list above instead.</p>
+              <div id="focus-allow-list" class="focus-site-pills"></div>
+              <div class="input-row" style="margin-top:12px;">
+                <input type="text" id="focus-allow-input" class="input" placeholder="e.g. notion.so, docs.google.com" style="flex:1;" />
+                <button id="btn-add-focus-allow" class="btn-ghost btn-sm" style="color:var(--success);border-color:rgba(16,185,129,0.2);">+ Allow</button>
               </div>
             </div>
 
