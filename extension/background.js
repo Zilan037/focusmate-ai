@@ -1,4 +1,4 @@
-// background.js — Service worker: tracking engine, focus timer, blocking
+// background.js — Service worker V3: tracking, focus, blocking, notifications, shortcuts
 // Manifest V3 service worker — event-driven, no persistent state in memory
 
 importScripts("utils/storage.js", "utils/categories.js", "utils/scoring.js", "utils/insights.js");
@@ -183,22 +183,53 @@ async function recordDistractionLoop(domains) {
   chrome.action.setBadgeText({ text: "!" });
   chrome.action.setBadgeBackgroundColor({ color: "#ef4444" });
   setTimeout(() => chrome.action.setBadgeText({ text: "" }), 30000);
+
+  // Send notification if enabled
+  await sendNotification("distraction", "Distraction Loop Detected", "You're rapidly switching between distracting sites. Stay focused!");
+}
+
+// ─── Smart Notifications ───
+async function sendNotification(type, title, message) {
+  const settings = await Storage.getSettings();
+  const notifSettings = settings.notifications || {};
+  
+  if (type === "focus_complete" && notifSettings.focusComplete === false) return;
+  if (type === "daily_limit" && notifSettings.dailyLimit === false) return;
+  if (type === "distraction" && notifSettings.distractionLoop === false) return;
+
+  try {
+    chrome.notifications.create(`fg_${type}_${Date.now()}`, {
+      type: "basic",
+      iconUrl: "icons/icon128.png",
+      title,
+      message,
+      priority: 1,
+    });
+  } catch(e) {
+    console.log("[FocusGuard] Notification error:", e);
+  }
 }
 
 // ─── Blocking Engine ───
 async function checkBlocking(domain, tabId) {
   const settings = await Storage.getSettings();
 
-  if (settings.blockedDomains.includes(domain)) {
-    redirectToBlocked(tabId, domain, "Domain is on your block list");
-    return;
+  // Check individual blocked domains (with enabled check)
+  const blockedDomains = settings.blockedDomains || [];
+  for (const blocked of blockedDomains) {
+    const blockedDomain = typeof blocked === "object" ? blocked.domain : blocked;
+    const isEnabled = typeof blocked === "object" ? blocked.enabled !== false : true;
+    if (isEnabled && blockedDomain === domain) {
+      redirectToBlocked(tabId, domain, "Domain is on your block list");
+      return;
+    }
   }
 
   const now = new Date();
   const currentDay = now.getDay();
   const currentTime = now.getHours() * 60 + now.getMinutes();
 
-  for (const schedule of settings.scheduledBlocks) {
+  for (const schedule of (settings.scheduledBlocks || [])) {
     if (!schedule.days.includes(currentDay)) continue;
     const [startH, startM] = schedule.startTime.split(":").map(Number);
     const [endH, endM] = schedule.endTime.split(":").map(Number);
@@ -224,13 +255,19 @@ async function checkBlocking(domain, tabId) {
 
 async function checkDailyLimit(domain, totalMinutes, settings) {
   const limit = settings.dailyLimits[domain];
-  if (limit && totalMinutes >= limit) {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab && extractDomain(tab.url) === domain) {
-        redirectToBlocked(tab.id, domain, `Daily limit of ${limit} minutes reached`);
-      }
-    } catch (e) {}
+  if (limit) {
+    // 80% warning
+    if (totalMinutes >= limit * 0.8 && totalMinutes < limit) {
+      await sendNotification("daily_limit", "Daily Limit Warning", `You've used 80% of your ${limit}min limit for ${domain}`);
+    }
+    if (totalMinutes >= limit) {
+      try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab && extractDomain(tab.url) === domain) {
+          redirectToBlocked(tab.id, domain, `Daily limit of ${limit} minutes reached`);
+        }
+      } catch (e) {}
+    }
   }
 }
 
@@ -257,6 +294,21 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
   if (alarm.name === "session_tick") {
     await commitSession();
+  }
+  if (alarm.name === "break_tick") {
+    const breakState = await Storage.get("focusguard_break");
+    if (breakState && breakState.active) {
+      breakState.remaining -= 1;
+      if (breakState.remaining <= 0) {
+        await Storage.set("focusguard_break", { active: false, remaining: 0, type: null });
+        chrome.action.setBadgeText({ text: "" });
+        await sendNotification("focus_complete", "Break Complete", "Time to start your next focus session!");
+      } else {
+        await Storage.set("focusguard_break", breakState);
+        chrome.action.setBadgeText({ text: `☕${breakState.remaining}` });
+        chrome.action.setBadgeBackgroundColor({ color: "#34D399" });
+      }
+    }
   }
 });
 
@@ -310,8 +362,51 @@ async function completeFocusSession(state, status) {
 
   if (status === "completed") {
     await Storage.updateStreak();
+    await sendNotification("focus_complete", "Focus Session Complete! 🎯", `You completed ${elapsed} minutes of focused work.`);
+    
+    // Start break timer (Pomodoro)
+    const pomodoroCount = await Storage.get("focusguard_pomodoro_count") || 0;
+    const newCount = pomodoroCount + 1;
+    await Storage.set("focusguard_pomodoro_count", newCount);
+    
+    const breakDuration = (newCount % 4 === 0) ? 15 : 5;
+    const breakState = { active: true, remaining: breakDuration, type: newCount % 4 === 0 ? "long" : "short" };
+    await Storage.set("focusguard_break", breakState);
+    chrome.alarms.create("break_tick", { periodInMinutes: 1 });
+    chrome.action.setBadgeText({ text: `☕${breakDuration}` });
+    chrome.action.setBadgeBackgroundColor({ color: "#34D399" });
   }
 }
+
+// ─── Keyboard Shortcuts ───
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command === "toggle-focus") {
+    const state = await Storage.getFocusState();
+    if (state.active) {
+      await stopFocusMode();
+    } else {
+      const settings = await Storage.getSettings();
+      await startFocusMode(settings.focusDefaults.duration);
+    }
+  } else if (command === "block-current") {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && tab.url) {
+        const domain = extractDomain(tab.url);
+        if (domain) {
+          const settings = await Storage.getSettings();
+          const blockedDomains = settings.blockedDomains || [];
+          const isDomainStr = blockedDomains.some(b => (typeof b === "string" ? b : b.domain) === domain);
+          if (!isDomainStr) {
+            blockedDomains.push({ domain, enabled: true, addedAt: new Date().toISOString() });
+            settings.blockedDomains = blockedDomains;
+            await Storage.saveSettings(settings);
+          }
+        }
+      }
+    } catch(e) {}
+  }
+});
 
 // ─── Message Handler ───
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -378,8 +473,11 @@ async function handleMessage(msg) {
 
     case "blockDomain": {
       const settings = await Storage.getSettings();
-      if (!settings.blockedDomains.includes(msg.domain)) {
-        settings.blockedDomains.push(msg.domain);
+      const blockedList = settings.blockedDomains || [];
+      const exists = blockedList.some(b => (typeof b === "string" ? b : b.domain) === msg.domain);
+      if (!exists) {
+        blockedList.push({ domain: msg.domain, enabled: true, addedAt: new Date().toISOString() });
+        settings.blockedDomains = blockedList;
         await Storage.saveSettings(settings);
       }
       return { success: true };
@@ -387,8 +485,50 @@ async function handleMessage(msg) {
 
     case "unblockDomain": {
       const s = await Storage.getSettings();
-      s.blockedDomains = s.blockedDomains.filter((d) => d !== msg.domain);
+      s.blockedDomains = (s.blockedDomains || []).filter((d) => {
+        const dom = typeof d === "string" ? d : d.domain;
+        return dom !== msg.domain;
+      });
       await Storage.saveSettings(s);
+      return { success: true };
+    }
+
+    case "updateBlockedDomain": {
+      const st = await Storage.getSettings();
+      const list = st.blockedDomains || [];
+      const idx = list.findIndex(b => (typeof b === "string" ? b : b.domain) === msg.domain);
+      if (idx !== -1) {
+        if (typeof list[idx] === "string") {
+          list[idx] = { domain: list[idx], enabled: msg.enabled !== undefined ? msg.enabled : true, addedAt: new Date().toISOString() };
+        } else {
+          if (msg.enabled !== undefined) list[idx].enabled = msg.enabled;
+        }
+        st.blockedDomains = list;
+        await Storage.saveSettings(st);
+      }
+      return { success: true };
+    }
+
+    case "bulkBlockDomains": {
+      const sett = await Storage.getSettings();
+      const bl = sett.blockedDomains || [];
+      (msg.domains || []).forEach(d => {
+        const exists = bl.some(b => (typeof b === "string" ? b : b.domain) === d);
+        if (!exists) bl.push({ domain: d, enabled: true, addedAt: new Date().toISOString() });
+      });
+      sett.blockedDomains = bl;
+      await Storage.saveSettings(sett);
+      return { success: true };
+    }
+
+    case "bulkUnblockDomains": {
+      const se = await Storage.getSettings();
+      const domainsToRemove = msg.domains || [];
+      se.blockedDomains = (se.blockedDomains || []).filter(b => {
+        const dom = typeof b === "string" ? b : b.domain;
+        return !domainsToRemove.includes(dom);
+      });
+      await Storage.saveSettings(se);
       return { success: true };
     }
 
@@ -402,8 +542,8 @@ async function handleMessage(msg) {
 
     case "checkUnlockRequirements": {
       const focus = await Storage.getFocusState();
-      const sett = await Storage.getSettings();
-      const reqs = sett.focusDefaults.unlockRequirements;
+      const settR = await Storage.getSettings();
+      const reqs = settR.focusDefaults.unlockRequirements;
       const elapsed = focus.active ? Math.floor((Date.now() - focus.startTime) / 60000) : 0;
       const tasksDone = focus.tasks ? focus.tasks.filter((t) => t.done).length : 0;
       return {
@@ -425,12 +565,15 @@ async function handleMessage(msg) {
       if (msg.settings) {
         const s = await Storage.getSettings();
         s.focusDefaults.duration = msg.settings.focusDuration || 25;
+        if (msg.settings.dailyGoal) {
+          s.dailyGoal = msg.settings.dailyGoal;
+        }
         await Storage.saveSettings(s);
       }
       return { success: true };
     }
 
-    // ─── NEW: Theme ───
+    // ─── Theme ───
     case "getTheme": {
       const { focusguard_theme } = await chrome.storage.local.get("focusguard_theme");
       return { theme: focusguard_theme || "dark" };
@@ -441,7 +584,7 @@ async function handleMessage(msg) {
       return { success: true };
     }
 
-    // ─── NEW: Data Export/Import ───
+    // ─── Data Export/Import ───
     case "exportData": {
       const allData = await chrome.storage.local.get(null);
       return { data: allData };
@@ -455,7 +598,7 @@ async function handleMessage(msg) {
       return { error: "Invalid data" };
     }
 
-    // ─── NEW: Comparison Stats ───
+    // ─── Comparison Stats ───
     case "getComparisonStats": {
       const todayUsage = await Storage.getTodayUsage();
       const weekUsage = await Storage.getLastNDays(2);
@@ -476,7 +619,7 @@ async function handleMessage(msg) {
       };
     }
 
-    // ─── NEW: Today Insight Summary ───
+    // ─── Today Insight Summary ───
     case "getTodayInsightSummary": {
       const tu = await Storage.getTodayUsage();
       const weekU = await Storage.getLastNDays(2);
@@ -511,6 +654,116 @@ async function handleMessage(msg) {
       }
 
       return { text: `${focusPct}% productive today. Keep going!`, icon: "💪" };
+    }
+
+    // ─── Detailed Stats (30-day) ───
+    case "getDetailedStats": {
+      const data30 = await Storage.getLastNDays(30);
+      return data30;
+    }
+
+    // ─── Domain History (7-day sparkline) ───
+    case "getDomainHistory": {
+      const week7 = await Storage.getLastNDays(7);
+      const domain = msg.domain;
+      const history = week7.map(d => ({
+        date: d.date,
+        time: d.data.domains?.[domain]?.time || 0,
+      }));
+      return history.reverse();
+    }
+
+    // ─── Goal Management ───
+    case "setDailyGoal": {
+      const sg = await Storage.getSettings();
+      sg.dailyGoal = msg.hours || 4;
+      await Storage.saveSettings(sg);
+      return { success: true };
+    }
+
+    case "getDailyGoal": {
+      const gg = await Storage.getSettings();
+      return { goal: gg.dailyGoal || 4 };
+    }
+
+    case "getGoalProgress": {
+      const gSettings = await Storage.getSettings();
+      const gUsage = await Storage.getTodayUsage();
+      const goalHours = gSettings.dailyGoal || 4;
+      const focusHours = (gUsage.focusTime || 0) / 60;
+      return {
+        goal: goalHours,
+        current: Math.round(focusHours * 10) / 10,
+        percentage: Math.min(100, Math.round((focusHours / goalHours) * 100)),
+      };
+    }
+
+    // ─── Scheduled Blocks ───
+    case "getScheduledBlocks": {
+      const sbs = await Storage.getSettings();
+      return sbs.scheduledBlocks || [];
+    }
+
+    case "saveScheduledBlock": {
+      const sb = await Storage.getSettings();
+      sb.scheduledBlocks = sb.scheduledBlocks || [];
+      if (msg.block.id !== undefined) {
+        const idx2 = sb.scheduledBlocks.findIndex(b => b.id === msg.block.id);
+        if (idx2 !== -1) sb.scheduledBlocks[idx2] = msg.block;
+        else sb.scheduledBlocks.push({ ...msg.block, id: Date.now() });
+      } else {
+        sb.scheduledBlocks.push({ ...msg.block, id: Date.now() });
+      }
+      await Storage.saveSettings(sb);
+      return { success: true };
+    }
+
+    case "deleteScheduledBlock": {
+      const dsb = await Storage.getSettings();
+      dsb.scheduledBlocks = (dsb.scheduledBlocks || []).filter(b => b.id !== msg.id);
+      await Storage.saveSettings(dsb);
+      return { success: true };
+    }
+
+    // ─── Category Override ───
+    case "setCategoryOverride": {
+      const co = await Storage.getSettings();
+      co.categoryOverrides = co.categoryOverrides || {};
+      co.categoryOverrides[msg.domain] = msg.category;
+      await Storage.saveSettings(co);
+      return { success: true };
+    }
+
+    // ─── Break State ───
+    case "getBreakState": {
+      const bs = await Storage.get("focusguard_break");
+      return bs || { active: false, remaining: 0, type: null };
+    }
+
+    case "skipBreak": {
+      await Storage.set("focusguard_break", { active: false, remaining: 0, type: null });
+      chrome.alarms.clear("break_tick");
+      chrome.action.setBadgeText({ text: "" });
+      return { success: true };
+    }
+
+    // ─── Pomodoro Count ───
+    case "getPomodoroCount": {
+      const pc = await Storage.get("focusguard_pomodoro_count");
+      return { count: pc || 0 };
+    }
+
+    // ─── Resist Counter ───
+    case "getResistCount": {
+      const rc = await Storage.get("focusguard_resist_count_" + Storage.todayKey());
+      return { count: rc || 0 };
+    }
+
+    case "incrementResist": {
+      const key = "focusguard_resist_count_" + Storage.todayKey();
+      const current = await Storage.get(key) || 0;
+      await Storage.set(key, current + 1);
+      return { count: current + 1 };
     }
 
     default:
