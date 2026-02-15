@@ -1,10 +1,13 @@
-// popup.js — FocusGuard V3 Premium popup
+// popup.js — FocusGuard V4 Premium popup with tabs
 
 document.addEventListener("DOMContentLoaded", init);
 
 let selectedDuration = 25;
+let ctrlDuration = 25;
+let currentTabDomain = null;
 
 async function init() {
+  setupPopupTabs();
   await loadStats();
   await loadGoalProgress();
   await loadInsight();
@@ -12,6 +15,20 @@ async function init() {
   await checkFocusState();
   updateDurHighlight();
   setupThemeToggle();
+  await loadControlsTab();
+  await loadActivityTab();
+}
+
+// ─── Tab Navigation ───
+function setupPopupTabs() {
+  document.querySelectorAll(".popup-nav-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".popup-nav-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".popup-tab-content").forEach(c => c.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("popup-tab-" + btn.dataset.tab).classList.add("active");
+    });
+  });
 }
 
 // ─── Theme ───
@@ -30,7 +47,6 @@ function animateNumber(el, target, duration = 600, suffix = "") {
   const start = parseInt(el.textContent) || 0;
   if (start === target) return;
   const startTime = performance.now();
-  
   function tick(now) {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
@@ -42,7 +58,6 @@ function animateNumber(el, target, duration = 600, suffix = "") {
   requestAnimationFrame(tick);
 }
 
-// ─── Format Time ───
 function formatTime(minutes) {
   if (!minutes || minutes === 0) return "0h 0m";
   const h = Math.floor(minutes / 60);
@@ -57,7 +72,6 @@ async function loadStats() {
     const streak = await chrome.runtime.sendMessage({ action: "getStreak" });
     const scoreData = await chrome.runtime.sendMessage({ action: "getScore" });
 
-    // Score ring
     const score = scoreData.score || 0;
     const scoreEl = document.getElementById("stat-score");
     animateNumber(scoreEl, score);
@@ -73,25 +87,19 @@ async function loadStats() {
       scoreEl.style.color = scoreData.label.color;
     }
 
-    // Stats
     document.getElementById("stat-focus-time").textContent = formatTime(usage.focusTime || 0);
     document.getElementById("stat-distracted").textContent = formatTime(usage.distractedTime || 0);
     document.getElementById("stat-active").textContent = formatTime(usage.totalActive || 0);
 
-    // Streak
     const streakCount = streak.current || 0;
     document.getElementById("streak-count").textContent = streakCount;
-    if (streakCount > 0) {
-      document.getElementById("streak-badge").classList.add("active");
-    }
+    if (streakCount > 0) document.getElementById("streak-badge").classList.add("active");
 
-    // Ticker
     const domainCount = Object.keys(usage.domains || {}).length;
     const focusStr = formatTime(usage.focusTime || 0);
     const tickerEl = document.getElementById("ticker-content");
     tickerEl.innerHTML = `<span>${domainCount} sites visited</span> <span class="ticker-sep">·</span> <span>${focusStr} focused</span> <span class="ticker-sep">·</span> <span>Score: ${score}</span>`;
 
-    // Domain bars
     renderDomainBars(usage.domains || {});
   } catch (e) {
     console.error("Failed to load stats:", e);
@@ -108,10 +116,7 @@ async function loadGoalProgress() {
       document.getElementById("goal-progress-text").textContent = `${formatTime(goalData.current * 60)} / ${goalData.goal}h focused`;
       document.getElementById("goal-pct").textContent = pct + "%";
       document.getElementById("goal-streak").textContent = (goalData.streak || 0) + " day streak";
-      
-      if (pct >= 100) {
-        document.getElementById("goal-bar").classList.add("goal-complete");
-      }
+      if (pct >= 100) document.getElementById("goal-bar").classList.add("goal-complete");
     }
   } catch (e) {}
 }
@@ -177,7 +182,7 @@ function renderDomainBars(domains) {
 
 // ─── Duration Highlight ───
 function updateDurHighlight() {
-  const btns = document.querySelectorAll(".dur-btn");
+  const btns = document.querySelectorAll("#popup-tab-overview .dur-btn");
   const highlight = document.getElementById("dur-highlight");
   let activeIndex = 0;
   btns.forEach((btn, i) => {
@@ -193,9 +198,9 @@ function setupListeners() {
   document.getElementById("btn-dashboard").addEventListener("click", openDashboard);
   document.getElementById("btn-dashboard-bottom").addEventListener("click", openDashboard);
 
-  document.querySelectorAll(".dur-btn").forEach((btn) => {
+  document.querySelectorAll("#popup-tab-overview .dur-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".dur-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll("#popup-tab-overview .dur-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       selectedDuration = parseInt(btn.dataset.dur);
       updateDurHighlight();
@@ -203,7 +208,6 @@ function setupListeners() {
   });
 
   document.getElementById("btn-start-focus").addEventListener("click", () => {
-    // Open dashboard Focus Mode tab for full setup
     chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/dashboard.html#focus") });
     window.close();
   });
@@ -242,7 +246,6 @@ function openDashboard() {
 // ─── Focus State ───
 async function checkFocusState() {
   const state = await chrome.runtime.sendMessage({ action: "getFocusState" });
-
   const inactiveEl = document.getElementById("focus-inactive");
   const activeEl = document.getElementById("focus-active");
 
@@ -261,7 +264,6 @@ async function checkFocusState() {
     const offset = 264 * (1 - pct);
     ring.style.strokeDashoffset = offset;
 
-    // Status label
     const statusLabel = document.getElementById("focus-status-label");
     if (state.paused) {
       statusLabel.textContent = "Paused";
@@ -274,21 +276,19 @@ async function checkFocusState() {
       statusLabel.style.color = "var(--accent)";
     }
 
-    // Pomodoro count
     const pomodoroEl = document.getElementById("pomodoro-count");
     pomodoroEl.textContent = `🍅 ${state.pomodoroCount || 0}`;
 
-    // Task checklist
     const tasksList = document.getElementById("focus-tasks-list");
     tasksList.innerHTML = "";
     if (state.tasks && state.tasks.length > 0) {
       state.tasks.forEach((task, i) => {
         const item = document.createElement("label");
         item.className = "focus-task-item";
-        const checked = task.completed ? "checked" : "";
-        item.innerHTML = `<input type="checkbox" ${checked} data-index="${i}" /><span>${task.name || task}</span>`;
+        const checked = task.done ? "checked" : "";
+        item.innerHTML = `<input type="checkbox" ${checked} data-index="${i}" /><span>${task.text || task}</span>`;
         item.querySelector("input").addEventListener("change", async (e) => {
-          await chrome.runtime.sendMessage({ action: "toggleFocusTask", index: i, completed: e.target.checked });
+          await chrome.runtime.sendMessage({ action: "toggleTask", taskIndex: i });
         });
         tasksList.appendChild(item);
       });
@@ -304,5 +304,185 @@ async function checkFocusState() {
     inactiveEl.style.display = "block";
     activeEl.style.display = "none";
     activeEl.classList.remove("pulsing");
+  }
+}
+
+// ─── CONTROLS TAB ───
+async function loadControlsTab() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.url) return;
+    
+    const url = new URL(tab.url);
+    const domain = url.hostname.replace(/^www\./, "");
+    currentTabDomain = domain;
+    
+    const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+    document.getElementById("ctrl-favicon").src = faviconUrl;
+    document.getElementById("ctrl-domain").textContent = domain;
+    
+    // Get usage and settings
+    const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+    const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+    
+    // Category
+    const category = Categories.categorize(domain, settings.categoryOverrides);
+    const catEl = document.getElementById("ctrl-category");
+    const color = Categories.getCategoryColor(category);
+    catEl.textContent = category;
+    catEl.style.color = color;
+    
+    // Time spent
+    const timeSpent = Math.round(usage.domains?.[domain]?.time || 0);
+    document.getElementById("ctrl-time-spent").textContent = timeSpent + "m today";
+    
+    // Is blocked?
+    const isBlocked = (settings.blockedDomains || []).some(b => (typeof b === "string" ? b : b.domain) === domain);
+    const blockBtn = document.getElementById("ctrl-btn-block");
+    const blockLabel = document.getElementById("ctrl-block-label");
+    if (isBlocked) {
+      blockBtn.classList.add("is-blocked");
+      blockLabel.textContent = "Unblock";
+    }
+    
+    // Block/unblock
+    blockBtn.addEventListener("click", async () => {
+      if (blockBtn.classList.contains("is-blocked")) {
+        await chrome.runtime.sendMessage({ action: "unblockDomain", domain });
+        blockBtn.classList.remove("is-blocked");
+        blockLabel.textContent = "Block";
+      } else {
+        await chrome.runtime.sendMessage({ action: "blockDomain", domain });
+        blockBtn.classList.add("is-blocked");
+        blockLabel.textContent = "Unblock";
+      }
+    });
+    
+    // Daily limit
+    const existingLimit = settings.dailyLimits?.[domain];
+    if (existingLimit) {
+      document.getElementById("ctrl-limit-picker").style.display = "none";
+      const progressEl = document.getElementById("ctrl-limit-progress");
+      progressEl.style.display = "block";
+      const pct = Math.min(100, Math.round((timeSpent / existingLimit) * 100));
+      const barColor = pct >= 100 ? '#F43F5E' : pct >= 80 ? '#F59E0B' : '#10B981';
+      document.getElementById("ctrl-limit-text").textContent = `${timeSpent}/${existingLimit} min`;
+      const barFill = document.getElementById("ctrl-limit-bar-fill");
+      barFill.style.width = pct + "%";
+      barFill.style.background = barColor;
+      
+      document.getElementById("ctrl-limit-remove").addEventListener("click", async () => {
+        delete settings.dailyLimits[domain];
+        await chrome.runtime.sendMessage({ action: "saveSettings", settings });
+        progressEl.style.display = "none";
+        document.getElementById("ctrl-btn-limit").style.display = "flex";
+      });
+    }
+    
+    // Limit picker toggle
+    document.getElementById("ctrl-btn-limit").addEventListener("click", () => {
+      const picker = document.getElementById("ctrl-limit-picker");
+      picker.style.display = picker.style.display === "none" ? "flex" : "none";
+    });
+    
+    // Limit options
+    document.querySelectorAll(".ctrl-limit-opt").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const mins = parseInt(btn.dataset.mins);
+        const s = await chrome.runtime.sendMessage({ action: "getSettings" });
+        s.dailyLimits[domain] = mins;
+        await chrome.runtime.sendMessage({ action: "saveSettings", settings: s });
+        document.getElementById("ctrl-limit-picker").style.display = "none";
+        // Show progress
+        document.getElementById("ctrl-limit-progress").style.display = "block";
+        document.getElementById("ctrl-limit-text").textContent = `${timeSpent}/${mins} min`;
+        const pct = Math.min(100, Math.round((timeSpent / mins) * 100));
+        document.getElementById("ctrl-limit-bar-fill").style.width = pct + "%";
+        document.getElementById("ctrl-btn-limit").style.display = "none";
+      });
+    });
+
+    // Quick focus from controls
+    document.querySelectorAll(".ctrl-dur-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".ctrl-dur-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        ctrlDuration = parseInt(btn.dataset.dur);
+      });
+    });
+
+    document.getElementById("ctrl-btn-start-focus").addEventListener("click", async () => {
+      const mode = document.querySelector('input[name="ctrl-focus-mode"]:checked').value;
+      const allowedSites = mode === "allow" ? [domain] : [];
+      await chrome.runtime.sendMessage({
+        action: "startFocus",
+        duration: ctrlDuration,
+        tasks: [],
+        blockedSites: [],
+        allowedSites,
+      });
+      await checkFocusState();
+      // Switch to overview tab to see timer
+      document.querySelector('[data-tab="overview"]').click();
+    });
+
+    // Quick block categories
+    document.querySelectorAll(".ctrl-cat-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const category = btn.dataset.category;
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+        const result = await chrome.runtime.sendMessage({ action: "quickBlockCategory", category });
+        btn.textContent = `✓ ${result.added || 0} added`;
+        setTimeout(() => { btn.disabled = false; btn.style.opacity = "1"; }, 2000);
+      });
+    });
+  } catch (e) {
+    console.error("Controls tab error:", e);
+  }
+}
+
+// ─── ACTIVITY TAB ───
+async function loadActivityTab() {
+  try {
+    const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+    const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+    
+    // Sites count
+    const sitesCount = Object.keys(usage.domains || {}).length;
+    document.getElementById("act-sites-count").textContent = sitesCount;
+    
+    // Focus sessions
+    const sessions = (usage.focusSessions || []).length;
+    document.getElementById("act-focus-sessions").textContent = sessions;
+    
+    // Blocked count
+    const blockedCount = (settings.blockedDomains || []).length;
+    document.getElementById("act-blocked-count").textContent = blockedCount;
+    
+    // Category breakdown pills
+    const catTotals = {};
+    Object.entries(usage.domains || {}).forEach(([, info]) => {
+      const cat = info.category || "Other";
+      catTotals[cat] = (catTotals[cat] || 0) + (info.time || 0);
+    });
+    
+    const catContainer = document.getElementById("category-pills");
+    const catEntries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+    
+    if (catEntries.length === 0) {
+      catContainer.innerHTML = '<div class="empty-state">No data yet</div>';
+    } else {
+      catContainer.innerHTML = catEntries.map(([cat, time]) => {
+        const color = Categories.getCategoryColor(cat);
+        return `<div class="cat-pill" style="border-color:${color}33;background:${color}11;">
+          <span class="cat-pill-dot" style="background:${color}"></span>
+          <span class="cat-pill-name">${cat}</span>
+          <span class="cat-pill-time">${Math.round(time)}m</span>
+        </div>`;
+      }).join("");
+    }
+  } catch (e) {
+    console.error("Activity tab error:", e);
   }
 }

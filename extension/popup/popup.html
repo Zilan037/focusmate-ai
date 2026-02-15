@@ -11,13 +11,6 @@
 <body>
   <div class="popup-bg"></div>
   <div class="popup-container">
-    <!-- Ticker -->
-    <div class="ticker fade-up">
-      <div class="ticker-track" id="ticker-track">
-        <span class="ticker-item" id="ticker-content">Loading stats...</span>
-      </div>
-    </div>
-
     <!-- Header -->
     <header class="popup-header fade-up">
       <div class="popup-logo">
@@ -49,127 +42,257 @@
       </div>
     </header>
 
-    <!-- Score Hero Card -->
-    <div class="score-hero glass-card fade-up delay-1">
-      <div class="score-ring-container">
-        <svg class="score-ring-svg" viewBox="0 0 100 100">
-          <defs>
-            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#2563EB"/>
-              <stop offset="50%" stop-color="#6366F1"/>
-              <stop offset="100%" stop-color="#10B981"/>
-            </linearGradient>
-          </defs>
-          <circle class="score-ring-bg" cx="50" cy="50" r="42" />
-          <circle class="score-ring-fill" id="score-ring" cx="50" cy="50" r="42" 
-            stroke-dasharray="264" stroke-dashoffset="264" />
-        </svg>
-        <div class="score-inner">
-          <span class="score-number" id="stat-score">0</span>
-          <span class="score-label" id="score-label">—</span>
-        </div>
-      </div>
-      <div class="score-stats">
-        <div class="score-stat-pill">
-          <span class="score-stat-dot" style="background:var(--accent)"></span>
-          <span class="score-stat-label">Focus</span>
-          <span class="score-stat-value" id="stat-focus-time">0h 0m</span>
-        </div>
-        <div class="score-stat-pill">
-          <span class="score-stat-dot" style="background:var(--danger)"></span>
-          <span class="score-stat-label">Distracted</span>
-          <span class="score-stat-value" id="stat-distracted">0h 0m</span>
-        </div>
-        <div class="score-stat-pill">
-          <span class="score-stat-dot" style="background:var(--success)"></span>
-          <span class="score-stat-label">Active</span>
-          <span class="score-stat-value" id="stat-active">0h 0m</span>
-        </div>
-      </div>
-    </div>
+    <!-- Tab Navigation -->
+    <nav class="popup-nav fade-up">
+      <button class="popup-nav-btn active" data-tab="overview">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 11V6M5 11V3M8 11V8M11 11V5M14 11V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Overview
+      </button>
+      <button class="popup-nav-btn" data-tab="controls">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/><line x1="3.5" y1="3.5" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        Controls
+      </button>
+      <button class="popup-nav-btn" data-tab="activity">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        Activity
+      </button>
+    </nav>
 
-    <!-- Daily Goal Progress -->
-    <div class="goal-progress glass-card fade-up delay-1" id="goal-section">
-      <div class="goal-header">
-        <span class="goal-icon">🎯</span>
-        <span class="goal-title">Daily Goal</span>
-        <span class="goal-streak-badge" id="goal-streak">0 day streak</span>
-      </div>
-      <div class="goal-bar-wrap">
-        <div class="goal-bar-fill" id="goal-bar" style="width:0%"></div>
-      </div>
-      <div class="goal-meta">
-        <span id="goal-progress-text">0h / 4h focused</span>
-        <span id="goal-pct">0%</span>
-      </div>
-    </div>
-
-    <!-- Insight Card -->
-    <div class="insight-card glass-card fade-up delay-2" id="insight-card">
-      <span class="insight-icon" id="insight-icon">💡</span>
-      <span class="insight-text" id="insight-text">Loading insight...</span>
-    </div>
-
-    <!-- Focus Mode -->
-    <section class="section fade-up delay-3">
-      <h2 class="section-title">Focus Mode</h2>
-      <div id="focus-inactive" class="focus-controls">
-        <!-- Task input -->
-        <div class="focus-task-input">
-          <input type="text" id="focus-tasks" class="input" placeholder="Tasks (comma separated)..." />
+    <!-- ═══ OVERVIEW TAB ═══ -->
+    <div id="popup-tab-overview" class="popup-tab-content active">
+      <!-- Ticker -->
+      <div class="ticker">
+        <div class="ticker-track" id="ticker-track">
+          <span class="ticker-item" id="ticker-content">Loading stats...</span>
         </div>
-        <div class="duration-selector">
-          <div class="dur-track">
-            <div class="dur-highlight" id="dur-highlight"></div>
-            <button class="dur-btn" data-dur="15">15m</button>
-            <button class="dur-btn active" data-dur="25">25m</button>
-            <button class="dur-btn" data-dur="45">45m</button>
-            <button class="dur-btn" data-dur="60">60m</button>
+      </div>
+
+      <!-- Score Hero Card -->
+      <div class="score-hero glass-card">
+        <div class="score-ring-container">
+          <svg class="score-ring-svg" viewBox="0 0 100 100">
+            <defs>
+              <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#2563EB"/>
+                <stop offset="50%" stop-color="#6366F1"/>
+                <stop offset="100%" stop-color="#10B981"/>
+              </linearGradient>
+            </defs>
+            <circle class="score-ring-bg" cx="50" cy="50" r="42" />
+            <circle class="score-ring-fill" id="score-ring" cx="50" cy="50" r="42" 
+              stroke-dasharray="264" stroke-dashoffset="264" />
+          </svg>
+          <div class="score-inner">
+            <span class="score-number" id="stat-score">0</span>
+            <span class="score-label" id="score-label">—</span>
           </div>
         </div>
-        <button id="btn-start-focus" class="btn-focus-start">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 14,8 3,15"/></svg>
+        <div class="score-stats">
+          <div class="score-stat-pill">
+            <span class="score-stat-dot" style="background:var(--accent)"></span>
+            <span class="score-stat-label">Focus</span>
+            <span class="score-stat-value" id="stat-focus-time">0h 0m</span>
+          </div>
+          <div class="score-stat-pill">
+            <span class="score-stat-dot" style="background:var(--danger)"></span>
+            <span class="score-stat-label">Distracted</span>
+            <span class="score-stat-value" id="stat-distracted">0h 0m</span>
+          </div>
+          <div class="score-stat-pill">
+            <span class="score-stat-dot" style="background:var(--success)"></span>
+            <span class="score-stat-label">Active</span>
+            <span class="score-stat-value" id="stat-active">0h 0m</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Goal Progress -->
+      <div class="goal-progress glass-card" id="goal-section">
+        <div class="goal-header">
+          <span class="goal-icon">🎯</span>
+          <span class="goal-title">Daily Goal</span>
+          <span class="goal-streak-badge" id="goal-streak">0 day streak</span>
+        </div>
+        <div class="goal-bar-wrap">
+          <div class="goal-bar-fill" id="goal-bar" style="width:0%"></div>
+        </div>
+        <div class="goal-meta">
+          <span id="goal-progress-text">0h / 4h focused</span>
+          <span id="goal-pct">0%</span>
+        </div>
+      </div>
+
+      <!-- Insight Card -->
+      <div class="insight-card glass-card" id="insight-card">
+        <span class="insight-icon" id="insight-icon">💡</span>
+        <span class="insight-text" id="insight-text">Loading insight...</span>
+      </div>
+
+      <!-- Focus Mode (compact) -->
+      <section class="section">
+        <h2 class="section-title">Focus Mode</h2>
+        <div id="focus-inactive" class="focus-controls">
+          <div class="focus-task-input">
+            <input type="text" id="focus-tasks" class="input" placeholder="Tasks (comma separated)..." />
+          </div>
+          <div class="duration-selector">
+            <div class="dur-track">
+              <div class="dur-highlight" id="dur-highlight"></div>
+              <button class="dur-btn" data-dur="15">15m</button>
+              <button class="dur-btn active" data-dur="25">25m</button>
+              <button class="dur-btn" data-dur="45">45m</button>
+              <button class="dur-btn" data-dur="60">60m</button>
+            </div>
+          </div>
+          <button id="btn-start-focus" class="btn-focus-start">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 14,8 3,15"/></svg>
+            Start Focus
+          </button>
+        </div>
+        <div id="focus-active" class="focus-active" style="display:none;">
+          <div class="focus-timer-wrap">
+            <svg class="focus-ring" viewBox="0 0 100 100">
+              <circle class="focus-ring-bg" cx="50" cy="50" r="42" />
+              <circle class="focus-ring-fill" id="focus-ring" cx="50" cy="50" r="42" 
+                stroke-dasharray="264" stroke-dashoffset="0" />
+            </svg>
+            <div class="focus-timer" id="focus-timer">25:00</div>
+          </div>
+          <div class="focus-tasks-list" id="focus-tasks-list"></div>
+          <div class="focus-session-meta">
+            <span class="pomodoro-count" id="pomodoro-count">🍅 0</span>
+            <span class="focus-status-label" id="focus-status-label">Focusing</span>
+          </div>
+          <div class="focus-actions">
+            <button id="btn-pause-focus" class="btn-focus-action">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg>
+            </button>
+            <button id="btn-stop-focus" class="btn-focus-action btn-focus-stop">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="2" width="10" height="10" rx="2"/></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ═══ CONTROLS TAB ═══ -->
+    <div id="popup-tab-controls" class="popup-tab-content">
+      <!-- Current Site Context -->
+      <div class="ctrl-current-site glass-card" id="ctrl-current-site">
+        <div class="ctrl-site-header">
+          <img class="ctrl-site-favicon" id="ctrl-favicon" src="" alt="" />
+          <div class="ctrl-site-info">
+            <span class="ctrl-site-domain" id="ctrl-domain">loading...</span>
+            <span class="ctrl-site-category" id="ctrl-category">—</span>
+          </div>
+          <span class="ctrl-site-time" id="ctrl-time-spent">0m</span>
+        </div>
+        <div class="ctrl-site-actions">
+          <button class="ctrl-action-btn ctrl-action-block" id="ctrl-btn-block">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/><line x1="3.5" y1="3.5" x2="10.5" y2="10.5" stroke="currentColor" stroke-width="1.5"/></svg>
+            <span id="ctrl-block-label">Block</span>
+          </button>
+          <button class="ctrl-action-btn ctrl-action-limit" id="ctrl-btn-limit">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M7 3.5V7l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Set Limit
+          </button>
+        </div>
+        <!-- Limit Picker (hidden by default) -->
+        <div class="ctrl-limit-picker" id="ctrl-limit-picker" style="display:none;">
+          <span class="ctrl-limit-label">Daily limit:</span>
+          <div class="ctrl-limit-options">
+            <button class="ctrl-limit-opt" data-mins="15">15m</button>
+            <button class="ctrl-limit-opt" data-mins="30">30m</button>
+            <button class="ctrl-limit-opt" data-mins="60">1h</button>
+            <button class="ctrl-limit-opt" data-mins="120">2h</button>
+          </div>
+        </div>
+        <!-- Existing Limit Progress -->
+        <div class="ctrl-limit-progress" id="ctrl-limit-progress" style="display:none;">
+          <div class="ctrl-limit-progress-header">
+            <span class="ctrl-limit-progress-label" id="ctrl-limit-text">0/60 min</span>
+            <button class="ctrl-limit-remove" id="ctrl-limit-remove" title="Remove limit">✕</button>
+          </div>
+          <div class="ctrl-limit-bar">
+            <div class="ctrl-limit-bar-fill" id="ctrl-limit-bar-fill" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Focus Start -->
+      <div class="ctrl-focus-section glass-card">
+        <h3 class="ctrl-section-title">⚡ Quick Focus</h3>
+        <p class="ctrl-section-desc">Start a focus session directly from here.</p>
+        <div class="ctrl-focus-dur-row">
+          <button class="ctrl-dur-btn" data-dur="15">15m</button>
+          <button class="ctrl-dur-btn active" data-dur="25">25m</button>
+          <button class="ctrl-dur-btn" data-dur="45">45m</button>
+          <button class="ctrl-dur-btn" data-dur="60">60m</button>
+        </div>
+        <div class="ctrl-focus-mode-row">
+          <label class="ctrl-radio-label">
+            <input type="radio" name="ctrl-focus-mode" value="block" checked />
+            Block distractions
+          </label>
+          <label class="ctrl-radio-label">
+            <input type="radio" name="ctrl-focus-mode" value="allow" />
+            Allow only current site
+          </label>
+        </div>
+        <button class="btn-focus-start ctrl-focus-start" id="ctrl-btn-start-focus">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 14,8 3,15"/></svg>
           Start Focus
         </button>
       </div>
-      <div id="focus-active" class="focus-active" style="display:none;">
-        <div class="focus-timer-wrap">
-          <svg class="focus-ring" viewBox="0 0 100 100">
-            <circle class="focus-ring-bg" cx="50" cy="50" r="42" />
-            <circle class="focus-ring-fill" id="focus-ring" cx="50" cy="50" r="42" 
-              stroke-dasharray="264" stroke-dashoffset="0" />
-          </svg>
-          <div class="focus-timer" id="focus-timer">25:00</div>
-        </div>
-        <!-- Task checklist during focus -->
-        <div class="focus-tasks-list" id="focus-tasks-list"></div>
-        <div class="focus-session-meta">
-          <span class="pomodoro-count" id="pomodoro-count">🍅 0</span>
-          <span class="focus-status-label" id="focus-status-label">Focusing</span>
-        </div>
-        <div class="focus-actions">
-          <button id="btn-pause-focus" class="btn-focus-action">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg>
-          </button>
-          <button id="btn-stop-focus" class="btn-focus-action btn-focus-stop">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="2" width="10" height="10" rx="2"/></svg>
-          </button>
+
+      <!-- Quick Block Actions -->
+      <div class="ctrl-quick-block glass-card">
+        <h3 class="ctrl-section-title">🚫 Quick Block Categories</h3>
+        <div class="ctrl-cat-grid">
+          <button class="ctrl-cat-btn" data-category="Social Media">💬 Social</button>
+          <button class="ctrl-cat-btn" data-category="Entertainment">🎬 Entertainment</button>
+          <button class="ctrl-cat-btn" data-category="Shopping">🛒 Shopping</button>
+          <button class="ctrl-cat-btn ctrl-cat-danger" data-category="Adult">🔞 Adult</button>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Top Sites -->
-    <section class="section fade-up delay-4">
-      <h2 class="section-title">Top Sites</h2>
-      <div id="domain-bars" class="domain-bars">
-        <!-- Skeleton loading -->
-        <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:60%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:80%;border-radius:2px;"></div></div></div>
-        <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:45%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:55%;border-radius:2px;"></div></div></div>
-        <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:35%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:40%;border-radius:2px;"></div></div></div>
+    <!-- ═══ ACTIVITY TAB ═══ -->
+    <div id="popup-tab-activity" class="popup-tab-content">
+      <!-- Top Sites -->
+      <section class="section">
+        <h2 class="section-title">Top Sites Today</h2>
+        <div id="domain-bars" class="domain-bars">
+          <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:60%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:80%;border-radius:2px;"></div></div></div>
+          <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:45%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:55%;border-radius:2px;"></div></div></div>
+          <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:35%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:40%;border-radius:2px;"></div></div></div>
+        </div>
+      </section>
+
+      <!-- Category Breakdown -->
+      <section class="section">
+        <h2 class="section-title">Categories</h2>
+        <div id="category-pills" class="category-pills"></div>
+      </section>
+
+      <!-- Quick Summary -->
+      <div class="activity-summary glass-card">
+        <div class="activity-stat">
+          <span class="activity-stat-value" id="act-sites-count">0</span>
+          <span class="activity-stat-label">Sites</span>
+        </div>
+        <div class="activity-stat">
+          <span class="activity-stat-value" id="act-focus-sessions">0</span>
+          <span class="activity-stat-label">Sessions</span>
+        </div>
+        <div class="activity-stat">
+          <span class="activity-stat-value" id="act-blocked-count">0</span>
+          <span class="activity-stat-label">Blocked</span>
+        </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Quick Actions -->
+    <!-- Quick Actions (always visible) -->
     <div class="quick-actions fade-up delay-5">
       <button id="btn-block-current" class="btn-action-glass btn-action-danger">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/><line x1="3.5" y1="3.5" x2="10.5" y2="10.5" stroke="currentColor" stroke-width="1.5"/></svg>
