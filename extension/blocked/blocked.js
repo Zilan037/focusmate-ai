@@ -83,19 +83,29 @@ function showQuote(index) {
   document.getElementById("quote-author").textContent = `— ${q.author}`;
 }
 
-// ─── Resist Counter ───
+// ─── Resist Counter (unique domains per day) ───
 async function loadResistCount() {
   try {
+    const params = new URLSearchParams(window.location.search);
+    const domain = params.get("domain") || "unknown";
     const result = await chrome.storage.local.get("focusguard_resist_count");
     const data = result.focusguard_resist_count || {};
     const today = new Date().toISOString().split("T")[0];
-    const count = data[today] || 0;
-    document.getElementById("resist-count").textContent = count;
     
-    // Increment
-    data[today] = count + 1;
-    await chrome.storage.local.set({ focusguard_resist_count: data });
-    document.getElementById("resist-count").textContent = data[today];
+    // Migrate from number to object format
+    if (typeof data[today] === "number") {
+      data[today] = { count: data[today], domains: [] };
+    }
+    if (!data[today]) data[today] = { count: 0, domains: [] };
+    
+    // Only increment for unique domain visits
+    if (!data[today].domains.includes(domain)) {
+      data[today].count += 1;
+      data[today].domains.push(domain);
+      await chrome.storage.local.set({ focusguard_resist_count: data });
+    }
+    
+    document.getElementById("resist-count").textContent = data[today].count;
   } catch (e) {}
 }
 
