@@ -148,6 +148,8 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
         redirectToBlocked(details.tabId, domain, "Not in your Allowed Sites list — only whitelisted sites can be accessed during Focus Mode");
         return;
       }
+      // Domain IS allowed — skip all further checks
+      return;
     }
     
     // BLACKLIST: check blockedSites
@@ -203,6 +205,8 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
       if (!isAllowed) {
         redirectToBlocked(details.tabId, domain, "Not in your Allowed Sites list — only whitelisted sites can be accessed during Focus Mode");
       }
+      // Whether allowed or not, we're done — don't fall through to distraction checks
+      return;
     }
   } catch (e) {}
 });
