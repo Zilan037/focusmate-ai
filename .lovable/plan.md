@@ -1,119 +1,115 @@
 
-# FocusGuard UX & Feature Enhancement Plan
+
+# FocusGuard: Strict Whitelist Fix, Access Policy UX Overhaul, and Extension Popup Upgrade
 
 ## Overview
-This plan adds five major improvements to make the extension intuitive and powerful: per-site daily time limits with a dedicated UI, permanent unremovable blocks, clearer Focus Mode whitelist flow, a detailed Reports tab, and a guided onboarding/help system.
+
+Three major improvements: (1) Fix the broken "Allow Only" whitelist blocking so it actually works, (2) Redesign the Access Policy page for clarity, and (3) Upgrade the extension popup with inline site controls and better navigation.
 
 ---
 
-## 1. Per-Site Daily Time Limits (Dedicated Section)
+## 1. Fix Strict Whitelist Blocking (Critical Bug)
 
-**Problem:** Daily limits exist in Settings but are buried and hard to find.
+The "Allow Only" mode currently has a logic gap: `checkBlocking` in `background.js` only checks `allowedSites` during **Focus Mode**, but the check happens in `handleTabChange` which calls `checkBlocking` -- the problem is that `checkBlocking` correctly checks `focusState.allowedSites`, but the system relies on `chrome.tabs.onUpdated` which only fires once per page load. Navigating within a site (SPA-style) or opening new tabs may bypass it.
 
-**Solution:** Move daily limits into the **Access Policy** tab as a first-class feature with a clear UI.
+### Fix:
+- **`background.js`**: Add a `chrome.webNavigation.onBeforeNavigate` listener (requires `webNavigation` permission) that intercepts ALL navigation attempts, not just tab updates. This ensures strict enforcement.
+- **`background.js`**: Also add `chrome.webNavigation.onCommitted` as a fallback to catch any navigation that slips through.
+- **`manifest.json`**: Add `"webNavigation"` to permissions array.
+- **`background.js` > `checkBlocking`**: Add subdomain matching improvement -- `youtube.com` should also allow `www.youtube.com`, `m.youtube.com`, etc. Currently it checks `domain.endsWith("." + s)` which works, but also needs to match the exact domain. Fix: also strip `www.` from the stored allowed site before comparison.
+- **`background.js`**: Always allow `chrome-extension://` URLs (extension's own pages) in whitelist mode -- currently there's a string check for `"chrome-extension"` but it should use protocol checking.
 
-### Changes:
-- **`dashboard.html`** -- Add a "Daily Time Limits" card inside `#tab-blocklist` (Access Policy) with:
-  - Domain input + minutes selector (dropdown: 15m, 30m, 1h, 2h, custom)
-  - Visual list of active limits showing domain favicon, limit, usage progress bar, and remaining time
-  - One-click "Set Limit" from the Network Access (domains) table rows
-- **`dashboard.js`** -- Add `renderDailyLimits()` function that shows current limits with live usage data (queries today's usage to show "42/60 min used" with a progress bar)
-- **`background.js`** -- Already has `checkDailyLimit` -- no changes needed; the backend is already wired
-
-### UX Flow:
-User sees YouTube in their domains list -> clicks "Set Limit" -> picks 60 minutes -> limit appears in Access Policy with a live usage bar
+### Testing Scenario:
+User selects "Allow Only" > adds `youtube.com` > Deploys Focus. Every other site (google.com, reddit.com, etc.) should redirect to blocked page. Only youtube.com and its subdomains should work.
 
 ---
 
-## 2. Permanent (Locked) Blocks
+## 2. Access Policy Page UX Overhaul
 
-**Problem:** Users can unblock sites they want permanently blocked (like adult content). No "lock" mechanism exists.
+The current Access Policy tab mixes too many concepts without clear visual separation. Reorganize into distinct, labeled sections with helper text.
 
-**Solution:** Add a "Lock" toggle to blocked domains that requires a typed confirmation phrase to unlock.
+### Changes to `dashboard.html` (tab-blocklist):
 
-### Changes:
-- **`dashboard.html`** -- Add a lock icon button next to each blocked domain in the blocklist
-- **`dashboard.js`** -- 
-  - When locking: set `locked: true` on the domain object in settings
-  - When trying to unlock a locked domain: show a confirmation modal requiring the user to type "UNLOCK [domain]" to proceed (cognitive friction)
-  - Locked domains show a padlock icon and have the delete/toggle buttons disabled
-- **`background.js`** -- Add `locked` field support in `updateBlockedDomain` and `unblockDomain` handlers; refuse to unblock if `locked: true` unless `forceUnlock: true` is passed
-- **Storage schema update** -- blocked domain objects gain `locked: boolean` field
+Restructure into these clearly separated sections, each inside its own card:
 
-### UX Flow:
-User blocks pornhub.com -> clicks lock icon -> domain shows padlock -> trying to remove it requires typing "UNLOCK pornhub.com"
+1. **Safety Shield** (top) -- Strict Safety Mode toggle with a clear explanation banner
+2. **Blocked Websites** -- Add domain input + blocklist table with lock/toggle/delete. Move Quick Block Categories inside this section as a collapsible "Quick Add" dropdown
+3. **Daily Time Limits** -- Dedicated card with domain input + time selector + active limits list with progress bars
+4. **Scheduled Blocks** -- Time-based blocking with day/time pickers
+5. **Import/Export** -- Small action row at the bottom
 
----
+Each section gets:
+- A numbered step indicator or icon
+- A short "What is this?" description in muted text
+- Clear action buttons
 
-## 3. Clearer Focus Mode Whitelist UX
-
-**Problem:** Users are confused by the dual Block/Allow system in Focus Mode setup.
-
-**Solution:** Simplify with a visual mode selector and clear explanations.
-
-### Changes:
-- **`dashboard.html`** (Focus Mode tab) -- Replace the current two separate cards with:
-  - A **Mode Selector** at the top: two large clickable cards:
-    - "Block Distractions" (default) -- "Block specific sites. Everything else stays accessible."
-    - "Allow Only" (strict) -- "ONLY these sites will work. Everything else is blocked."
-  - When "Allow Only" is selected, show a prominent warning banner and the allow-list input
-  - When "Block Distractions" is selected, show the block-list input
-  - Only one mode visible at a time -- reduces confusion
-- **`dashboard.js`** -- Toggle visibility between the two panels based on mode selection; pass the correct lists to `startFocus`
+### Changes to `dashboard.css`:
+- Add `.access-section` class with clear borders, section numbers
+- Add `.section-explainer` for helper text styling
+- Better spacing between sections
 
 ---
 
-## 4. Detailed Reports Tab
+## 3. Extension Popup Upgrade
 
-**Problem:** Insights tab is minimal. Users want to see "how many websites they visited today, last week, categorized."
+### 3a. Add Tab Navigation to Popup
 
-**Solution:** Enhance the existing **Strategy Planner** (Insights) tab into a full reports view.
+Add a compact bottom tab bar or top pill navigation to the popup with 3 views:
 
-### Changes:
-- **`dashboard.html`** -- Expand `#tab-insights` with:
-  - **Summary Cards Row:** Total sites visited, Total time, Most visited category, Blocked attempts
-  - **Date Range Selector:** Today / This Week / This Month / Custom
-  - **Category Breakdown Table:** Each category with total time, site count, percentage bar
-  - **Top 10 Sites Table:** Domain, category badge, total time, visits count, daily average
-  - **Daily Comparison Chart:** Side-by-side bars for selected date range
-- **`dashboard.js`** -- 
-  - Add `loadReports(range)` function that aggregates data from `getLastNDays()`
-  - Calculate per-category totals, per-domain rankings, visit counts
-  - Render category breakdown with colored bars matching category colors from `Categories.getCategoryColor()`
-- **`background.js`** -- Add `getMonthUsage` message handler (calls `Storage.getLastNDays(30)`)
+- **Overview** (default) -- Current score ring, stats, daily goal, insight (existing)
+- **Controls** -- Site blocking, timer settings, focus mode quick-start
+- **Activity** -- Top sites list, mini category breakdown
 
----
+### Changes to `popup.html`:
+- Add `.popup-nav` bar with 3 tab buttons (Overview, Controls, Activity)
+- Wrap existing content in `#popup-tab-overview`
+- Add `#popup-tab-controls` with:
+  - **Current site context**: Show current tab's domain with block/timer/limit buttons
+  - **Quick Block**: One-tap block current site
+  - **Set Timer**: Inline dropdown to set daily limit for current site (15m/30m/1h/2h)
+  - **Focus Quick-Start**: Duration selector + start button (starts directly, no redirect)
+- Add `#popup-tab-activity` with:
+  - Top 5 sites (existing, moved here)
+  - Mini category breakdown pills
 
-## 5. Quick-Set Limit from Domains Table
+### Changes to `popup.js`:
+- Add `setupPopupTabs()` for tab switching
+- Add `loadControlsTab()` -- fetches current tab domain, checks if blocked, shows inline controls
+- Add inline limit setter that saves via `chrome.runtime.sendMessage`
+- Make focus start work directly from popup (not redirect to dashboard) for quick sessions
 
-**Problem:** No way to quickly set a daily limit from the domains list.
+### 3b. Current Site Context Actions
 
-**Solution:** Add a "Set Limit" button to each row in the Network Access table.
+When user opens popup while on `x.com`:
+- Show "x.com" prominently at top of Controls tab
+- Show category badge (e.g., "Social Media")
+- Show time spent today (e.g., "42 min today")
+- Action buttons: "Block", "Set Limit", "Add to Focus Blocklist"
 
-### Changes:
-- **`dashboard.html`** -- Add a "Limit" column to the domains table
-- **`dashboard.js`** -- In `renderDomainsTable()`:
-  - Show current limit if set (e.g., "60m") or a "Set" button
-  - Clicking "Set" shows an inline input to pick minutes
-  - Saves to `settings.dailyLimits`
-  - Show usage progress if a limit is active (e.g., colored bar showing 42/60 min)
+### 3c. Upgrade Floating Widget (`content.js`)
+
+- Add a "Block This Site" confirmation step (currently instant, add a small confirm tooltip)
+- Add "Set Limit" button that opens a mini time picker (15m/30m/1h/2h) directly in the widget
+- Show daily limit progress if one exists for current domain
 
 ---
 
 ## Technical Details
 
 ### Files Modified:
-1. **`extension/dashboard/dashboard.html`** -- New Daily Limits section in Access Policy, Focus Mode mode-selector, expanded Reports/Insights tab, limit column in domains table
-2. **`extension/dashboard/dashboard.js`** -- New functions: `renderDailyLimits()`, `loadReports()`, focus mode-selector logic, inline limit setter, lock/unlock modal
-3. **`extension/dashboard/dashboard.css`** -- Styles for mode selector cards, lock icons, progress bars, report tables, category breakdown bars
-4. **`extension/background.js`** -- Add `locked` field support, `getMonthUsage` handler
-
-### No New Dependencies
-All features use vanilla JS, CSS, and the existing Chrome extension APIs.
+1. **`extension/manifest.json`** -- Add `webNavigation` permission
+2. **`extension/background.js`** -- Add `webNavigation` listeners, fix whitelist domain matching, harden `checkBlocking`
+3. **`extension/dashboard/dashboard.html`** -- Restructure Access Policy tab with clear sections and helper text
+4. **`extension/dashboard/dashboard.css`** -- New styles for section layout, explainer text, numbered sections
+5. **`extension/popup/popup.html`** -- Add tab navigation, controls tab with current-site context, activity tab
+6. **`extension/popup/popup.js`** -- Add tab switching, controls logic, inline limit/block actions, direct focus start
+7. **`extension/popup/popup.css`** -- Styles for popup tabs, controls UI, current-site card
+8. **`extension/content.js`** -- Add limit setter and confirmation to floating widget
 
 ### Implementation Order:
-1. Focus Mode clarity (mode selector) -- simplest, highest UX impact
-2. Daily Limits UI in Access Policy -- moves existing feature to a visible location
-3. Quick-Set Limit from domains table -- builds on #2
-4. Permanent Lock feature -- new blocking logic
-5. Reports tab enhancement -- largest but self-contained
+1. Fix whitelist blocking in background.js (critical bug fix)
+2. Add webNavigation permission to manifest
+3. Restructure Access Policy HTML/CSS
+4. Build popup tab navigation and controls tab
+5. Upgrade floating widget with limit setter
+
