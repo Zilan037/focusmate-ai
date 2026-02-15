@@ -464,21 +464,24 @@
         const blockedSection = document.getElementById("fg-blocked-section");
         try {
           const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
-          const blockedDomains = (settings.blockedDomains || []).map(b => typeof b === "string" ? b : b.domain);
-          if (blockedSection && blockedDomains.length > 0) {
+          // Filter out system-default domains (NSFW/gambling) — never show those names
+          const userBlockedDomains = (settings.blockedDomains || [])
+            .filter(b => !(typeof b === "object" && b.systemDefault))
+            .map(b => typeof b === "string" ? b : b.domain);
+          if (blockedSection && userBlockedDomains.length > 0) {
             blockedSection.style.display = "block";
             const bList = document.getElementById("fg-blocked-list");
             bList.innerHTML = "";
-            blockedDomains.slice(0, 6).forEach(site => {
+            userBlockedDomains.slice(0, 6).forEach(site => {
               const pill = document.createElement("span");
               pill.className = "fg-blocked-pill";
               pill.textContent = site;
               bList.appendChild(pill);
             });
-            if (blockedDomains.length > 6) {
+            if (userBlockedDomains.length > 6) {
               const more = document.createElement("span");
               more.className = "fg-blocked-pill";
-              more.textContent = `+${blockedDomains.length - 6}`;
+              more.textContent = `+${userBlockedDomains.length - 6}`;
               bList.appendChild(more);
             }
           } else if (blockedSection) {

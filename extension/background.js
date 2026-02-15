@@ -660,29 +660,29 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
 
     if (allowedSites && allowedSites.length > 0) {
       // WHITELIST MODE: Block everything, then add exceptions
+      const allResourceTypes = ["main_frame", "sub_frame", "stylesheet", "script", "image", "font", "xmlhttprequest", "ping", "media", "websocket", "other"];
       
-      // Rule 1: Block ALL http/https traffic
+      // Rule 1: Block ALL http traffic (catch-all)
       rules.push({
         id: ruleId++,
         priority: 1,
         action: { type: "block" },
         condition: {
-          urlFilter: "*",
-          resourceTypes: ["main_frame", "sub_frame"],
+          urlFilter: "|http",
+          resourceTypes: allResourceTypes,
         },
       });
 
       // Exception rules for each allowed domain + subdomains
       for (const site of allowedSites) {
         const clean = site.replace(/^www\./, "").toLowerCase();
-        // Allow exact domain
         rules.push({
           id: ruleId++,
           priority: 2,
           action: { type: "allow" },
           condition: {
             requestDomains: [clean],
-            resourceTypes: ["main_frame", "sub_frame"],
+            resourceTypes: allResourceTypes,
           },
         });
       }
@@ -694,7 +694,7 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
         action: { type: "allow" },
         condition: {
           urlFilter: "chrome-extension://*",
-          resourceTypes: ["main_frame", "sub_frame"],
+          resourceTypes: allResourceTypes,
         },
       });
 

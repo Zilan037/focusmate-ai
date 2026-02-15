@@ -1,10 +1,13 @@
-// popup.js — FocusGuard V4 Premium popup with tabs
+// popup.js — FocusGuard V5 Premium popup with 4 tabs (Stats, Focus, Block, Activity)
 
 document.addEventListener("DOMContentLoaded", init);
 
-let selectedDuration = 25;
-let ctrlDuration = 25;
 let currentTabDomain = null;
+let focusPopupMode = "allow"; // "allow" or "block"
+let focusPopupDuration = 25;
+let focusPopupSites = [];
+let focusPopupTasks = [];
+let ctrlDuration = 25;
 
 async function init() {
   setupPopupTabs();
@@ -12,9 +15,8 @@ async function init() {
   await loadGoalProgress();
   await loadInsight();
   setupListeners();
-  await checkFocusState();
-  updateDurHighlight();
   setupThemeToggle();
+  await loadFocusTab();
   await loadControlsTab();
   await loadActivityTab();
 }
@@ -95,11 +97,6 @@ async function loadStats() {
     document.getElementById("streak-count").textContent = streakCount;
     if (streakCount > 0) document.getElementById("streak-badge").classList.add("active");
 
-    const domainCount = Object.keys(usage.domains || {}).length;
-    const focusStr = formatTime(usage.focusTime || 0);
-    const tickerEl = document.getElementById("ticker-content");
-    tickerEl.innerHTML = `<span>${domainCount} sites visited</span> <span class="ticker-sep">·</span> <span>${focusStr} focused</span> <span class="ticker-sep">·</span> <span>Score: ${score}</span>`;
-
     renderDomainBars(usage.domains || {});
   } catch (e) {
     console.error("Failed to load stats:", e);
@@ -139,7 +136,7 @@ function renderDomainBars(domains) {
 
   const sorted = Object.entries(domains)
     .sort((a, b) => (b[1].time || 0) - (a[1].time || 0))
-    .slice(0, 5);
+    .slice(0, 4);
 
   if (sorted.length === 0) {
     container.innerHTML = '<div class="empty-state">No activity yet today</div>';
@@ -152,7 +149,6 @@ function renderDomainBars(domains) {
     const pct = Math.round(((info.time || 0) / maxTime) * 100);
     const color = Categories.getCategoryColor(info.category || "Other");
     const mins = Math.round(info.time || 0);
-    const catIcon = Categories.getCategoryIcon ? Categories.getCategoryIcon(info.category || "Other") : "🌐";
 
     const bar = document.createElement("div");
     bar.className = "domain-bar fade-up";
@@ -166,10 +162,7 @@ function renderDomainBars(domains) {
         <img src="${faviconUrl}" onerror="this.style.display='none';this.parentElement.textContent='${letter}'" />
       </div>
       <div class="domain-info">
-        <div class="domain-name-row">
-          <span class="domain-name">${domain}</span>
-          <span class="domain-cat-icon" title="${info.category || 'Other'}">${catIcon}</span>
-        </div>
+        <span class="domain-name">${domain}</span>
         <div class="domain-bar-track">
           <div class="domain-bar-fill" style="width:${pct}%;background:${color};"></div>
         </div>
@@ -180,38 +173,50 @@ function renderDomainBars(domains) {
   });
 }
 
-// ─── Duration Highlight ───
-function updateDurHighlight() {
-  const btns = document.querySelectorAll("#popup-tab-overview .dur-btn");
-  const highlight = document.getElementById("dur-highlight");
-  let activeIndex = 0;
-  btns.forEach((btn, i) => {
-    if (btn.classList.contains("active")) activeIndex = i;
-  });
-  const btnWidth = 100 / btns.length;
-  highlight.style.width = `calc(${btnWidth}% - 1.5px)`;
-  highlight.style.transform = `translateX(${activeIndex * 100}%)`;
-}
-
 // ─── Listeners ───
 function setupListeners() {
   document.getElementById("btn-dashboard").addEventListener("click", openDashboard);
-  document.getElementById("btn-dashboard-bottom").addEventListener("click", openDashboard);
+}
 
-  document.querySelectorAll("#popup-tab-overview .dur-btn").forEach((btn) => {
+function openDashboard() {
+  chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/dashboard.html") });
+}
+
+// ═══ FOCUS TAB ═══
+async function loadFocusTab() {
+  // Mode selector
+  document.querySelectorAll(".focus-mode-option").forEach(btn => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll("#popup-tab-overview .dur-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".focus-mode-option").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      selectedDuration = parseInt(btn.dataset.dur);
-      updateDurHighlight();
+      focusPopupMode = btn.dataset.mode;
+      updateFocusSiteLabel();
+      focusPopupSites = [];
+      renderFocusSitePills();
     });
   });
 
-  document.getElementById("btn-start-focus").addEventListener("click", () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/dashboard.html#focus") });
-    window.close();
+  // Duration pills
+  document.querySelectorAll(".focus-dur-pill-popup").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".focus-dur-pill-popup").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      focusPopupDuration = parseInt(btn.dataset.dur);
+    });
   });
 
+  // Add site
+  document.getElementById("btn-add-focus-site").addEventListener("click", addFocusSite);
+  document.getElementById("focus-site-input").addEventListener("keydown", e => { if (e.key === "Enter") addFocusSite(); });
+
+  // Add task
+  document.getElementById("btn-add-focus-task-popup").addEventListener("click", addFocusTask);
+  document.getElementById("focus-task-input-popup").addEventListener("keydown", e => { if (e.key === "Enter") addFocusTask(); });
+
+  // Deploy
+  document.getElementById("btn-deploy-focus-popup").addEventListener("click", deployFocusFromPopup);
+
+  // Pause/Stop
   document.getElementById("btn-pause-focus").addEventListener("click", async () => {
     await chrome.runtime.sendMessage({ action: "pauseFocus" });
     await checkFocusState();
@@ -225,34 +230,89 @@ function setupListeners() {
     }
   });
 
-  document.getElementById("btn-block-current").addEventListener("click", async () => {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab || !tab.url) return;
-      const url = new URL(tab.url);
-      const domain = url.hostname.replace(/^www\./, "");
-      if (confirm(`Block ${domain}?`)) {
-        await chrome.runtime.sendMessage({ action: "blockDomain", domain });
-        window.close();
-      }
-    } catch (e) {}
+  updateFocusSiteLabel();
+  await checkFocusState();
+}
+
+function updateFocusSiteLabel() {
+  const label = document.getElementById("focus-site-label");
+  const desc = document.getElementById("focus-site-desc");
+  if (focusPopupMode === "allow") {
+    label.textContent = "✅ Allowed Websites";
+    desc.textContent = "Only these sites will be accessible. Everything else blocked.";
+  } else {
+    label.textContent = "🚫 Blocked Websites";
+    desc.textContent = "These sites will be blocked. Everything else stays accessible.";
+  }
+}
+
+function addFocusSite() {
+  const input = document.getElementById("focus-site-input");
+  const domain = input.value.trim().replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/.*$/, "").toLowerCase();
+  if (!domain) return;
+  if (!focusPopupSites.includes(domain)) {
+    focusPopupSites.push(domain);
+  }
+  input.value = "";
+  renderFocusSitePills();
+}
+
+function addFocusTask() {
+  const input = document.getElementById("focus-task-input-popup");
+  const text = input.value.trim();
+  if (!text) return;
+  focusPopupTasks.push(text);
+  input.value = "";
+  renderFocusTaskPills();
+}
+
+function renderFocusSitePills() {
+  const container = document.getElementById("focus-site-pills");
+  const colorClass = focusPopupMode === "allow" ? "pill-allow" : "pill-block";
+  container.innerHTML = focusPopupSites.map((s, i) =>
+    `<span class="focus-pill ${colorClass}"><span>${s}</span><button data-idx="${i}">✕</button></span>`
+  ).join("");
+  container.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      focusPopupSites.splice(parseInt(btn.dataset.idx), 1);
+      renderFocusSitePills();
+    });
   });
 }
 
-function openDashboard() {
-  chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/dashboard.html") });
+function renderFocusTaskPills() {
+  const container = document.getElementById("focus-task-pills");
+  container.innerHTML = focusPopupTasks.map((t, i) =>
+    `<span class="focus-pill pill-task"><span>${t}</span><button data-idx="${i}">✕</button></span>`
+  ).join("");
+  container.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      focusPopupTasks.splice(parseInt(btn.dataset.idx), 1);
+      renderFocusTaskPills();
+    });
+  });
+}
+
+async function deployFocusFromPopup() {
+  await chrome.runtime.sendMessage({
+    action: "startFocus",
+    duration: focusPopupDuration,
+    tasks: focusPopupTasks,
+    blockedSites: focusPopupMode === "block" ? focusPopupSites : [],
+    allowedSites: focusPopupMode === "allow" ? focusPopupSites : [],
+  });
+  await checkFocusState();
 }
 
 // ─── Focus State ───
 async function checkFocusState() {
   const state = await chrome.runtime.sendMessage({ action: "getFocusState" });
-  const inactiveEl = document.getElementById("focus-inactive");
-  const activeEl = document.getElementById("focus-active");
+  const inactiveEl = document.getElementById("focus-tab-inactive");
+  const activeEl = document.getElementById("focus-tab-active");
 
   if (state.active) {
     inactiveEl.style.display = "none";
     activeEl.style.display = "block";
-    activeEl.classList.add("pulsing");
 
     const mins = Math.floor(state.remaining);
     const secs = Math.round((state.remaining % 1) * 60);
@@ -287,7 +347,7 @@ async function checkFocusState() {
         item.className = "focus-task-item";
         const checked = task.done ? "checked" : "";
         item.innerHTML = `<input type="checkbox" ${checked} data-index="${i}" /><span>${task.text || task}</span>`;
-        item.querySelector("input").addEventListener("change", async (e) => {
+        item.querySelector("input").addEventListener("change", async () => {
           await chrome.runtime.sendMessage({ action: "toggleTask", taskIndex: i });
         });
         tasksList.appendChild(item);
@@ -300,14 +360,16 @@ async function checkFocusState() {
     } else {
       pauseBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg>';
     }
+
+    // Auto-switch to focus tab if active
+    document.querySelector('[data-tab="focus"]').click();
   } else {
-    inactiveEl.style.display = "block";
+    inactiveEl.style.display = "flex";
     activeEl.style.display = "none";
-    activeEl.classList.remove("pulsing");
   }
 }
 
-// ─── CONTROLS TAB ───
+// ═══ CONTROLS TAB ═══
 async function loadControlsTab() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -321,23 +383,23 @@ async function loadControlsTab() {
     document.getElementById("ctrl-favicon").src = faviconUrl;
     document.getElementById("ctrl-domain").textContent = domain;
     
-    // Get usage and settings
     const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
     const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
     
-    // Category
     const category = Categories.categorize(domain, settings.categoryOverrides);
     const catEl = document.getElementById("ctrl-category");
     const color = Categories.getCategoryColor(category);
     catEl.textContent = category;
     catEl.style.color = color;
     
-    // Time spent
     const timeSpent = Math.round(usage.domains?.[domain]?.time || 0);
     document.getElementById("ctrl-time-spent").textContent = timeSpent + "m today";
     
-    // Is blocked?
-    const isBlocked = (settings.blockedDomains || []).some(b => (typeof b === "string" ? b : b.domain) === domain);
+    const isBlocked = (settings.blockedDomains || []).some(b => {
+      const d = typeof b === "string" ? b : b.domain;
+      const isSystem = typeof b === "object" && b.systemDefault;
+      return d === domain && !isSystem;
+    });
     const blockBtn = document.getElementById("ctrl-btn-block");
     const blockLabel = document.getElementById("ctrl-block-label");
     if (isBlocked) {
@@ -345,7 +407,6 @@ async function loadControlsTab() {
       blockLabel.textContent = "Unblock";
     }
     
-    // Block/unblock
     blockBtn.addEventListener("click", async () => {
       if (blockBtn.classList.contains("is-blocked")) {
         await chrome.runtime.sendMessage({ action: "unblockDomain", domain });
@@ -358,7 +419,6 @@ async function loadControlsTab() {
       }
     });
     
-    // Daily limit
     const existingLimit = settings.dailyLimits?.[domain];
     if (existingLimit) {
       document.getElementById("ctrl-limit-picker").style.display = "none";
@@ -379,13 +439,11 @@ async function loadControlsTab() {
       });
     }
     
-    // Limit picker toggle
     document.getElementById("ctrl-btn-limit").addEventListener("click", () => {
       const picker = document.getElementById("ctrl-limit-picker");
       picker.style.display = picker.style.display === "none" ? "flex" : "none";
     });
     
-    // Limit options
     document.querySelectorAll(".ctrl-limit-opt").forEach(btn => {
       btn.addEventListener("click", async () => {
         const mins = parseInt(btn.dataset.mins);
@@ -393,37 +451,12 @@ async function loadControlsTab() {
         s.dailyLimits[domain] = mins;
         await chrome.runtime.sendMessage({ action: "saveSettings", settings: s });
         document.getElementById("ctrl-limit-picker").style.display = "none";
-        // Show progress
         document.getElementById("ctrl-limit-progress").style.display = "block";
         document.getElementById("ctrl-limit-text").textContent = `${timeSpent}/${mins} min`;
         const pct = Math.min(100, Math.round((timeSpent / mins) * 100));
         document.getElementById("ctrl-limit-bar-fill").style.width = pct + "%";
         document.getElementById("ctrl-btn-limit").style.display = "none";
       });
-    });
-
-    // Quick focus from controls
-    document.querySelectorAll(".ctrl-dur-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".ctrl-dur-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        ctrlDuration = parseInt(btn.dataset.dur);
-      });
-    });
-
-    document.getElementById("ctrl-btn-start-focus").addEventListener("click", async () => {
-      const mode = document.querySelector('input[name="ctrl-focus-mode"]:checked').value;
-      const allowedSites = mode === "allow" ? [domain] : [];
-      await chrome.runtime.sendMessage({
-        action: "startFocus",
-        duration: ctrlDuration,
-        tasks: [],
-        blockedSites: [],
-        allowedSites,
-      });
-      await checkFocusState();
-      // Switch to overview tab to see timer
-      document.querySelector('[data-tab="overview"]').click();
     });
 
     // Quick block categories
@@ -442,25 +475,22 @@ async function loadControlsTab() {
   }
 }
 
-// ─── ACTIVITY TAB ───
+// ═══ ACTIVITY TAB ═══
 async function loadActivityTab() {
   try {
     const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
     const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
     
-    // Sites count
     const sitesCount = Object.keys(usage.domains || {}).length;
     document.getElementById("act-sites-count").textContent = sitesCount;
     
-    // Focus sessions
     const sessions = (usage.focusSessions || []).length;
     document.getElementById("act-focus-sessions").textContent = sessions;
     
-    // Blocked count
-    const blockedCount = (settings.blockedDomains || []).length;
+    // Only count user-blocked (non-system) domains
+    const blockedCount = (settings.blockedDomains || []).filter(b => !(typeof b === "object" && b.systemDefault)).length;
     document.getElementById("act-blocked-count").textContent = blockedCount;
     
-    // Category breakdown pills
     const catTotals = {};
     Object.entries(usage.domains || {}).forEach(([, info]) => {
       const cat = info.category || "Other";

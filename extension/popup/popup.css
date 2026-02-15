@@ -67,15 +67,180 @@ body {
 .popup-tab-content { display: none; }
 .popup-tab-content.active { display: flex; flex-direction: column; gap: var(--sp-3); animation: fadeUp 0.25s var(--ease-out); }
 
-/* ─── Ticker ─── */
-.ticker {
-  overflow: hidden;
-  padding: 5px 0;
-  border-bottom: 1px solid var(--bg-glass-border);
-  margin: 0 calc(-1 * var(--sp-5));
-  padding: 5px var(--sp-5);
+/* ═══ FOCUS TAB ═══ */
+#focus-tab-inactive {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 }
-.ticker-track {
+
+.focus-mode-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+}
+.focus-mode-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--sp-4) var(--sp-3);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--radius-xl);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+.focus-mode-option:hover {
+  border-color: var(--bg-glass-border-hover);
+  background: var(--bg-glass-hover);
+}
+.focus-mode-option.active {
+  background: var(--gradient-primary);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--shadow-glow);
+}
+.focus-mode-icon { font-size: 20px; }
+.focus-mode-info { text-align: center; }
+.focus-mode-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+}
+.focus-mode-desc {
+  display: block;
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.focus-site-input-section, .focus-tasks-setup {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-xl);
+}
+.focus-input-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.focus-input-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin: 0 0 var(--sp-2);
+  line-height: 1.4;
+}
+.focus-site-input-row {
+  display: flex;
+  gap: 6px;
+}
+.focus-site-input-row .input {
+  flex: 1;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+}
+.btn-add-site {
+  padding: 8px 14px;
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-glass);
+  color: var(--accent);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--duration-fast);
+}
+.btn-add-site:hover {
+  background: rgba(37,99,235,0.1);
+  border-color: rgba(37,99,235,0.3);
+}
+
+.focus-site-pills-list, .focus-task-pills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: var(--sp-2);
+}
+.focus-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 700;
+}
+.focus-pill button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+  color: inherit;
+  opacity: 0.6;
+  padding: 0 2px;
+}
+.focus-pill button:hover { opacity: 1; }
+.pill-allow {
+  background: rgba(16,185,129,0.1);
+  color: #10B981;
+  border: 1px solid rgba(16,185,129,0.2);
+}
+.pill-block {
+  background: rgba(244,63,94,0.1);
+  color: #F43F5E;
+  border: 1px solid rgba(244,63,94,0.2);
+}
+.pill-task {
+  background: rgba(37,99,235,0.1);
+  color: var(--accent);
+  border: 1px solid rgba(37,99,235,0.15);
+}
+
+.focus-dur-section { text-align: center; }
+.focus-dur-pills {
+  display: inline-flex;
+  gap: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--radius-xl);
+  padding: 3px;
+}
+.focus-dur-pill-popup {
+  padding: 8px 16px;
+  border-radius: calc(var(--radius-xl) - 2px);
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+.focus-dur-pill-popup:hover { color: var(--text-primary); }
+.focus-dur-pill-popup.active {
+  background: var(--gradient-primary);
+  color: #fff;
+}
+
+.focus-active-card {
+  text-align: center;
+  padding: var(--sp-5);
+  border-radius: var(--radius-2xl);
+  animation: borderGlow 2s ease-in-out infinite;
+  border: 1px solid transparent;
+}
+
+/* ─── Ticker (removed — cleaner UI) ───
+
+/* ─── Section ─── */
   display: flex;
   gap: var(--sp-6);
   white-space: nowrap;
