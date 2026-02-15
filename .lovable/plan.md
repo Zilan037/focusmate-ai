@@ -1,115 +1,93 @@
 
 
-# FocusGuard: Strict Whitelist Fix, Access Policy UX Overhaul, and Extension Popup Upgrade
+# FocusGuard: NSFW Auto-Block, Focus Mode Fix, and UI Cleanup
 
 ## Overview
 
-Three major improvements: (1) Fix the broken "Allow Only" whitelist blocking so it actually works, (2) Redesign the Access Policy page for clarity, and (3) Upgrade the extension popup with inline site controls and better navigation.
+Three critical fixes: (1) Permanently auto-block all adult/gambling/scam sites on install with no user override, (2) Fix the broken "Allow Only" whitelist in Focus Mode using declarativeNetRequest for true network-level blocking, and (3) Clean up the popup and dashboard UI.
 
 ---
 
-## 1. Fix Strict Whitelist Blocking (Critical Bug)
+## 1. Permanent NSFW/Gambling Auto-Block System
 
-The "Allow Only" mode currently has a logic gap: `checkBlocking` in `background.js` only checks `allowedSites` during **Focus Mode**, but the check happens in `handleTabChange` which calls `checkBlocking` -- the problem is that `checkBlocking` correctly checks `focusState.allowedSites`, but the system relies on `chrome.tabs.onUpdated` which only fires once per page load. Navigating within a site (SPA-style) or opening new tabs may bypass it.
+### Problem
+Adult (18+) and Gambling categories are shown in the Quick Block UI, exposing harmful domain names to users. These should be silently and permanently blocked from the moment the extension is installed.
 
-### Fix:
-- **`background.js`**: Add a `chrome.webNavigation.onBeforeNavigate` listener (requires `webNavigation` permission) that intercepts ALL navigation attempts, not just tab updates. This ensures strict enforcement.
-- **`background.js`**: Also add `chrome.webNavigation.onCommitted` as a fallback to catch any navigation that slips through.
-- **`manifest.json`**: Add `"webNavigation"` to permissions array.
-- **`background.js` > `checkBlocking`**: Add subdomain matching improvement -- `youtube.com` should also allow `www.youtube.com`, `m.youtube.com`, etc. Currently it checks `domain.endsWith("." + s)` which works, but also needs to match the exact domain. Fix: also strip `www.` from the stored allowed site before comparison.
-- **`background.js`**: Always allow `chrome-extension://` URLs (extension's own pages) in whitelist mode -- currently there's a string check for `"chrome-extension"` but it should use protocol checking.
+### Solution
+- On `chrome.runtime.onInstalled`, automatically inject all Adult + Gambling domains from `CategoryPatterns` into `blockedDomains` with `{ locked: true, systemDefault: true }` flags. System-default domains cannot be unlocked or removed by the user -- the unlock modal will refuse them.
+- Remove the "Adult (18+)" and "Gambling" buttons from the Quick Block Categories grid in `dashboard.html` and from the popup's Quick Block section.
+- Add a prominent "Safety Shield" banner at the top of Access Policy that says: "FocusGuard automatically blocks all adult, gambling, and scam websites. This protection cannot be disabled."
+- Expand the domain lists in `CategoryPatterns` with additional patterns and use keyword-based blocking in `checkBlocking` so even unlisted NSFW/gambling domains are caught (already partially implemented via `Categories.categorize` keyword fallback).
 
-### Testing Scenario:
-User selects "Allow Only" > adds `youtube.com` > Deploys Focus. Every other site (google.com, reddit.com, etc.) should redirect to blocked page. Only youtube.com and its subdomains should work.
-
----
-
-## 2. Access Policy Page UX Overhaul
-
-The current Access Policy tab mixes too many concepts without clear visual separation. Reorganize into distinct, labeled sections with helper text.
-
-### Changes to `dashboard.html` (tab-blocklist):
-
-Restructure into these clearly separated sections, each inside its own card:
-
-1. **Safety Shield** (top) -- Strict Safety Mode toggle with a clear explanation banner
-2. **Blocked Websites** -- Add domain input + blocklist table with lock/toggle/delete. Move Quick Block Categories inside this section as a collapsible "Quick Add" dropdown
-3. **Daily Time Limits** -- Dedicated card with domain input + time selector + active limits list with progress bars
-4. **Scheduled Blocks** -- Time-based blocking with day/time pickers
-5. **Import/Export** -- Small action row at the bottom
-
-Each section gets:
-- A numbered step indicator or icon
-- A short "What is this?" description in muted text
-- Clear action buttons
-
-### Changes to `dashboard.css`:
-- Add `.access-section` class with clear borders, section numbers
-- Add `.section-explainer` for helper text styling
-- Better spacing between sections
+### Files Changed
+- **`background.js`** -- Add `initSystemBlocklist()` called from `onInstalled`. It reads all Adult + Gambling domains from CategoryPatterns and DistractionDefaults, merges them into `settings.blockedDomains` with `systemDefault: true, locked: true`. Also block any domain matching NSFW/gambling keywords at the `checkBlocking` level regardless of user settings.
+- **`dashboard.html`** -- Remove Adult and Gambling buttons from `#quick-category-grid`. Add Safety Shield info banner.
+- **`dashboard.js`** -- Skip system-default domains in the unlock modal (refuse to unlock them). Show them with a special "System Protected" badge in the blocklist.
+- **`popup.html`** -- Remove the Adult quick-block button from Controls tab.
+- **`categories.js`** -- Add more NSFW/gambling domain patterns for broader coverage.
 
 ---
 
-## 3. Extension Popup Upgrade
+## 2. Fix "Allow Only" (Strict Whitelist) in Focus Mode
 
-### 3a. Add Tab Navigation to Popup
+### Problem
+When a user selects "Allow Only" and adds a site like `notion.so`, ALL other websites should be blocked. Currently, only explicitly blocked sites get blocked -- the whitelist enforcement has a race condition because `webNavigation.onBeforeNavigate` is an async informational event, not a blocking one. The navigation completes before the redirect fires.
 
-Add a compact bottom tab bar or top pill navigation to the popup with 3 views:
+### Solution
+Use `chrome.declarativeNetRequest.updateDynamicRules()` to create actual network-level blocking rules when Focus Mode starts in "Allow Only" mode. This blocks requests at the browser engine level before they even reach the page -- no race conditions.
 
-- **Overview** (default) -- Current score ring, stats, daily goal, insight (existing)
-- **Controls** -- Site blocking, timer settings, focus mode quick-start
-- **Activity** -- Top sites list, mini category breakdown
+### Implementation
+- When `startFocusMode` is called with `allowedSites.length > 0`:
+  1. Create a dynamic declarativeNetRequest rule that blocks ALL URLs (`"*://*/*"`)
+  2. Add exception rules for each allowed domain and its subdomains
+  3. Always exempt `chrome-extension://` URLs
+- When focus mode ends (`completeFocusSession` or `stopFocusMode`), remove all dynamic rules.
+- Keep the existing `webNavigation` listeners as a visual fallback (shows the blocked page with a reason), but the real blocking happens at the network level.
+- For "Block Distractions" mode, also add declarativeNetRequest rules for the explicitly blocked domains for more reliable enforcement.
 
-### Changes to `popup.html`:
-- Add `.popup-nav` bar with 3 tab buttons (Overview, Controls, Activity)
-- Wrap existing content in `#popup-tab-overview`
-- Add `#popup-tab-controls` with:
-  - **Current site context**: Show current tab's domain with block/timer/limit buttons
-  - **Quick Block**: One-tap block current site
-  - **Set Timer**: Inline dropdown to set daily limit for current site (15m/30m/1h/2h)
-  - **Focus Quick-Start**: Duration selector + start button (starts directly, no redirect)
-- Add `#popup-tab-activity` with:
-  - Top 5 sites (existing, moved here)
-  - Mini category breakdown pills
+### Files Changed
+- **`background.js`** -- Add `applyFocusBlockingRules(allowedSites, blockedSites)` and `clearFocusBlockingRules()` functions using `chrome.declarativeNetRequest.updateDynamicRules`. Call them in `startFocusMode` and `completeFocusSession`/`stopFocusMode`.
+- **`manifest.json`** -- Already has `declarativeNetRequest` permission and `rules.json`. No changes needed.
 
-### Changes to `popup.js`:
-- Add `setupPopupTabs()` for tab switching
-- Add `loadControlsTab()` -- fetches current tab domain, checks if blocked, shows inline controls
-- Add inline limit setter that saves via `chrome.runtime.sendMessage`
-- Make focus start work directly from popup (not redirect to dashboard) for quick sessions
+---
 
-### 3b. Current Site Context Actions
+## 3. UI Cleanup and Simplification
 
-When user opens popup while on `x.com`:
-- Show "x.com" prominently at top of Controls tab
-- Show category badge (e.g., "Social Media")
-- Show time spent today (e.g., "42 min today")
-- Action buttons: "Block", "Set Limit", "Add to Focus Blocklist"
+### 3a. Access Policy Page
+- Remove Adult/Gambling from Quick Block Categories grid
+- Add a clean "Safety Shield" info card at top explaining auto-protection
+- Better visual hierarchy: number each section (1. Safety Shield, 2. Block Websites, 3. Time Limits, 4. Scheduled Blocks)
+- Add subtle helper text to each section explaining what it does
 
-### 3c. Upgrade Floating Widget (`content.js`)
+### 3b. Extension Popup
+- Clean up spacing and reduce visual clutter in the Overview tab
+- Remove the Adult quick-block button from Controls tab (since it is auto-blocked)
+- Tighten the layout so it looks less "messy" -- reduce padding, consolidate action buttons, improve section spacing
+- Make the current-site context card more prominent with clearer actions
 
-- Add a "Block This Site" confirmation step (currently instant, add a small confirm tooltip)
-- Add "Set Limit" button that opens a mini time picker (15m/30m/1h/2h) directly in the widget
-- Show daily limit progress if one exists for current domain
+### 3c. Floating Widget
+- Add a confirmation step to "Block Site" (small inline confirm rather than instant action)
+- Show daily limit progress bar if a limit exists for the current domain
+
+### Files Changed
+- **`dashboard.html`** -- Remove Adult/Gambling buttons, add Safety Shield banner
+- **`dashboard.css`** -- Add styles for Safety Shield banner, section numbering
+- **`popup.html`** -- Remove Adult button, tighten layout
+- **`popup.css`** -- Reduce padding, improve spacing consistency
+- **`content.js`** -- Add block confirmation step and limit progress display
 
 ---
 
 ## Technical Details
 
-### Files Modified:
-1. **`extension/manifest.json`** -- Add `webNavigation` permission
-2. **`extension/background.js`** -- Add `webNavigation` listeners, fix whitelist domain matching, harden `checkBlocking`
-3. **`extension/dashboard/dashboard.html`** -- Restructure Access Policy tab with clear sections and helper text
-4. **`extension/dashboard/dashboard.css`** -- New styles for section layout, explainer text, numbered sections
-5. **`extension/popup/popup.html`** -- Add tab navigation, controls tab with current-site context, activity tab
-6. **`extension/popup/popup.js`** -- Add tab switching, controls logic, inline limit/block actions, direct focus start
-7. **`extension/popup/popup.css`** -- Styles for popup tabs, controls UI, current-site card
-8. **`extension/content.js`** -- Add limit setter and confirmation to floating widget
+### Implementation Order
+1. NSFW auto-block system in `background.js` + `onInstalled` initialization
+2. declarativeNetRequest-based focus mode blocking
+3. UI cleanup (dashboard + popup + widget)
 
-### Implementation Order:
-1. Fix whitelist blocking in background.js (critical bug fix)
-2. Add webNavigation permission to manifest
-3. Restructure Access Policy HTML/CSS
-4. Build popup tab navigation and controls tab
-5. Upgrade floating widget with limit setter
+### Key Architecture Decisions
+- System-default blocked domains use `systemDefault: true` flag -- the UI code checks this flag and prevents any unlock/delete operations
+- declarativeNetRequest rules use IDs 10000-19999 range to avoid conflicts with other rules
+- The keyword-based fallback in `Categories.categorize` catches unlisted NSFW domains (domains containing "porn", "xxx", "casino", etc.)
+- All changes are backwards-compatible with existing user data
 
