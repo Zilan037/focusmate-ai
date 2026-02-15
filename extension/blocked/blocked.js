@@ -72,7 +72,8 @@ function init() {
 
   document.getElementById("btn-unlock").addEventListener("click", () => {
     chrome.runtime.sendMessage({ action: "unblockDomain", domain }, () => {
-      window.location.href = "https://" + domain;
+      // Replace history entry so F5 refreshes the real site, not the blocked page
+      window.location.replace("https://" + domain);
     });
   });
 }
@@ -217,6 +218,6 @@ function setupOverride(domain) {
   overrideBtn.addEventListener("click", async () => {
     if (!reflectionComplete) return;
     await chrome.runtime.sendMessage({ action: "recordBypass" });
-    window.location.href = "https://" + domain;
+    window.location.replace("https://" + domain);
   });
 }

@@ -540,6 +540,7 @@ function redirectToBlocked(tabId, domain, reason) {
   const blockedUrl = chrome.runtime.getURL(
     `blocked/blocked.html?domain=${encodeURIComponent(domain)}&reason=${encodeURIComponent(reason)}`
   );
+  // Use history.replaceState equivalent: replace the tab URL so the original URL is not in history
   chrome.tabs.update(tabId, { url: blockedUrl });
 }
 
