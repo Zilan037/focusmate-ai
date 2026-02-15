@@ -1,114 +1,106 @@
 
-# FocusGuard: Fix Whitelist Blocking, Remove NSFW Names, Add Popup Focus Tab, Clean UI
 
-## Overview
+# FocusGuard: Domain Input Fix, Autocomplete, Blocked Sites Management, and Dashboard Polish
 
-Five issues to fix: (1) The widget and dashboard Focus Mode display all blocked domain names including NSFW sites -- must filter those out, (2) Focus Mode "Allow Only" still not blocking properly, (3) Remove all NSFW/gambling domain names from all UI surfaces, (4) Create a dedicated Focus Mode tab inside the extension popup, (5) Clean up the popup UI.
+## What's Being Fixed
 
----
-
-## 1. Remove All NSFW/Gambling Domain Names from UI
-
-The floating widget (`content.js`) loads ALL blocked domains and displays them as pills (lines 466-489), including pornhub.com, xvideos.com, etc. The dashboard Focus Mode setup also pre-loads all blocked domains into the "Sites to Block" panel (line 1565).
-
-### Fix in `content.js`:
-- Filter out system-default domains when rendering the "BLOCKED" section. Change line 467 to filter: only show domains where `systemDefault` is NOT true.
-- Cap displayed blocked sites to user-added ones only.
-
-### Fix in `dashboard.js` (`loadFocusBlockedSites`):
-- Line 1565: Filter out system-default domains from the pre-loaded block list. Only load user-blocked domains into the Focus Mode "Sites to Block" panel.
-- This prevents NSFW names from appearing in the Focus Mode setup UI.
-
-### Fix in `popup.js`:
-- Ensure no system-default domain names are ever rendered in the popup Controls tab or Quick Block section.
+1. **Focus Mode "Allow Only" still not blocking** -- the domain input normalization and declarativeNetRequest rules need fixes
+2. **Autocomplete suggestions** when typing website names
+3. **Blocked sites management** section in dashboard and popup Activity tab
+4. **Dashboard data display** fixes to show real tracking data
 
 ---
 
-## 2. Fix "Allow Only" Whitelist (Still Not Working)
+## 1. Fix Domain Input and Whitelist Blocking
 
-The `declarativeNetRequest` rules in `background.js` use `urlFilter: "*"` (line 671) which may not match correctly. The Chrome declarativeNetRequest API requires proper filter patterns.
+**Problem:** When a user types `youtube.com`, the system stores it correctly but the declarativeNetRequest `requestDomains` field needs to include both the base domain AND `www.` variant. Also, if a user pastes `https://www.youtube.com/watch?v=...`, we need to strip it down to `youtube.com`.
 
-### Root Cause:
-The block-all rule uses `urlFilter: "*"` but `declarativeNetRequest` interprets `"*"` differently from a catch-all. The correct approach is to use `urlFilter: "*://*/*"` or `requestDomains` with an inverted match.
+**Changes in `background.js` (`applyFocusBlockingRules`):**
+- For each allowed site, add BOTH the base domain and `www.` prefixed version to `requestDomains`
+- Change the block-all rule to also use `urlFilter: "|https"` as a second rule (some sites are HTTPS-only and `|http` may not catch all patterns)
+- Actually, the better approach: use TWO block-all rules -- one with `urlFilter: "|http"` and one with `urlFilter: "|https"` to ensure total coverage
+- For the allow exceptions, include `www.DOMAIN` alongside the base domain in `requestDomains`
 
-### Fix in `background.js` (`applyFocusBlockingRules`):
-- Change the block-all rule to use `urlFilter: "||"` or `urlFilter: "*"` with `requestMethods` included, ensuring it catches all main_frame navigations.
-- Actually, the better fix: use `urlFilter: "*://*/*"` which is the proper catch-all pattern for declarativeNetRequest.
-- Add `"http", "https"` resource scheme filtering to ensure only web traffic is blocked.
-- Add additional resource types beyond just `main_frame` and `sub_frame` to also block `xmlhttprequest`, `script`, `stylesheet`, `image` etc. -- this prevents SPAs from loading content from non-allowed domains.
+**Changes in `popup.js` and `dashboard.js` (`addFocusSite`):**
+- Improve domain normalization: strip protocol, `www.`, trailing paths, query strings, hash fragments, and port numbers
+- Handle edge cases like `https://www.youtube.com/watch?v=xxx` becoming `youtube.com`
+- Handle `notion.so`, `docs.google.com` etc. correctly (don't strip subdomains other than `www`)
 
-### Also fix `webNavigation` listeners:
-- Keep as fallback to show the blocked page UI (since declarativeNetRequest just drops the request silently, the user sees a generic browser error).
-- Ensure `webNavigation.onBeforeNavigate` and `onCommitted` correctly redirect to the blocked page for non-allowed domains.
-
----
-
-## 3. Simplify Focus Mode in Dashboard
-
-### Focus Mode should have two clear sections:
-1. **Allow Only** -- User adds websites. Only those are accessible. Everything else is blocked.
-2. **Block Distractions** -- User adds websites. Only those are blocked. Everything else is accessible.
-
-### Changes to `dashboard.html`:
-- In the Focus Mode tab, do NOT pre-populate the "Sites to Block" with the user's global blocklist. Start with an empty list. The global blocklist + Safety Shield always apply regardless.
-- Add clearer labels and descriptions to both panels.
-
-### Changes to `dashboard.js`:
-- Remove `loadFocusBlockedSites()` or change it to NOT auto-populate the focus block list with ALL blocked domains. The focus blocklist should only contain domains the user explicitly adds for this session.
+**Changes in `background.js` (`isDomainAllowed` and `isDomainInList`):**
+- Already correct, but add an extra normalization step to strip any protocol or path that might have leaked through
 
 ---
 
-## 4. Add Dedicated Focus Mode Tab in Extension Popup
+## 2. Website Autocomplete Suggestions
 
-Currently the popup has 3 tabs (Overview, Controls, Activity). The Focus Mode section is embedded in the Overview tab as a small compact area. Move it to its own dedicated tab.
+**New: Popular websites database** -- Add a `POPULAR_SITES` array in `popup.js` and `dashboard.js` containing ~100 common domains organized by category (youtube.com, google.com, notion.so, github.com, reddit.com, twitter.com, etc.) sourced from `CategoryPatterns` in `categories.js`.
 
-### Changes to `popup.html`:
-- Add a 4th tab button: **Focus** (with a clock/target icon)
-- Create `#popup-tab-focus` content section with:
-  - Duration selector (15m, 25m, 45m, 60m pills)
-  - Task input (add tasks for the session)
-  - Mode selector (Allow Only vs Block Distractions) as two clear cards
-  - Site input for the selected mode (add allowed or blocked sites)
-  - "Start Focus" button
-  - Active focus state view (timer, tasks, pause/stop) -- same as existing but inside this tab
-- Remove the Focus Mode section from the Overview tab to declutter it
+**Autocomplete behavior:**
+- As user types in any site input field, show a dropdown with matching suggestions
+- Match against the popular sites list + user's recently used domains (stored in `chrome.storage.local`)
+- Recently used domains appear first, then popular matches
+- Clicking a suggestion fills the input and adds it
+- Dropdown appears below input, styled with proper z-index and background
 
-### Changes to `popup.js`:
-- Add `loadFocusTab()` function to populate the focus tab
-- Handle task adding, site adding, mode switching, and deploying focus directly from the popup
-- When focus is active, show the timer and task checklist in the focus tab
-- Keep the quick overview of focus status in the Overview tab (just a small badge/indicator, not the full controls)
+**Changes:**
+- `popup.html` / `popup.js`: Add autocomplete dropdown container below each site input, wire up `input` event listener
+- `dashboard.html` / `dashboard.js`: Same for dashboard Focus Mode and blocklist inputs
+- `background.js`: Add `getRecentDomains` message handler that returns the user's most-visited domains from usage data
+- Store "recently blocked/allowed" domains list in storage for priority suggestions
 
 ---
 
-## 5. Clean Up Popup UI
+## 3. Blocked Sites Management Section
 
-### Changes to `popup.html` and `popup.css`:
-- Remove Focus Mode controls from the Overview tab (moved to Focus tab)
-- Tighten spacing, reduce padding
-- Make the tab navigation more compact (4 tabs fit well with icons + short labels)
-- Remove the bottom "Block Site" / "Dashboard" quick actions bar (redundant with Controls tab)
-- Keep the keyboard shortcuts hint and footer
+**Dashboard -- new "Manage Blocked Sites" section:**
+- Add a new card in the Access Policy tab (or a sub-section) showing all user-blocked domains (NOT system-default) with:
+  - Domain name + favicon
+  - "Unblock" button for each
+  - Visual indicator if the domain has a daily limit set
+- Filter out all `systemDefault: true` entries
 
-### Changes to `popup.css`:
-- Ensure consistent card spacing
-- Improve visual hierarchy in the Controls tab
+**Popup Activity tab -- "Your Blocked Sites" section:**
+- Add a scrollable list below the category pills showing user-blocked domains
+- Each entry has: favicon, domain name, small "Unblock" button
+- Max 10 shown, with "View all in Dashboard" link
+- Filter out system-default domains
+
+**Changes:**
+- `popup.html`: Add `#blocked-sites-list` container in Activity tab
+- `popup.js` (`loadActivityTab`): Fetch settings, filter user-blocked domains, render list with unblock buttons
+- `dashboard.html`: Ensure the blocklist section in Access Policy properly renders (may already exist)
+- `dashboard.js`: Ensure blocklist rendering filters system defaults
+
+---
+
+## 4. Dashboard Data and Chart Fixes
+
+From the screenshot, the dashboard charts (Temporal Flow State, etc.) appear empty with no data. This is likely because:
+
+- The hourly activity canvas (`chart-hourly`) needs the tracking data to be non-zero
+- The charts rely on `usage.hourlyActivity` which may not have data yet or the chart rendering function has issues
+
+**Changes in `dashboard.js`:**
+- Add fallback/placeholder content when charts have no data ("Start browsing to see your data here")
+- Ensure `loadOverview()` correctly reads and passes `hourlyActivity` data to the chart
+- Verify that `loadComparisons()` and sparkline rendering handle zero-data gracefully
+- Add a "Last updated" indicator that shows actual refresh time
 
 ---
 
 ## Technical Details
 
 ### Files Modified:
-1. **`extension/background.js`** -- Fix `applyFocusBlockingRules()` to use correct `urlFilter` pattern for catch-all blocking
-2. **`extension/content.js`** -- Filter out system-default domains from the blocked pills display
-3. **`extension/dashboard/dashboard.js`** -- Remove auto-population of system-default domains in Focus Mode block list
-4. **`extension/popup/popup.html`** -- Add Focus tab, remove focus controls from Overview, remove redundant bottom actions
-5. **`extension/popup/popup.js`** -- Add focus tab logic with task/site management, mode selector, deploy, and active state
-6. **`extension/popup/popup.css`** -- Styles for focus tab, cleaner layout
+1. **`extension/background.js`** -- Fix `applyFocusBlockingRules` to add `www.` variants and dual http/https block rules; add `getRecentDomains` message handler
+2. **`extension/popup/popup.html`** -- Add autocomplete dropdown containers; add blocked sites section in Activity tab
+3. **`extension/popup/popup.js`** -- Autocomplete logic; blocked sites rendering in Activity tab; improved domain normalization in `addFocusSite`
+4. **`extension/popup/popup.css`** -- Styles for autocomplete dropdown and blocked sites list
+5. **`extension/dashboard/dashboard.html`** -- Ensure blocked sites management section exists in Access Policy
+6. **`extension/dashboard/dashboard.js`** -- Autocomplete for dashboard inputs; improved domain normalization; chart empty-state handling; fix `loadFocusBlockedSites` to NOT pre-populate block list
+7. **`extension/dashboard/dashboard.css`** -- Styles for autocomplete and blocked sites management
 
 ### Implementation Order:
-1. Fix declarativeNetRequest blocking rules (critical bug)
-2. Filter system-default domains from all UI surfaces
-3. Clean up Focus Mode dashboard pre-population
-4. Add Focus tab to popup
-5. UI cleanup and polish
+1. Fix domain normalization and declarativeNetRequest rules (critical blocking fix)
+2. Add blocked sites management to popup Activity tab and dashboard
+3. Add autocomplete suggestions system
+4. Fix dashboard chart empty states
