@@ -18,10 +18,15 @@ async function init() {
   await loadBlocklist();
   await loadSettings();
   await loadSidebarStats();
+  await loadDailyLimitsUI();
+  await loadReports("today");
   setupDataManagement();
   setupQuickActions();
   setupBlocklistActions();
   setupFocusMode();
+  setupReportsTab();
+  setupDailyLimitsActions();
+  setupUnlockModal();
   startAutoRefresh();
 }
 
@@ -159,7 +164,6 @@ function setComparison(id, data) {
 
 // ─── Comparison Row (Today vs Yesterday vs Avg) ───
 async function loadComparisonRow() {
-  // Comparison row elements removed in V4 layout - data now shown inline
   try {
     const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
     const weekData = await chrome.runtime.sendMessage({ action: "getWeekUsage" });
@@ -272,11 +276,9 @@ async function loadOverview() {
 
   document.getElementById("d-streak").textContent = `🔥 ${streak.current || 0}`;
   
-  // Streak highlight card
   const streakVal = document.getElementById("streak-card-value");
   if (streakVal) streakVal.innerHTML = `${streak.current || 0} <span class="streak-card-unit">Days</span>`;
   
-  // Sidebar goal
   try {
     const goalData = await chrome.runtime.sendMessage({ action: "getGoalProgress" });
     if (goalData) {
@@ -290,7 +292,6 @@ async function loadOverview() {
     }
   } catch (e) {}
 
-  // Peak hour
   const hourly = usage.hourlyActivity || [];
   let peakHour = 0, peakVal = 0;
   hourly.forEach((hr, i) => {
@@ -591,7 +592,6 @@ function draw30DayChart(days) {
   const maxScore = 100;
   const stepX = chartW / (days.length - 1 || 1);
 
-  // Grid
   for (let i = 0; i <= 4; i++) {
     const y = padding.top + (chartH / 4) * i;
     ctx.strokeStyle = colors.gridLine;
@@ -607,7 +607,6 @@ function draw30DayChart(days) {
     ctx.fillText(100 - i * 25, padding.left - 8, y + 3);
   }
 
-  // Area fill
   ctx.beginPath();
   ctx.moveTo(padding.left, padding.top + chartH);
   days.forEach((day, i) => {
@@ -624,7 +623,6 @@ function draw30DayChart(days) {
   ctx.fillStyle = areaGrad;
   ctx.fill();
 
-  // Line
   ctx.beginPath();
   days.forEach((day, i) => {
     const x = padding.left + i * stepX;
@@ -636,7 +634,6 @@ function draw30DayChart(days) {
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Dots
   days.forEach((day, i) => {
     if (i % 5 === 0 || i === days.length - 1) {
       const x = padding.left + i * stepX;
@@ -726,33 +723,52 @@ function renderDomainsTable(domains, settings) {
   const sorted = Object.entries(domains).sort((a, b) => (b[1].time || 0) - (a[1].time || 0));
   
   if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No domain data yet</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No domain data yet</td></tr>';
     return;
   }
 
   const visible = sorted.slice(0, domainShowCount);
+  const dailyLimits = settings.dailyLimits || {};
   
   visible.forEach(([domain, info], i) => {
     const isBlocked = (settings.blockedDomains || []).some(b => (typeof b === "string" ? b : b.domain) === domain);
     const color = Categories.getCategoryColor(info.category || "Other");
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
     const pctOfTotal = totalTime > 0 ? Math.round((info.time / totalTime) * 100) : 0;
+    const limit = dailyLimits[domain];
+    const usedMin = Math.round(info.time || 0);
+    
     const tr = document.createElement("tr");
     tr.dataset.domain = domain;
     tr.style.animationDelay = `${i * 30}ms`;
+    
+    let limitCell = '';
+    if (limit) {
+      const pct = Math.min(100, Math.round((usedMin / limit) * 100));
+      const barColor = pct >= 100 ? '#F43F5E' : pct >= 80 ? '#F59E0B' : '#10B981';
+      limitCell = `<td class="inline-limit-wrap">
+        <span class="inline-limit-value">${limit}m</span>
+        <span class="inline-limit-usage"><span class="inline-limit-usage-fill" style="width:${pct}%;background:${barColor};"></span></span>
+      </td>`;
+    } else {
+      limitCell = `<td><button class="inline-limit-btn" data-domain="${domain}">Set</button></td>`;
+    }
+    
     tr.innerHTML = `
       <td style="font-weight:600;">
         <img class="domain-row-favicon" src="${faviconUrl}" onerror="this.style.display='none'" />
         ${domain}
       </td>
       <td><span class="category-pill" style="background:${color}22;color:${color};border:1px solid ${color}33;">${info.category || "Other"}</span></td>
-      <td class="number-mono">${Math.round(info.time || 0)}m</td>
+      <td class="number-mono">${usedMin}m</td>
       <td class="number-mono">${pctOfTotal}%</td>
       <td>${info.visits || 0}</td>
       <td><canvas class="sparkline" width="50" height="20" data-domain="${domain}"></canvas></td>
+      ${limitCell}
       <td><div class="toggle ${isBlocked ? 'active' : ''}" data-domain="${domain}"></div></td>
     `;
     
+    // Block toggle
     tr.querySelector(".toggle").addEventListener("click", async function() {
       const d = this.dataset.domain;
       if (this.classList.contains("active")) {
@@ -764,10 +780,26 @@ function renderDomainsTable(domains, settings) {
       }
     });
     
+    // Inline limit setter
+    const limitBtn = tr.querySelector(".inline-limit-btn");
+    if (limitBtn) {
+      limitBtn.addEventListener("click", async function() {
+        const d = this.dataset.domain;
+        const mins = prompt(`Set daily limit for ${d} (in minutes):`, "60");
+        if (mins && !isNaN(parseInt(mins))) {
+          const s = await chrome.runtime.sendMessage({ action: "getSettings" });
+          s.dailyLimits[d] = parseInt(mins);
+          await chrome.runtime.sendMessage({ action: "saveSettings", settings: s });
+          const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+          renderDomainsTable(usage.domains || {}, s);
+          await loadDailyLimitsUI();
+        }
+      });
+    }
+    
     tbody.appendChild(tr);
   });
 
-  // Show more button
   const showMoreEl = document.getElementById("domains-show-more");
   if (sorted.length > domainShowCount) {
     showMoreEl.style.display = "flex";
@@ -779,7 +811,6 @@ function renderDomainsTable(domains, settings) {
     showMoreEl.style.display = "none";
   }
 
-  // Load sparklines
   loadSparklines();
 }
 
@@ -853,23 +884,40 @@ function renderBlocklistItems(settings) {
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
     const dateAdded = (typeof entry === "object" && entry.addedAt) ? new Date(entry.addedAt).toLocaleDateString() : "—";
     const enabled = typeof entry === "object" ? entry.enabled !== false : true;
+    const locked = typeof entry === "object" ? entry.locked === true : false;
     
     const item = document.createElement("div");
-    item.className = "blocklist-item glass-card fade-up";
+    item.className = `blocklist-item glass-card fade-up${locked ? ' is-locked' : ''}`;
     item.style.animationDelay = `${i * 40}ms`;
     item.innerHTML = `
       <img class="blocklist-favicon" src="${faviconUrl}" onerror="this.style.display='none'" />
       <div class="blocklist-info">
         <span class="blocklist-domain">${domain}</span>
-        <span class="blocklist-date">Added ${dateAdded}</span>
+        <span class="blocklist-date">Added ${dateAdded}${locked ? ' · <span class="blocklist-locked-badge">🔒 Locked</span>' : ''}</span>
       </div>
+      <button class="blocklist-lock ${locked ? 'locked' : ''}" data-domain="${domain}" title="${locked ? 'Unlock (requires confirmation)' : 'Lock permanently'}">${locked ? '🔒' : '🔓'}</button>
       <div class="toggle ${enabled ? 'active' : ''}" data-domain="${domain}" data-action="toggle"></div>
       <button class="blocklist-delete" data-domain="${domain}" title="Remove">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M5 4V3a1 1 0 011-1h2a1 1 0 011 1v1M8.5 6.5v4M5.5 6.5v4M3.5 4l.5 8a1 1 0 001 1h4a1 1 0 001-1l.5-8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
       </button>
     `;
     
+    // Lock/Unlock
+    item.querySelector(".blocklist-lock").addEventListener("click", async function() {
+      const d = this.dataset.domain;
+      if (this.classList.contains("locked")) {
+        // Show unlock modal
+        showUnlockModal(d);
+      } else {
+        // Lock it
+        await chrome.runtime.sendMessage({ action: "updateBlockedDomain", domain: d, locked: true });
+        const updated = await chrome.runtime.sendMessage({ action: "getSettings" });
+        renderBlocklistItems(updated);
+      }
+    });
+    
     item.querySelector("[data-action='toggle']").addEventListener("click", async function() {
+      if (locked) return;
       const d = this.dataset.domain;
       this.classList.toggle("active");
       await chrome.runtime.sendMessage({ 
@@ -880,6 +928,7 @@ function renderBlocklistItems(settings) {
     });
     
     item.querySelector(".blocklist-delete").addEventListener("click", async function() {
+      if (locked) return;
       const d = this.dataset.domain;
       await chrome.runtime.sendMessage({ action: "unblockDomain", domain: d });
       item.style.transform = "translateX(100%)";
@@ -892,6 +941,47 @@ function renderBlocklistItems(settings) {
     
     container.appendChild(item);
   });
+}
+
+// ─── Unlock Modal ───
+let unlockDomain = null;
+
+function setupUnlockModal() {
+  document.getElementById("unlock-modal-cancel")?.addEventListener("click", () => {
+    document.getElementById("unlock-modal").style.display = "none";
+    unlockDomain = null;
+  });
+
+  document.getElementById("unlock-modal-input")?.addEventListener("input", (e) => {
+    const expected = `UNLOCK ${unlockDomain}`;
+    const confirmBtn = document.getElementById("unlock-modal-confirm");
+    if (e.target.value === expected) {
+      confirmBtn.disabled = false;
+      confirmBtn.style.opacity = "1";
+    } else {
+      confirmBtn.disabled = true;
+      confirmBtn.style.opacity = "0.5";
+    }
+  });
+
+  document.getElementById("unlock-modal-confirm")?.addEventListener("click", async () => {
+    if (!unlockDomain) return;
+    await chrome.runtime.sendMessage({ action: "updateBlockedDomain", domain: unlockDomain, locked: false, forceUnlock: true });
+    document.getElementById("unlock-modal").style.display = "none";
+    document.getElementById("unlock-modal-input").value = "";
+    unlockDomain = null;
+    const updated = await chrome.runtime.sendMessage({ action: "getSettings" });
+    renderBlocklistItems(updated);
+  });
+}
+
+function showUnlockModal(domain) {
+  unlockDomain = domain;
+  document.getElementById("unlock-modal-phrase").textContent = `UNLOCK ${domain}`;
+  document.getElementById("unlock-modal-input").value = "";
+  document.getElementById("unlock-modal-confirm").disabled = true;
+  document.getElementById("unlock-modal-confirm").style.opacity = "0.5";
+  document.getElementById("unlock-modal").style.display = "flex";
 }
 
 function setupBlocklistActions() {
@@ -1006,6 +1096,193 @@ async function loadScheduledBlocks() {
   } catch (e) {}
 }
 
+// ─── Daily Limits UI (Access Policy) ───
+async function loadDailyLimitsUI() {
+  const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+  const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+  renderDailyLimits(settings, usage);
+}
+
+function renderDailyLimits(settings, usage) {
+  const container = document.getElementById("daily-limits-list");
+  if (!container) return;
+  const limits = settings.dailyLimits || {};
+  const domains = usage.domains || {};
+
+  if (Object.keys(limits).length === 0) {
+    container.innerHTML = '<div class="empty-state" style="padding:12px;">No daily limits set yet. Add one above!</div>';
+    return;
+  }
+
+  container.innerHTML = "";
+  Object.entries(limits).forEach(([domain, limitMins]) => {
+    const usedMins = Math.round(domains[domain]?.time || 0);
+    const pct = Math.min(100, Math.round((usedMins / limitMins) * 100));
+    const remaining = Math.max(0, limitMins - usedMins);
+    const barColor = pct >= 100 ? '#F43F5E' : pct >= 80 ? '#F59E0B' : '#10B981';
+    const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+
+    const item = document.createElement("div");
+    item.className = "daily-limit-item";
+    item.innerHTML = `
+      <img class="daily-limit-favicon" src="${faviconUrl}" onerror="this.style.display='none'" />
+      <div class="daily-limit-info">
+        <span class="daily-limit-domain">${domain}</span>
+        <span class="daily-limit-meta">${usedMins}/${limitMins} min used</span>
+      </div>
+      <div class="daily-limit-bar-wrap">
+        <div class="daily-limit-bar-fill" style="width:${pct}%;background:${barColor};"></div>
+      </div>
+      <span class="daily-limit-remaining" style="color:${barColor};">${remaining > 0 ? remaining + 'm left' : 'Reached!'}</span>
+      <button class="blocklist-delete" data-domain="${domain}" title="Remove limit">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    `;
+
+    item.querySelector(".blocklist-delete").addEventListener("click", async () => {
+      delete settings.dailyLimits[domain];
+      await chrome.runtime.sendMessage({ action: "saveSettings", settings });
+      renderDailyLimits(settings, usage);
+    });
+
+    container.appendChild(item);
+  });
+}
+
+function setupDailyLimitsActions() {
+  const selectEl = document.getElementById("select-daily-limit-mins");
+  const customInput = document.getElementById("input-daily-limit-custom");
+  
+  if (selectEl) {
+    selectEl.addEventListener("change", () => {
+      customInput.style.display = selectEl.value === "custom" ? "block" : "none";
+    });
+  }
+
+  document.getElementById("btn-add-daily-limit")?.addEventListener("click", async () => {
+    const domainInput = document.getElementById("input-daily-limit-domain");
+    const domain = domainInput.value.trim().replace(/^www\./, "").toLowerCase();
+    if (!domain) return;
+
+    let mins;
+    if (selectEl.value === "custom") {
+      mins = parseInt(customInput.value);
+    } else {
+      mins = parseInt(selectEl.value);
+    }
+    if (!mins || mins < 1) return;
+
+    const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+    settings.dailyLimits[domain] = mins;
+    await chrome.runtime.sendMessage({ action: "saveSettings", settings });
+    domainInput.value = "";
+    customInput.value = "";
+    await loadDailyLimitsUI();
+  });
+}
+
+// ─── Reports Tab ───
+function setupReportsTab() {
+  document.querySelectorAll(".report-range-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".report-range-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      loadReports(btn.dataset.range);
+    });
+  });
+}
+
+async function loadReports(range) {
+  let nDays = 1;
+  if (range === "week") nDays = 7;
+  else if (range === "month") nDays = 30;
+
+  try {
+    const data = await chrome.runtime.sendMessage({ action: nDays === 1 ? "getTodayUsage" : "getMonthUsage", days: nDays });
+    
+    let allDomains = {};
+    let totalActive = 0;
+    let totalBlocked = 0;
+
+    if (nDays === 1) {
+      allDomains = data.domains || {};
+      totalActive = data.totalActive || 0;
+      totalBlocked = data.blockBypasses || 0;
+    } else {
+      const daysData = Array.isArray(data) ? data : (data.days || []);
+      daysData.slice(0, nDays).forEach(day => {
+        const d = day.data || day;
+        totalActive += d.totalActive || 0;
+        totalBlocked += d.blockBypasses || 0;
+        Object.entries(d.domains || {}).forEach(([domain, info]) => {
+          if (!allDomains[domain]) allDomains[domain] = { time: 0, category: info.category || "Other", visits: 0 };
+          allDomains[domain].time += info.time || 0;
+          allDomains[domain].visits += info.visits || 0;
+        });
+      });
+    }
+
+    const sitesVisited = Object.keys(allDomains).length;
+    
+    // Category totals
+    const catTotals = {};
+    Object.entries(allDomains).forEach(([, info]) => {
+      const cat = info.category || "Other";
+      catTotals[cat] = (catTotals[cat] || 0) + (info.time || 0);
+    });
+    const topCat = Object.entries(catTotals).sort((a, b) => b[1] - a[1])[0];
+
+    // Update summary cards
+    document.getElementById("report-sites-visited").textContent = sitesVisited;
+    document.getElementById("report-total-time").textContent = formatTime(totalActive);
+    document.getElementById("report-top-category").textContent = topCat ? topCat[0] : "—";
+    document.getElementById("report-blocked").textContent = totalBlocked;
+
+    // Category breakdown
+    const catContainer = document.getElementById("report-category-breakdown");
+    const catEntries = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+    const maxCatTime = catEntries.length > 0 ? catEntries[0][1] : 1;
+
+    if (catEntries.length === 0) {
+      catContainer.innerHTML = '<div class="empty-state">No data for this period</div>';
+    } else {
+      catContainer.innerHTML = catEntries.map(([cat, time]) => {
+        const pct = Math.round((time / maxCatTime) * 100);
+        const color = Categories.getCategoryColor(cat);
+        const siteCount = Object.values(allDomains).filter(d => d.category === cat).length;
+        return `<div class="report-cat-row">
+          <span class="report-cat-label"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:8px;"></span>${cat}</span>
+          <div class="report-cat-bar-wrap"><div class="report-cat-bar-fill" style="width:${pct}%;background:${color};"></div></div>
+          <span class="report-cat-stats">${formatTime(time)} · ${siteCount} sites</span>
+        </div>`;
+      }).join("");
+    }
+
+    // Top 10 sites
+    const topSites = Object.entries(allDomains).sort((a, b) => (b[1].time || 0) - (a[1].time || 0)).slice(0, 10);
+    const topSitesBody = document.getElementById("report-top-sites");
+    
+    if (topSites.length === 0) {
+      topSitesBody.innerHTML = '<tr><td colspan="5" class="empty-state">No data for this period</td></tr>';
+    } else {
+      topSitesBody.innerHTML = topSites.map(([domain, info]) => {
+        const color = Categories.getCategoryColor(info.category || "Other");
+        const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+        const dailyAvg = formatTime((info.time || 0) / nDays);
+        return `<tr>
+          <td style="font-weight:600;"><img class="domain-row-favicon" src="${faviconUrl}" onerror="this.style.display='none'" />${domain}</td>
+          <td><span class="category-pill" style="background:${color}22;color:${color};border:1px solid ${color}33;">${info.category || "Other"}</span></td>
+          <td class="number-mono">${formatTime(info.time || 0)}</td>
+          <td>${info.visits || 0}</td>
+          <td class="number-mono">${dailyAvg}</td>
+        </tr>`;
+      }).join("");
+    }
+  } catch (e) {
+    console.error("Reports error:", e);
+  }
+}
+
 // ─── Insights ───
 async function loadInsights() {
   const insights = await chrome.runtime.sendMessage({ action: "getInsights" });
@@ -1099,13 +1376,11 @@ async function loadSettings() {
   document.getElementById("input-unlock-tasks").value = settings.focusDefaults?.unlockRequirements?.tasksRequired || 2;
   document.getElementById("input-unlock-interruptions").value = settings.focusDefaults?.unlockRequirements?.maxInterruptions || 3;
 
-  // Load goal
   try {
     const goalData = await chrome.runtime.sendMessage({ action: "getDailyGoal" });
     document.getElementById("input-daily-goal").value = goalData?.goal || 4;
   } catch (e) {}
 
-  // Load notification settings
   const notifKeys = ["notifyFocusComplete", "notifyLimitWarning", "notifyDistractionLoop"];
   notifKeys.forEach(key => {
     const toggle = document.querySelector(`[data-key="${key}"]`);
@@ -1131,6 +1406,7 @@ async function loadSettings() {
     domainInput.value = "";
     minInput.value = "";
     renderLimits(settings);
+    await loadDailyLimitsUI();
   });
 
   document.getElementById("btn-save-settings").addEventListener("click", async () => {
@@ -1177,6 +1453,7 @@ function renderLimits(settings) {
       delete settings.dailyLimits[domain];
       await chrome.runtime.sendMessage({ action: "saveSettings", settings });
       renderLimits(settings);
+      await loadDailyLimitsUI();
     });
     container.appendChild(card);
   });
@@ -1215,6 +1492,7 @@ let focusBlockedSites = [];
 let focusAllowedSites = [];
 let focusDuration = 25;
 let focusTimerInterval = null;
+let focusAccessMode = "block"; // "block" or "allow"
 
 function setupFocusMode() {
   // Duration pills
@@ -1229,6 +1507,26 @@ function setupFocusMode() {
   // Tasks
   document.getElementById("btn-add-focus-task")?.addEventListener("click", addFocusTask);
   document.getElementById("focus-task-input")?.addEventListener("keydown", e => { if (e.key === "Enter") addFocusTask(); });
+
+  // Mode Selector
+  document.querySelectorAll(".focus-mode-card").forEach(card => {
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".focus-mode-card").forEach(c => c.classList.remove("active"));
+      card.classList.add("active");
+      focusAccessMode = card.dataset.mode;
+      
+      const blockPanel = document.getElementById("focus-block-panel");
+      const allowPanel = document.getElementById("focus-allow-panel");
+      
+      if (focusAccessMode === "block") {
+        blockPanel.style.display = "block";
+        allowPanel.style.display = "none";
+      } else {
+        blockPanel.style.display = "none";
+        allowPanel.style.display = "block";
+      }
+    });
+  });
 
   // Block/Allow sites
   document.getElementById("btn-add-focus-block")?.addEventListener("click", () => addFocusSite("block"));
@@ -1328,8 +1626,8 @@ async function deployFocus() {
     action: "startFocus",
     duration: focusDuration,
     tasks: focusTasks,
-    blockedSites: focusBlockedSites,
-    allowedSites: focusAllowedSites,
+    blockedSites: focusAccessMode === "block" ? focusBlockedSites : [],
+    allowedSites: focusAccessMode === "allow" ? focusAllowedSites : [],
   });
   checkFocusPhase();
 }
@@ -1375,16 +1673,13 @@ function startFocusTimer(state) {
       document.getElementById("focus-elapsed").textContent = elapsed + "m";
       document.getElementById("focus-interruptions").textContent = s.interruptions || 0;
 
-      // Label
       const label = document.getElementById("focus-timer-label");
       if (s.paused) { label.textContent = "Paused"; label.style.color = "var(--warning)"; }
       else { label.textContent = "Remaining"; label.style.color = ""; }
 
-      // Pause button
       const pauseBtn = document.getElementById("btn-pause-focus");
       pauseBtn.textContent = s.paused ? "▶ Resume" : "⏸ Pause";
 
-      // Tasks
       const taskContainer = document.getElementById("focus-active-tasks");
       taskContainer.innerHTML = "";
       let doneCount = 0;
