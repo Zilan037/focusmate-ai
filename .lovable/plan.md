@@ -1,93 +1,114 @@
 
-
-# FocusGuard: NSFW Auto-Block, Focus Mode Fix, and UI Cleanup
+# FocusGuard: Fix Whitelist Blocking, Remove NSFW Names, Add Popup Focus Tab, Clean UI
 
 ## Overview
 
-Three critical fixes: (1) Permanently auto-block all adult/gambling/scam sites on install with no user override, (2) Fix the broken "Allow Only" whitelist in Focus Mode using declarativeNetRequest for true network-level blocking, and (3) Clean up the popup and dashboard UI.
+Five issues to fix: (1) The widget and dashboard Focus Mode display all blocked domain names including NSFW sites -- must filter those out, (2) Focus Mode "Allow Only" still not blocking properly, (3) Remove all NSFW/gambling domain names from all UI surfaces, (4) Create a dedicated Focus Mode tab inside the extension popup, (5) Clean up the popup UI.
 
 ---
 
-## 1. Permanent NSFW/Gambling Auto-Block System
+## 1. Remove All NSFW/Gambling Domain Names from UI
 
-### Problem
-Adult (18+) and Gambling categories are shown in the Quick Block UI, exposing harmful domain names to users. These should be silently and permanently blocked from the moment the extension is installed.
+The floating widget (`content.js`) loads ALL blocked domains and displays them as pills (lines 466-489), including pornhub.com, xvideos.com, etc. The dashboard Focus Mode setup also pre-loads all blocked domains into the "Sites to Block" panel (line 1565).
 
-### Solution
-- On `chrome.runtime.onInstalled`, automatically inject all Adult + Gambling domains from `CategoryPatterns` into `blockedDomains` with `{ locked: true, systemDefault: true }` flags. System-default domains cannot be unlocked or removed by the user -- the unlock modal will refuse them.
-- Remove the "Adult (18+)" and "Gambling" buttons from the Quick Block Categories grid in `dashboard.html` and from the popup's Quick Block section.
-- Add a prominent "Safety Shield" banner at the top of Access Policy that says: "FocusGuard automatically blocks all adult, gambling, and scam websites. This protection cannot be disabled."
-- Expand the domain lists in `CategoryPatterns` with additional patterns and use keyword-based blocking in `checkBlocking` so even unlisted NSFW/gambling domains are caught (already partially implemented via `Categories.categorize` keyword fallback).
+### Fix in `content.js`:
+- Filter out system-default domains when rendering the "BLOCKED" section. Change line 467 to filter: only show domains where `systemDefault` is NOT true.
+- Cap displayed blocked sites to user-added ones only.
 
-### Files Changed
-- **`background.js`** -- Add `initSystemBlocklist()` called from `onInstalled`. It reads all Adult + Gambling domains from CategoryPatterns and DistractionDefaults, merges them into `settings.blockedDomains` with `systemDefault: true, locked: true`. Also block any domain matching NSFW/gambling keywords at the `checkBlocking` level regardless of user settings.
-- **`dashboard.html`** -- Remove Adult and Gambling buttons from `#quick-category-grid`. Add Safety Shield info banner.
-- **`dashboard.js`** -- Skip system-default domains in the unlock modal (refuse to unlock them). Show them with a special "System Protected" badge in the blocklist.
-- **`popup.html`** -- Remove the Adult quick-block button from Controls tab.
-- **`categories.js`** -- Add more NSFW/gambling domain patterns for broader coverage.
+### Fix in `dashboard.js` (`loadFocusBlockedSites`):
+- Line 1565: Filter out system-default domains from the pre-loaded block list. Only load user-blocked domains into the Focus Mode "Sites to Block" panel.
+- This prevents NSFW names from appearing in the Focus Mode setup UI.
+
+### Fix in `popup.js`:
+- Ensure no system-default domain names are ever rendered in the popup Controls tab or Quick Block section.
 
 ---
 
-## 2. Fix "Allow Only" (Strict Whitelist) in Focus Mode
+## 2. Fix "Allow Only" Whitelist (Still Not Working)
 
-### Problem
-When a user selects "Allow Only" and adds a site like `notion.so`, ALL other websites should be blocked. Currently, only explicitly blocked sites get blocked -- the whitelist enforcement has a race condition because `webNavigation.onBeforeNavigate` is an async informational event, not a blocking one. The navigation completes before the redirect fires.
+The `declarativeNetRequest` rules in `background.js` use `urlFilter: "*"` (line 671) which may not match correctly. The Chrome declarativeNetRequest API requires proper filter patterns.
 
-### Solution
-Use `chrome.declarativeNetRequest.updateDynamicRules()` to create actual network-level blocking rules when Focus Mode starts in "Allow Only" mode. This blocks requests at the browser engine level before they even reach the page -- no race conditions.
+### Root Cause:
+The block-all rule uses `urlFilter: "*"` but `declarativeNetRequest` interprets `"*"` differently from a catch-all. The correct approach is to use `urlFilter: "*://*/*"` or `requestDomains` with an inverted match.
 
-### Implementation
-- When `startFocusMode` is called with `allowedSites.length > 0`:
-  1. Create a dynamic declarativeNetRequest rule that blocks ALL URLs (`"*://*/*"`)
-  2. Add exception rules for each allowed domain and its subdomains
-  3. Always exempt `chrome-extension://` URLs
-- When focus mode ends (`completeFocusSession` or `stopFocusMode`), remove all dynamic rules.
-- Keep the existing `webNavigation` listeners as a visual fallback (shows the blocked page with a reason), but the real blocking happens at the network level.
-- For "Block Distractions" mode, also add declarativeNetRequest rules for the explicitly blocked domains for more reliable enforcement.
+### Fix in `background.js` (`applyFocusBlockingRules`):
+- Change the block-all rule to use `urlFilter: "||"` or `urlFilter: "*"` with `requestMethods` included, ensuring it catches all main_frame navigations.
+- Actually, the better fix: use `urlFilter: "*://*/*"` which is the proper catch-all pattern for declarativeNetRequest.
+- Add `"http", "https"` resource scheme filtering to ensure only web traffic is blocked.
+- Add additional resource types beyond just `main_frame` and `sub_frame` to also block `xmlhttprequest`, `script`, `stylesheet`, `image` etc. -- this prevents SPAs from loading content from non-allowed domains.
 
-### Files Changed
-- **`background.js`** -- Add `applyFocusBlockingRules(allowedSites, blockedSites)` and `clearFocusBlockingRules()` functions using `chrome.declarativeNetRequest.updateDynamicRules`. Call them in `startFocusMode` and `completeFocusSession`/`stopFocusMode`.
-- **`manifest.json`** -- Already has `declarativeNetRequest` permission and `rules.json`. No changes needed.
+### Also fix `webNavigation` listeners:
+- Keep as fallback to show the blocked page UI (since declarativeNetRequest just drops the request silently, the user sees a generic browser error).
+- Ensure `webNavigation.onBeforeNavigate` and `onCommitted` correctly redirect to the blocked page for non-allowed domains.
 
 ---
 
-## 3. UI Cleanup and Simplification
+## 3. Simplify Focus Mode in Dashboard
 
-### 3a. Access Policy Page
-- Remove Adult/Gambling from Quick Block Categories grid
-- Add a clean "Safety Shield" info card at top explaining auto-protection
-- Better visual hierarchy: number each section (1. Safety Shield, 2. Block Websites, 3. Time Limits, 4. Scheduled Blocks)
-- Add subtle helper text to each section explaining what it does
+### Focus Mode should have two clear sections:
+1. **Allow Only** -- User adds websites. Only those are accessible. Everything else is blocked.
+2. **Block Distractions** -- User adds websites. Only those are blocked. Everything else is accessible.
 
-### 3b. Extension Popup
-- Clean up spacing and reduce visual clutter in the Overview tab
-- Remove the Adult quick-block button from Controls tab (since it is auto-blocked)
-- Tighten the layout so it looks less "messy" -- reduce padding, consolidate action buttons, improve section spacing
-- Make the current-site context card more prominent with clearer actions
+### Changes to `dashboard.html`:
+- In the Focus Mode tab, do NOT pre-populate the "Sites to Block" with the user's global blocklist. Start with an empty list. The global blocklist + Safety Shield always apply regardless.
+- Add clearer labels and descriptions to both panels.
 
-### 3c. Floating Widget
-- Add a confirmation step to "Block Site" (small inline confirm rather than instant action)
-- Show daily limit progress bar if a limit exists for the current domain
+### Changes to `dashboard.js`:
+- Remove `loadFocusBlockedSites()` or change it to NOT auto-populate the focus block list with ALL blocked domains. The focus blocklist should only contain domains the user explicitly adds for this session.
 
-### Files Changed
-- **`dashboard.html`** -- Remove Adult/Gambling buttons, add Safety Shield banner
-- **`dashboard.css`** -- Add styles for Safety Shield banner, section numbering
-- **`popup.html`** -- Remove Adult button, tighten layout
-- **`popup.css`** -- Reduce padding, improve spacing consistency
-- **`content.js`** -- Add block confirmation step and limit progress display
+---
+
+## 4. Add Dedicated Focus Mode Tab in Extension Popup
+
+Currently the popup has 3 tabs (Overview, Controls, Activity). The Focus Mode section is embedded in the Overview tab as a small compact area. Move it to its own dedicated tab.
+
+### Changes to `popup.html`:
+- Add a 4th tab button: **Focus** (with a clock/target icon)
+- Create `#popup-tab-focus` content section with:
+  - Duration selector (15m, 25m, 45m, 60m pills)
+  - Task input (add tasks for the session)
+  - Mode selector (Allow Only vs Block Distractions) as two clear cards
+  - Site input for the selected mode (add allowed or blocked sites)
+  - "Start Focus" button
+  - Active focus state view (timer, tasks, pause/stop) -- same as existing but inside this tab
+- Remove the Focus Mode section from the Overview tab to declutter it
+
+### Changes to `popup.js`:
+- Add `loadFocusTab()` function to populate the focus tab
+- Handle task adding, site adding, mode switching, and deploying focus directly from the popup
+- When focus is active, show the timer and task checklist in the focus tab
+- Keep the quick overview of focus status in the Overview tab (just a small badge/indicator, not the full controls)
+
+---
+
+## 5. Clean Up Popup UI
+
+### Changes to `popup.html` and `popup.css`:
+- Remove Focus Mode controls from the Overview tab (moved to Focus tab)
+- Tighten spacing, reduce padding
+- Make the tab navigation more compact (4 tabs fit well with icons + short labels)
+- Remove the bottom "Block Site" / "Dashboard" quick actions bar (redundant with Controls tab)
+- Keep the keyboard shortcuts hint and footer
+
+### Changes to `popup.css`:
+- Ensure consistent card spacing
+- Improve visual hierarchy in the Controls tab
 
 ---
 
 ## Technical Details
 
-### Implementation Order
-1. NSFW auto-block system in `background.js` + `onInstalled` initialization
-2. declarativeNetRequest-based focus mode blocking
-3. UI cleanup (dashboard + popup + widget)
+### Files Modified:
+1. **`extension/background.js`** -- Fix `applyFocusBlockingRules()` to use correct `urlFilter` pattern for catch-all blocking
+2. **`extension/content.js`** -- Filter out system-default domains from the blocked pills display
+3. **`extension/dashboard/dashboard.js`** -- Remove auto-population of system-default domains in Focus Mode block list
+4. **`extension/popup/popup.html`** -- Add Focus tab, remove focus controls from Overview, remove redundant bottom actions
+5. **`extension/popup/popup.js`** -- Add focus tab logic with task/site management, mode selector, deploy, and active state
+6. **`extension/popup/popup.css`** -- Styles for focus tab, cleaner layout
 
-### Key Architecture Decisions
-- System-default blocked domains use `systemDefault: true` flag -- the UI code checks this flag and prevents any unlock/delete operations
-- declarativeNetRequest rules use IDs 10000-19999 range to avoid conflicts with other rules
-- The keyword-based fallback in `Categories.categorize` catches unlisted NSFW domains (domains containing "porn", "xxx", "casino", etc.)
-- All changes are backwards-compatible with existing user data
-
+### Implementation Order:
+1. Fix declarativeNetRequest blocking rules (critical bug)
+2. Filter system-default domains from all UI surfaces
+3. Clean up Focus Mode dashboard pre-population
+4. Add Focus tab to popup
+5. UI cleanup and polish
