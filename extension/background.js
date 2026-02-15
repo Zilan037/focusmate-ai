@@ -3,6 +3,11 @@
 
 importScripts("utils/storage.js", "utils/categories.js", "utils/scoring.js", "utils/insights.js");
 
+// ─── NSFW/Gambling Keyword patterns for runtime detection ───
+const NSFW_KEYWORDS = /porn|xxx|nsfw|hentai|adult|sex|nude|naked|erotic|fetish|cam(girl|boy|show)|livecam|18\+|boob|milf|lesbian|gay|anal|blowjob|dildo|vibrator|orgasm|masturbat|escort|hookup|fap|rule34|doujin|lewd/i;
+const GAMBLING_KEYWORDS = /bet|casino|gambl|poker|slots?|jackpot|wager|bookie|sportsbook|lottery|lotto|roulette|blackjack|baccarat|craps|keno|bingo.*casino|sweepstake|bookmaker/i;
+const SCAM_KEYWORDS = /scam|phish|spam|malware|trojan|virus|hack|crack|keygen|warez|torrent.*xxx|pirat/i;
+
 // ─── State (in-memory, rebuilt from storage on wake) ───
 let currentSession = null;
 let recentDomains = [];
@@ -13,6 +18,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   console.log("[FocusGuard] Installed / Updated");
   await Storage.updateStreak();
   await ensureAlarms();
+
+  // Always run system blocklist init (idempotent — merges, doesn't duplicate)
+  await initSystemBlocklist();
 
   if (details.reason === "install") {
     const { focusguard_onboarded } = await chrome.storage.local.get("focusguard_onboarded");
@@ -26,7 +34,67 @@ chrome.runtime.onStartup.addListener(async () => {
   console.log("[FocusGuard] Browser started");
   await Storage.updateStreak();
   await ensureAlarms();
+  // Re-apply system blocklist on every startup to catch any tampering
+  await initSystemBlocklist();
 });
+
+// ─── System Blocklist: Permanently block all Adult + Gambling domains ───
+async function initSystemBlocklist() {
+  const settings = await Storage.getSettings();
+  const blockedDomains = settings.blockedDomains || [];
+
+  // Gather ALL adult + gambling domains from CategoryPatterns and DistractionDefaults
+  const adultDomains = [...(CategoryPatterns["Adult"] || []), ...(DistractionDefaults["Adult"] || [])];
+  const gamblingDomains = [...(CategoryPatterns["Gambling"] || []), ...(DistractionDefaults["Gambling"] || [])];
+  const systemDomains = [...new Set([...adultDomains, ...gamblingDomains])];
+
+  let changed = false;
+  for (const domain of systemDomains) {
+    const existingIdx = blockedDomains.findIndex(b => {
+      const d = typeof b === "string" ? b : b.domain;
+      return d === domain;
+    });
+
+    if (existingIdx === -1) {
+      // Add new system-default entry
+      blockedDomains.push({
+        domain,
+        enabled: true,
+        locked: true,
+        systemDefault: true,
+        addedAt: new Date().toISOString(),
+      });
+      changed = true;
+    } else {
+      // Ensure existing entry has systemDefault + locked flags
+      const entry = blockedDomains[existingIdx];
+      if (typeof entry === "string") {
+        blockedDomains[existingIdx] = {
+          domain: entry,
+          enabled: true,
+          locked: true,
+          systemDefault: true,
+          addedAt: new Date().toISOString(),
+        };
+        changed = true;
+      } else if (!entry.systemDefault || !entry.locked || entry.enabled === false) {
+        entry.systemDefault = true;
+        entry.locked = true;
+        entry.enabled = true;
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    settings.blockedDomains = blockedDomains;
+    // Also force strict safety mode on
+    settings.strictSafetyMode = true;
+    await Storage.saveSettings(settings);
+  }
+
+  console.log(`[FocusGuard] System blocklist initialized: ${systemDomains.length} domains protected`);
+}
 
 async function ensureAlarms() {
   chrome.alarms.create("session_tick", { periodInMinutes: 1 });
@@ -48,22 +116,28 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 
 // ─── Strict Navigation Interception (webNavigation) ───
-// This ensures "Allow Only" whitelist mode catches ALL navigations,
-// including SPA-style navigations, new tabs, and address bar entries.
 chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
-  // Only intercept main frame navigations
   if (details.frameId !== 0) return;
   
   try {
     const url = details.url;
-    // Always allow extension pages and chrome internal pages
     if (!url || url.startsWith("chrome") || url.startsWith("about:") || url.startsWith("edge:")) return;
     
     const domain = extractDomain(url);
     if (!domain) return;
+
+    // ── Always block NSFW/gambling domains via keyword detection ──
+    if (isDangerousByKeyword(domain)) {
+      redirectToBlocked(details.tabId, domain, "FocusGuard Safety Shield — this site is permanently blocked");
+      return;
+    }
     
     const focusState = await Storage.getFocusState();
-    if (!focusState.active) return;
+    if (!focusState.active) {
+      // Even outside focus, enforce system blocks
+      await checkSystemBlocks(domain, details.tabId);
+      return;
+    }
     
     const allowedSites = focusState.allowedSites || [];
     
@@ -113,6 +187,12 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
     
     const domain = extractDomain(url);
     if (!domain) return;
+
+    // Always block NSFW/gambling by keyword
+    if (isDangerousByKeyword(domain)) {
+      redirectToBlocked(details.tabId, domain, "FocusGuard Safety Shield — this site is permanently blocked");
+      return;
+    }
     
     const focusState = await Storage.getFocusState();
     if (!focusState.active) return;
@@ -166,12 +246,10 @@ function extractDomain(url) {
 }
 
 // ─── Domain Matching Helpers ───
-// Normalizes domain for comparison: strips www. prefix
 function normalizeDomain(d) {
   return d.replace(/^www\./, "").toLowerCase();
 }
 
-// Check if domain matches any in a list (with subdomain support)
 function isDomainInList(domain, list) {
   const d = normalizeDomain(domain);
   return list.some(s => {
@@ -180,13 +258,47 @@ function isDomainInList(domain, list) {
   });
 }
 
-// Check if domain is allowed (whitelist mode)
 function isDomainAllowed(domain, allowedSites) {
   const d = normalizeDomain(domain);
   return allowedSites.some(s => {
     const ns = normalizeDomain(s);
     return d === ns || d.endsWith("." + ns);
   });
+}
+
+// ─── Dangerous Domain Detection (keyword-based, catches unlisted sites) ───
+function isDangerousByKeyword(domain) {
+  const d = normalizeDomain(domain);
+  return NSFW_KEYWORDS.test(d) || GAMBLING_KEYWORDS.test(d) || SCAM_KEYWORDS.test(d);
+}
+
+// ─── System Block Check (outside focus mode) ───
+async function checkSystemBlocks(domain, tabId) {
+  const settings = await Storage.getSettings();
+  
+  // Strict Safety Mode — block dangerous categories
+  if (settings.strictSafetyMode !== false) {
+    const category = Categories.categorize(domain, settings.categoryOverrides);
+    if (Categories.isDangerous(category)) {
+      redirectToBlocked(tabId, domain, `FocusGuard Safety Shield — ${category} content is permanently blocked`);
+      return;
+    }
+  }
+  
+  // Check individual blocked domains
+  const blockedDomains = settings.blockedDomains || [];
+  for (const blocked of blockedDomains) {
+    const blockedDomain = typeof blocked === "object" ? blocked.domain : blocked;
+    const isEnabled = typeof blocked === "object" ? blocked.enabled !== false : true;
+    if (isEnabled && (domain === blockedDomain || domain.endsWith("." + blockedDomain))) {
+      const isSystem = typeof blocked === "object" && blocked.systemDefault;
+      const reason = isSystem 
+        ? "FocusGuard Safety Shield — this site is permanently blocked"
+        : "This site is on your block list";
+      redirectToBlocked(tabId, domain, reason);
+      return;
+    }
+  }
 }
 
 async function handleTabChange(tab) {
@@ -318,6 +430,12 @@ async function checkBlocking(domain, tabId) {
   const settings = await Storage.getSettings();
   const focusState = await Storage.getFocusState();
 
+  // ── 0. Always block dangerous domains by keyword (even if not in list) ──
+  if (isDangerousByKeyword(domain)) {
+    redirectToBlocked(tabId, domain, "FocusGuard Safety Shield — this site is permanently blocked");
+    return;
+  }
+
   // ── 1. Focus Mode Active — strictest rules ──
   if (focusState.active) {
     const allowedSites = focusState.allowedSites || [];
@@ -361,7 +479,7 @@ async function checkBlocking(domain, tabId) {
   if (settings.strictSafetyMode !== false) {
     const category = Categories.categorize(domain, settings.categoryOverrides);
     if (Categories.isDangerous(category)) {
-      redirectToBlocked(tabId, domain, `${category} content is blocked by Safety Mode`);
+      redirectToBlocked(tabId, domain, `FocusGuard Safety Shield — ${category} content is permanently blocked`);
       return;
     }
   }
@@ -471,6 +589,9 @@ async function startFocusMode(duration, tasks = [], blockedSites = [], allowedSi
   chrome.alarms.create("focus_tick", { periodInMinutes: 1 });
   chrome.action.setBadgeText({ text: `${duration}m` });
   chrome.action.setBadgeBackgroundColor({ color: "#3b82f6" });
+
+  // Apply declarativeNetRequest rules for hardened blocking
+  await applyFocusBlockingRules(allowedSites || [], blockedSites || []);
 }
 
 async function stopFocusMode() {
@@ -506,6 +627,9 @@ async function completeFocusSession(state, status) {
   chrome.alarms.clear("focus_tick");
   chrome.action.setBadgeText({ text: "" });
 
+  // Clear declarativeNetRequest rules
+  await clearFocusBlockingRules();
+
   if (status === "completed") {
     await Storage.updateStreak();
     await sendNotification("focus_complete", "Focus Session Complete! 🎯", `You completed ${elapsed} minutes of focused work.`);
@@ -520,6 +644,103 @@ async function completeFocusSession(state, status) {
     chrome.alarms.create("break_tick", { periodInMinutes: 1 });
     chrome.action.setBadgeText({ text: `☕${breakDuration}` });
     chrome.action.setBadgeBackgroundColor({ color: "#34D399" });
+  }
+}
+
+// ─── DeclarativeNetRequest: Network-Level Blocking for Focus Mode ───
+const FOCUS_RULE_BASE_ID = 10000;
+
+async function applyFocusBlockingRules(allowedSites, blockedSites) {
+  try {
+    // First clear any existing focus rules
+    await clearFocusBlockingRules();
+
+    const rules = [];
+    let ruleId = FOCUS_RULE_BASE_ID;
+
+    if (allowedSites && allowedSites.length > 0) {
+      // WHITELIST MODE: Block everything, then add exceptions
+      
+      // Rule 1: Block ALL http/https traffic
+      rules.push({
+        id: ruleId++,
+        priority: 1,
+        action: { type: "block" },
+        condition: {
+          urlFilter: "*",
+          resourceTypes: ["main_frame", "sub_frame"],
+        },
+      });
+
+      // Exception rules for each allowed domain + subdomains
+      for (const site of allowedSites) {
+        const clean = site.replace(/^www\./, "").toLowerCase();
+        // Allow exact domain
+        rules.push({
+          id: ruleId++,
+          priority: 2,
+          action: { type: "allow" },
+          condition: {
+            requestDomains: [clean],
+            resourceTypes: ["main_frame", "sub_frame"],
+          },
+        });
+      }
+
+      // Always allow extension pages
+      rules.push({
+        id: ruleId++,
+        priority: 3,
+        action: { type: "allow" },
+        condition: {
+          urlFilter: "chrome-extension://*",
+          resourceTypes: ["main_frame", "sub_frame"],
+        },
+      });
+
+    } else if (blockedSites && blockedSites.length > 0) {
+      // BLACKLIST MODE: Block specific domains
+      for (const site of blockedSites) {
+        const clean = site.replace(/^www\./, "").toLowerCase();
+        rules.push({
+          id: ruleId++,
+          priority: 1,
+          action: { type: "block" },
+          condition: {
+            requestDomains: [clean],
+            resourceTypes: ["main_frame", "sub_frame"],
+          },
+        });
+      }
+    }
+
+    if (rules.length > 0) {
+      await chrome.declarativeNetRequest.updateDynamicRules({
+        removeRuleIds: rules.map(r => r.id),
+        addRules: rules,
+      });
+      console.log(`[FocusGuard] Applied ${rules.length} declarativeNetRequest rules`);
+    }
+  } catch (e) {
+    console.log("[FocusGuard] declarativeNetRequest error:", e);
+  }
+}
+
+async function clearFocusBlockingRules() {
+  try {
+    const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+    const focusRuleIds = existingRules
+      .filter(r => r.id >= FOCUS_RULE_BASE_ID && r.id < FOCUS_RULE_BASE_ID + 1000)
+      .map(r => r.id);
+    
+    if (focusRuleIds.length > 0) {
+      await chrome.declarativeNetRequest.updateDynamicRules({
+        removeRuleIds: focusRuleIds,
+      });
+      console.log(`[FocusGuard] Cleared ${focusRuleIds.length} focus blocking rules`);
+    }
+  } catch (e) {
+    console.log("[FocusGuard] Error clearing rules:", e);
   }
 }
 
@@ -631,6 +852,10 @@ async function handleMessage(msg) {
     case "unblockDomain": {
       const s = await Storage.getSettings();
       const entry = (s.blockedDomains || []).find(d => (typeof d === "string" ? d : d.domain) === msg.domain);
+      // System-default domains CANNOT be unblocked
+      if (entry && typeof entry === "object" && entry.systemDefault) {
+        return { success: false, error: "System-protected domain cannot be unblocked" };
+      }
       if (entry && typeof entry === "object" && entry.locked && !msg.forceUnlock) {
         return { success: false, error: "Domain is locked" };
       }
@@ -647,6 +872,11 @@ async function handleMessage(msg) {
       const list = st.blockedDomains || [];
       const idx = list.findIndex(b => (typeof b === "string" ? b : b.domain) === msg.domain);
       if (idx !== -1) {
+        const entry = list[idx];
+        // System-default domains cannot be modified
+        if (typeof entry === "object" && entry.systemDefault) {
+          return { success: false, error: "System-protected domain cannot be modified" };
+        }
         if (typeof list[idx] === "string") {
           list[idx] = { domain: list[idx], enabled: msg.enabled !== undefined ? msg.enabled : true, addedAt: new Date().toISOString(), locked: false };
         } else {
@@ -676,6 +906,8 @@ async function handleMessage(msg) {
       const domainsToRemove = msg.domains || [];
       se.blockedDomains = (se.blockedDomains || []).filter(b => {
         const dom = typeof b === "string" ? b : b.domain;
+        // Don't allow removing system defaults
+        if (typeof b === "object" && b.systemDefault) return true;
         return !domainsToRemove.includes(dom);
       });
       await Storage.saveSettings(se);
@@ -689,6 +921,8 @@ async function handleMessage(msg) {
         if (typeof b === "string") {
           return { domain: b, enabled, addedAt: new Date().toISOString() };
         }
+        // System defaults always stay enabled
+        if (b.systemDefault) return b;
         return { ...b, enabled };
       });
       await Storage.saveSettings(toggleSettings);
@@ -696,9 +930,7 @@ async function handleMessage(msg) {
     }
 
     case "toggleStrictSafetyMode": {
-      const safetySettings = await Storage.getSettings();
-      safetySettings.strictSafetyMode = msg.enabled;
-      await Storage.saveSettings(safetySettings);
+      // Safety mode cannot be disabled — it's always on
       return { success: true };
     }
 

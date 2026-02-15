@@ -879,6 +879,33 @@ body {
   padding: var(--sp-4) var(--sp-5);
   border-radius: var(--radius-2xl);
 }
+
+/* Safety Shield in popup */
+.ctrl-safety-shield {
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.03));
+  border: 1px solid rgba(16,185,129,0.15);
+}
+.ctrl-safety-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+.ctrl-safety-icon { font-size: 14px; }
+.ctrl-safety-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #10B981;
+}
+.ctrl-safety-desc {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
 .ctrl-section-title {
   font-size: 13px;
   font-weight: 800;

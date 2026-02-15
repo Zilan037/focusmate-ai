@@ -872,14 +872,19 @@ function renderBlocklistItems(settings) {
   container.innerHTML = "";
   const blocked = settings.blockedDomains || [];
   
-  document.getElementById("blocklist-count").textContent = `${blocked.length} domains blocked`;
+  // Separate user domains from system-default domains
+  const userDomains = blocked.filter(b => !(typeof b === "object" && b.systemDefault));
+  const systemCount = blocked.length - userDomains.length;
   
-  if (blocked.length === 0) {
-    container.innerHTML = '<div class="empty-state">No blocked domains yet</div>';
+  document.getElementById("blocklist-count").textContent = `${userDomains.length} user-blocked · ${systemCount} system-protected`;
+  
+  if (userDomains.length === 0) {
+    container.innerHTML = '<div class="empty-state">No custom blocked domains yet. System-protected sites are handled by Safety Shield.</div>';
     return;
   }
 
-  blocked.forEach((entry, i) => {
+  // Only show user-added domains (not system defaults — those are hidden behind Safety Shield)
+  userDomains.forEach((entry, i) => {
     const domain = typeof entry === "string" ? entry : entry.domain;
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
     const dateAdded = (typeof entry === "object" && entry.addedAt) ? new Date(entry.addedAt).toLocaleDateString() : "—";
@@ -906,10 +911,8 @@ function renderBlocklistItems(settings) {
     item.querySelector(".blocklist-lock").addEventListener("click", async function() {
       const d = this.dataset.domain;
       if (this.classList.contains("locked")) {
-        // Show unlock modal
         showUnlockModal(d);
       } else {
-        // Lock it
         await chrome.runtime.sendMessage({ action: "updateBlockedDomain", domain: d, locked: true });
         const updated = await chrome.runtime.sendMessage({ action: "getSettings" });
         renderBlocklistItems(updated);
@@ -976,12 +979,20 @@ function setupUnlockModal() {
 }
 
 function showUnlockModal(domain) {
-  unlockDomain = domain;
-  document.getElementById("unlock-modal-phrase").textContent = `UNLOCK ${domain}`;
-  document.getElementById("unlock-modal-input").value = "";
-  document.getElementById("unlock-modal-confirm").disabled = true;
-  document.getElementById("unlock-modal-confirm").style.opacity = "0.5";
-  document.getElementById("unlock-modal").style.display = "flex";
+  // Check if this is a system-default domain — refuse unlock
+  chrome.runtime.sendMessage({ action: "getSettings" }).then(settings => {
+    const entry = (settings.blockedDomains || []).find(b => (typeof b === "object" ? b.domain : b) === domain);
+    if (entry && typeof entry === "object" && entry.systemDefault) {
+      alert("This domain is protected by FocusGuard Safety Shield and cannot be unlocked.");
+      return;
+    }
+    unlockDomain = domain;
+    document.getElementById("unlock-modal-phrase").textContent = `UNLOCK ${domain}`;
+    document.getElementById("unlock-modal-input").value = "";
+    document.getElementById("unlock-modal-confirm").disabled = true;
+    document.getElementById("unlock-modal-confirm").style.opacity = "0.5";
+    document.getElementById("unlock-modal").style.display = "flex";
+  });
 }
 
 function setupBlocklistActions() {
