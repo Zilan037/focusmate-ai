@@ -664,28 +664,28 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
     let ruleId = FOCUS_RULE_BASE_ID;
 
     if (allowedSites && allowedSites.length > 0) {
-      // WHITELIST MODE: Block everything, then add exceptions
-      const allResourceTypes = ["main_frame", "sub_frame", "stylesheet", "script", "image", "font", "xmlhttprequest", "ping", "media", "websocket", "other"];
+      // WHITELIST MODE: Block navigation only (main_frame), let sub-resources load freely
+      // This ensures allowed sites can load CDN resources from any domain (e.g. YouTube + googlevideo.com)
       
-      // Rule 1: Block ALL http traffic
+      // Rule 1: Block ALL http navigation
       rules.push({
         id: ruleId++,
         priority: 1,
         action: { type: "block" },
         condition: {
           urlFilter: "|http",
-          resourceTypes: allResourceTypes,
+          resourceTypes: ["main_frame"],
         },
       });
 
-      // Rule 2: Block ALL https traffic (belt + suspenders)
+      // Rule 2: Block ALL https navigation
       rules.push({
         id: ruleId++,
         priority: 1,
         action: { type: "block" },
         condition: {
           urlFilter: "|https",
-          resourceTypes: allResourceTypes,
+          resourceTypes: ["main_frame"],
         },
       });
 
@@ -693,7 +693,6 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
       for (const site of allowedSites) {
         const clean = normalizeDomainInput(site);
         if (!clean) continue;
-        // Allow base domain AND www. variant
         const domains = [clean];
         if (!clean.startsWith("www.")) {
           domains.push("www." + clean);
@@ -704,7 +703,7 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
           action: { type: "allow" },
           condition: {
             requestDomains: domains,
-            resourceTypes: allResourceTypes,
+            resourceTypes: ["main_frame"],
           },
         });
       }
@@ -716,7 +715,7 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
         action: { type: "allow" },
         condition: {
           urlFilter: "chrome-extension://*",
-          resourceTypes: allResourceTypes,
+          resourceTypes: ["main_frame"],
         },
       });
 
@@ -1001,6 +1000,46 @@ async function handleMessage(msg) {
         interruptionsMet: (focus.interruptions || 0) < reqs.maxInterruptions,
         allMet: elapsed >= reqs.focusMinutes && tasksDone >= reqs.tasksRequired && (focus.interruptions || 0) < reqs.maxInterruptions,
       };
+    }
+
+    case "checkDomainBlocked": {
+      // Check if a domain is currently blocked (used by blocked page for auto-redirect)
+      const checkDomain = normalizeDomain(msg.domain || "");
+      if (!checkDomain) return { blocked: false };
+
+      // 1. Dangerous by keyword — always blocked
+      if (isDangerousByKeyword(checkDomain)) return { blocked: true };
+
+      // 2. Focus mode active?
+      const focusCheck = await Storage.getFocusState();
+      if (focusCheck.active) {
+        const allowed = focusCheck.allowedSites || [];
+        if (allowed.length > 0) {
+          return { blocked: !isDomainAllowed(checkDomain, allowed) };
+        }
+        const blocked = focusCheck.blockedSites || [];
+        if (blocked.length > 0 && isDomainInList(checkDomain, blocked)) {
+          return { blocked: true };
+        }
+        const setCheck = await Storage.getSettings();
+        const cat = Categories.categorize(checkDomain, setCheck.categoryOverrides);
+        if (Categories.isDistraction(cat) || Categories.isDangerous(cat)) return { blocked: true };
+      }
+
+      // 3. System blocks / user blocks outside focus
+      const sysSettings = await Storage.getSettings();
+      if (sysSettings.strictSafetyMode !== false) {
+        const cat2 = Categories.categorize(checkDomain, sysSettings.categoryOverrides);
+        if (Categories.isDangerous(cat2)) return { blocked: true };
+      }
+      const bl2 = sysSettings.blockedDomains || [];
+      for (const b of bl2) {
+        const bd = typeof b === "object" ? b.domain : b;
+        const en = typeof b === "object" ? b.enabled !== false : true;
+        if (en && (checkDomain === bd || checkDomain.endsWith("." + bd))) return { blocked: true };
+      }
+
+      return { blocked: false };
     }
 
     case "completeOnboarding": {

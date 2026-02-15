@@ -26,6 +26,10 @@ function init() {
   document.getElementById("blocked-domain").textContent = domain;
   document.getElementById("blocked-reason").textContent = reason;
 
+  // Auto-redirect: if domain is no longer blocked, navigate to it
+  checkIfStillBlocked(domain);
+  setInterval(() => checkIfStillBlocked(domain), 2000);
+
   // Random first quote
   quoteIndex = Math.floor(Math.random() * quotes.length);
   showQuote(quoteIndex);
@@ -84,7 +88,16 @@ function showQuote(index) {
   document.getElementById("quote-author").textContent = `— ${q.author}`;
 }
 
-// ─── Resist Counter (unique domains per day) ───
+// ─── Auto-redirect if domain is no longer blocked ───
+async function checkIfStillBlocked(domain) {
+  try {
+    const response = await chrome.runtime.sendMessage({ action: "checkDomainBlocked", domain });
+    if (response && !response.blocked) {
+      window.location.replace("https://" + domain);
+    }
+  } catch (e) {}
+}
+
 async function loadResistCount() {
   try {
     const params = new URLSearchParams(window.location.search);
