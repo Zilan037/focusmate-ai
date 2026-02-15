@@ -8,9 +8,11 @@ let focusPopupDuration = 25;
 let focusPopupSites = [];
 let focusPopupTasks = [];
 let ctrlDuration = 25;
+let recentDomains = [];
 
 async function init() {
   setupPopupTabs();
+  await loadRecentDomains();
   await loadStats();
   await loadGoalProgress();
   await loadInsight();
@@ -19,6 +21,15 @@ async function init() {
   await loadFocusTab();
   await loadControlsTab();
   await loadActivityTab();
+}
+
+// ─── Recent domains for autocomplete ───
+async function loadRecentDomains() {
+  try {
+    recentDomains = await chrome.runtime.sendMessage({ action: "getRecentDomains" });
+  } catch (e) {
+    recentDomains = [];
+  }
 }
 
 // ─── Tab Navigation ───
@@ -182,6 +193,52 @@ function openDashboard() {
   chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/dashboard.html") });
 }
 
+// ═══ AUTOCOMPLETE ═══
+function setupAutocomplete(inputId, dropdownId, onSelect) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  if (!input || !dropdown) return;
+
+  input.addEventListener("input", () => {
+    const query = input.value.trim();
+    const suggestions = getAutocompleteSuggestions(query, recentDomains);
+    
+    if (suggestions.length === 0) {
+      dropdown.style.display = "none";
+      return;
+    }
+
+    dropdown.innerHTML = suggestions.map(s => `
+      <div class="autocomplete-item${s.recent ? ' recent' : ''}" data-domain="${s.domain}">
+        <img class="autocomplete-favicon" src="https://www.google.com/s2/favicons?domain=${s.domain}&sz=16" onerror="this.style.display='none'" />
+        <span class="autocomplete-domain">${s.domain}</span>
+        ${s.recent ? '<span class="autocomplete-badge">Recent</span>' : ''}
+      </div>
+    `).join("");
+    dropdown.style.display = "block";
+
+    dropdown.querySelectorAll(".autocomplete-item").forEach(item => {
+      item.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        const domain = item.dataset.domain;
+        input.value = domain;
+        dropdown.style.display = "none";
+        if (onSelect) onSelect(domain);
+      });
+    });
+  });
+
+  input.addEventListener("blur", () => {
+    setTimeout(() => { dropdown.style.display = "none"; }, 150);
+  });
+
+  input.addEventListener("focus", () => {
+    if (input.value.trim().length >= 2) {
+      input.dispatchEvent(new Event("input"));
+    }
+  });
+}
+
 // ═══ FOCUS TAB ═══
 async function loadFocusTab() {
   // Mode selector
@@ -230,6 +287,11 @@ async function loadFocusTab() {
     }
   });
 
+  // Autocomplete for focus site input
+  setupAutocomplete("focus-site-input", "focus-site-autocomplete", (domain) => {
+    addFocusSiteByDomain(domain);
+  });
+
   updateFocusSiteLabel();
   await checkFocusState();
 }
@@ -246,9 +308,19 @@ function updateFocusSiteLabel() {
   }
 }
 
+function addFocusSiteByDomain(domain) {
+  const clean = normalizeDomainInput(domain);
+  if (!clean) return;
+  if (!focusPopupSites.includes(clean)) {
+    focusPopupSites.push(clean);
+  }
+  document.getElementById("focus-site-input").value = "";
+  renderFocusSitePills();
+}
+
 function addFocusSite() {
   const input = document.getElementById("focus-site-input");
-  const domain = input.value.trim().replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/.*$/, "").toLowerCase();
+  const domain = normalizeDomainInput(input.value);
   if (!domain) return;
   if (!focusPopupSites.includes(domain)) {
     focusPopupSites.push(domain);
@@ -417,6 +489,8 @@ async function loadControlsTab() {
         blockBtn.classList.add("is-blocked");
         blockLabel.textContent = "Unblock";
       }
+      // Refresh blocked sites in activity tab
+      await loadBlockedSitesList();
     });
     
     const existingLimit = settings.dailyLimits?.[domain];
@@ -468,6 +542,7 @@ async function loadControlsTab() {
         const result = await chrome.runtime.sendMessage({ action: "quickBlockCategory", category });
         btn.textContent = `✓ ${result.added || 0} added`;
         setTimeout(() => { btn.disabled = false; btn.style.opacity = "1"; }, 2000);
+        await loadBlockedSitesList();
       });
     });
   } catch (e) {
@@ -512,7 +587,60 @@ async function loadActivityTab() {
         </div>`;
       }).join("");
     }
+
+    // Load blocked sites list
+    await loadBlockedSitesList();
   } catch (e) {
     console.error("Activity tab error:", e);
+  }
+}
+
+// ─── Blocked Sites List (user-blocked only) ───
+async function loadBlockedSitesList() {
+  const container = document.getElementById("blocked-sites-list");
+  if (!container) return;
+
+  try {
+    const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+    const userBlocked = (settings.blockedDomains || [])
+      .filter(b => !(typeof b === "object" && b.systemDefault));
+
+    if (userBlocked.length === 0) {
+      container.innerHTML = '<div class="empty-state" style="padding:8px;">No sites blocked yet</div>';
+      return;
+    }
+
+    // Show max 10
+    const visible = userBlocked.slice(0, 10);
+    container.innerHTML = visible.map((entry, i) => {
+      const domain = typeof entry === "string" ? entry : entry.domain;
+      const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
+      return `<div class="blocked-site-item fade-up" style="animation-delay:${i * 30}ms">
+        <img class="blocked-site-favicon" src="${faviconUrl}" onerror="this.style.display='none'" />
+        <span class="blocked-site-domain">${domain}</span>
+        <button class="blocked-site-unblock" data-domain="${domain}" title="Unblock">✕</button>
+      </div>`;
+    }).join("");
+
+    if (userBlocked.length > 10) {
+      container.innerHTML += `<div class="blocked-site-more" style="text-align:center;padding:4px;">
+        <button class="btn-view-dashboard" style="font-size:10px;color:var(--accent);background:none;border:none;cursor:pointer;font-weight:700;">View all ${userBlocked.length} in Dashboard →</button>
+      </div>`;
+      container.querySelector(".btn-view-dashboard")?.addEventListener("click", openDashboard);
+    }
+
+    container.querySelectorAll(".blocked-site-unblock").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const domain = btn.dataset.domain;
+        await chrome.runtime.sendMessage({ action: "unblockDomain", domain });
+        await loadBlockedSitesList();
+        // Update count
+        const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+        const blockedCount = (settings.blockedDomains || []).filter(b => !(typeof b === "object" && b.systemDefault)).length;
+        document.getElementById("act-blocked-count").textContent = blockedCount;
+      });
+    });
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state">Could not load blocked sites</div>';
   }
 }
