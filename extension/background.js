@@ -21,6 +21,8 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
   // Always run system blocklist init (idempotent — merges, doesn't duplicate)
   await initSystemBlocklist();
+  // Apply persistent declarativeNetRequest rules for all blocked domains
+  await applyPersistentBlockRules();
 
   if (details.reason === "install") {
     const { focusguard_onboarded } = await chrome.storage.local.get("focusguard_onboarded");
@@ -34,8 +36,8 @@ chrome.runtime.onStartup.addListener(async () => {
   console.log("[FocusGuard] Browser started");
   await Storage.updateStreak();
   await ensureAlarms();
-  // Re-apply system blocklist on every startup to catch any tampering
   await initSystemBlocklist();
+  await applyPersistentBlockRules();
 });
 
 // ─── System Blocklist: Permanently block all Adult + Gambling domains ───
@@ -697,13 +699,15 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
         if (!clean.startsWith("www.")) {
           domains.push("www." + clean);
         }
+        // Allow ALL resource types so the site works fully (CDN, scripts, images, etc.)
+        const allTypes = ["main_frame", "sub_frame", "stylesheet", "script", "image", "font", "xmlhttprequest", "ping", "media", "websocket", "other"];
         rules.push({
           id: ruleId++,
-          priority: 2,
+          priority: 10, // Highest — overrides persistent blocks too
           action: { type: "allow" },
           condition: {
             requestDomains: domains,
-            resourceTypes: ["main_frame"],
+            resourceTypes: allTypes,
           },
         });
       }
@@ -711,7 +715,7 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
       // Always allow extension pages
       rules.push({
         id: ruleId++,
-        priority: 3,
+        priority: 10,
         action: { type: "allow" },
         condition: {
           urlFilter: "chrome-extension://*",
@@ -720,7 +724,8 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
       });
 
     } else if (blockedSites && blockedSites.length > 0) {
-      // BLACKLIST MODE: Block specific domains + www variant
+      // BLACKLIST MODE: Block ALL resource types for specific domains (total lockout)
+      const allResourceTypes = ["main_frame", "sub_frame", "stylesheet", "script", "image", "font", "xmlhttprequest", "ping", "media", "websocket", "other"];
       for (const site of blockedSites) {
         const clean = normalizeDomainInput(site);
         if (!clean) continue;
@@ -734,7 +739,7 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
           action: { type: "block" },
           condition: {
             requestDomains: domains,
-            resourceTypes: ["main_frame", "sub_frame"],
+            resourceTypes: allResourceTypes,
           },
         });
       }
@@ -767,6 +772,60 @@ async function clearFocusBlockingRules() {
     }
   } catch (e) {
     console.log("[FocusGuard] Error clearing rules:", e);
+  }
+}
+
+// ─── Persistent Block Rules: Always block user-blocked & system-blocked domains (all resource types) ───
+const PERSISTENT_RULE_BASE_ID = 20000;
+const PERSISTENT_RULE_MAX = 2500;
+
+async function applyPersistentBlockRules() {
+  try {
+    // Clear existing persistent rules
+    const existing = await chrome.declarativeNetRequest.getDynamicRules();
+    const persistentIds = existing
+      .filter(r => r.id >= PERSISTENT_RULE_BASE_ID && r.id < PERSISTENT_RULE_BASE_ID + PERSISTENT_RULE_MAX)
+      .map(r => r.id);
+    if (persistentIds.length > 0) {
+      await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: persistentIds });
+    }
+
+    const settings = await Storage.getSettings();
+    const blockedDomains = settings.blockedDomains || [];
+    const allResourceTypes = ["main_frame", "sub_frame", "stylesheet", "script", "image", "font", "xmlhttprequest", "ping", "media", "websocket", "other"];
+    const rules = [];
+    let ruleId = PERSISTENT_RULE_BASE_ID;
+
+    for (const blocked of blockedDomains) {
+      const domain = typeof blocked === "object" ? blocked.domain : blocked;
+      const enabled = typeof blocked === "object" ? blocked.enabled !== false : true;
+      if (!enabled) continue;
+
+      const domains = [domain];
+      if (!domain.startsWith("www.")) domains.push("www." + domain);
+
+      rules.push({
+        id: ruleId++,
+        priority: 5, // Below focus-allow (10) but above focus-block (1)
+        action: { type: "block" },
+        condition: {
+          requestDomains: domains,
+          resourceTypes: allResourceTypes,
+        },
+      });
+
+      if (ruleId >= PERSISTENT_RULE_BASE_ID + PERSISTENT_RULE_MAX - 1) break;
+    }
+
+    if (rules.length > 0) {
+      await chrome.declarativeNetRequest.updateDynamicRules({
+        removeRuleIds: rules.map(r => r.id),
+        addRules: rules,
+      });
+    }
+    console.log(`[FocusGuard] Applied ${rules.length} persistent block rules`);
+  } catch (e) {
+    console.log("[FocusGuard] Persistent block rules error:", e);
   }
 }
 
@@ -871,6 +930,7 @@ async function handleMessage(msg) {
         blockedList.push({ domain: msg.domain, enabled: true, addedAt: new Date().toISOString() });
         settings.blockedDomains = blockedList;
         await Storage.saveSettings(settings);
+        await applyPersistentBlockRules();
       }
       return { success: true };
     }
@@ -890,6 +950,7 @@ async function handleMessage(msg) {
         return dom !== msg.domain;
       });
       await Storage.saveSettings(s);
+      await applyPersistentBlockRules();
       return { success: true };
     }
 
@@ -911,6 +972,7 @@ async function handleMessage(msg) {
         }
         st.blockedDomains = list;
         await Storage.saveSettings(st);
+        await applyPersistentBlockRules();
       }
       return { success: true };
     }
@@ -924,6 +986,7 @@ async function handleMessage(msg) {
       });
       sett.blockedDomains = bl;
       await Storage.saveSettings(sett);
+      await applyPersistentBlockRules();
       return { success: true };
     }
 
@@ -937,6 +1000,7 @@ async function handleMessage(msg) {
         return !domainsToRemove.includes(dom);
       });
       await Storage.saveSettings(se);
+      await applyPersistentBlockRules();
       return { success: true };
     }
 
@@ -952,6 +1016,7 @@ async function handleMessage(msg) {
         return { ...b, enabled };
       });
       await Storage.saveSettings(toggleSettings);
+      await applyPersistentBlockRules();
       return { success: true };
     }
 
