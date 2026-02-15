@@ -1259,3 +1259,104 @@ body {
 .popup-footer .footer-org {
   font-weight: 700;
 }
+
+/* ═══ AUTOCOMPLETE DROPDOWN ═══ */
+.autocomplete-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 60px;
+  z-index: 100;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+[data-theme="light"] .autocomplete-dropdown {
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+.autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+.autocomplete-item:hover {
+  background: rgba(37,99,235,0.08);
+}
+.autocomplete-favicon {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.autocomplete-domain {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  flex: 1;
+}
+.autocomplete-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(37,99,235,0.1);
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+}
+
+/* ═══ BLOCKED SITES LIST ═══ */
+.blocked-sites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.blocked-site-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  background: rgba(244,63,94,0.04);
+  border: 1px solid rgba(244,63,94,0.08);
+  transition: background var(--duration-fast);
+}
+.blocked-site-item:hover {
+  background: rgba(244,63,94,0.08);
+}
+.blocked-site-favicon {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.blocked-site-domain {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.blocked-site-unblock {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast);
+}
+.blocked-site-unblock:hover {
+  color: var(--danger);
+  background: rgba(244,63,94,0.1);
+}

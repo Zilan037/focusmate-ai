@@ -161,9 +161,10 @@
         <div class="focus-site-input-section glass-card">
           <h3 class="focus-input-label" id="focus-site-label">✅ Allowed Websites</h3>
           <p class="focus-input-desc" id="focus-site-desc">Only these sites will be accessible. Everything else blocked.</p>
-          <div class="focus-site-input-row">
-            <input type="text" id="focus-site-input" class="input" placeholder="e.g. notion.so" />
+          <div class="focus-site-input-row" style="position:relative;">
+            <input type="text" id="focus-site-input" class="input" placeholder="e.g. notion.so" autocomplete="off" />
             <button id="btn-add-focus-site" class="btn-add-site">+ Add</button>
+            <div id="focus-site-autocomplete" class="autocomplete-dropdown"></div>
           </div>
           <div id="focus-site-pills" class="focus-site-pills-list"></div>
         </div>
@@ -310,6 +311,12 @@
           <span class="activity-stat-label">Blocked</span>
         </div>
       </div>
+
+      <!-- Your Blocked Sites (user-blocked only) -->
+      <section class="section">
+        <h2 class="section-title">Your Blocked Sites</h2>
+        <div id="blocked-sites-list" class="blocked-sites-list"></div>
+      </section>
     </div>
 
     <!-- Keyboard Shortcuts Hint -->
@@ -336,6 +343,7 @@
   <script src="../utils/storage.js"></script>
   <script src="../utils/categories.js"></script>
   <script src="../utils/scoring.js"></script>
+  <script src="../utils/popular-sites.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

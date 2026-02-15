@@ -1,7 +1,7 @@
 // background.js — Service worker V3: tracking, focus, blocking, notifications, shortcuts
 // Manifest V3 service worker — event-driven, no persistent state in memory
 
-importScripts("utils/storage.js", "utils/categories.js", "utils/scoring.js", "utils/insights.js");
+importScripts("utils/storage.js", "utils/categories.js", "utils/scoring.js", "utils/insights.js", "utils/popular-sites.js");
 
 // ─── NSFW/Gambling Keyword patterns for runtime detection ───
 const NSFW_KEYWORDS = /porn|xxx|nsfw|hentai|adult|sex|nude|naked|erotic|fetish|cam(girl|boy|show)|livecam|18\+|boob|milf|lesbian|gay|anal|blowjob|dildo|vibrator|orgasm|masturbat|escort|hookup|fap|rule34|doujin|lewd/i;
@@ -662,7 +662,7 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
       // WHITELIST MODE: Block everything, then add exceptions
       const allResourceTypes = ["main_frame", "sub_frame", "stylesheet", "script", "image", "font", "xmlhttprequest", "ping", "media", "websocket", "other"];
       
-      // Rule 1: Block ALL http traffic (catch-all)
+      // Rule 1: Block ALL http traffic
       rules.push({
         id: ruleId++,
         priority: 1,
@@ -673,15 +673,32 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
         },
       });
 
-      // Exception rules for each allowed domain + subdomains
+      // Rule 2: Block ALL https traffic (belt + suspenders)
+      rules.push({
+        id: ruleId++,
+        priority: 1,
+        action: { type: "block" },
+        condition: {
+          urlFilter: "|https",
+          resourceTypes: allResourceTypes,
+        },
+      });
+
+      // Exception rules for each allowed domain + subdomains + www variant
       for (const site of allowedSites) {
-        const clean = site.replace(/^www\./, "").toLowerCase();
+        const clean = normalizeDomainInput(site);
+        if (!clean) continue;
+        // Allow base domain AND www. variant
+        const domains = [clean];
+        if (!clean.startsWith("www.")) {
+          domains.push("www." + clean);
+        }
         rules.push({
           id: ruleId++,
           priority: 2,
           action: { type: "allow" },
           condition: {
-            requestDomains: [clean],
+            requestDomains: domains,
             resourceTypes: allResourceTypes,
           },
         });
@@ -699,15 +716,20 @@ async function applyFocusBlockingRules(allowedSites, blockedSites) {
       });
 
     } else if (blockedSites && blockedSites.length > 0) {
-      // BLACKLIST MODE: Block specific domains
+      // BLACKLIST MODE: Block specific domains + www variant
       for (const site of blockedSites) {
-        const clean = site.replace(/^www\./, "").toLowerCase();
+        const clean = normalizeDomainInput(site);
+        if (!clean) continue;
+        const domains = [clean];
+        if (!clean.startsWith("www.")) {
+          domains.push("www." + clean);
+        }
         rules.push({
           id: ruleId++,
           priority: 1,
           action: { type: "block" },
           condition: {
-            requestDomains: [clean],
+            requestDomains: domains,
             resourceTypes: ["main_frame", "sub_frame"],
           },
         });
@@ -1185,6 +1207,22 @@ async function handleMessage(msg) {
     case "getMonthUsage": {
       const n = msg.days || 30;
       return await Storage.getLastNDays(n);
+    }
+
+    // ─── Recent Domains for autocomplete ───
+    case "getRecentDomains": {
+      const recentUsage = await Storage.getTodayUsage();
+      const recentSettings = await Storage.getSettings();
+      const domainList = Object.keys(recentUsage.domains || {});
+      // Also include user-blocked domains
+      const userBlocked = (recentSettings.blockedDomains || [])
+        .filter(b => !(typeof b === "object" && b.systemDefault))
+        .map(b => typeof b === "string" ? b : b.domain);
+      // Merge and deduplicate, most-visited first
+      const sorted = [...new Set([...domainList, ...userBlocked])];
+      // Save to storage for persistence
+      await chrome.storage.local.set({ focusguard_recent_domains: sorted.slice(0, 50) });
+      return sorted.slice(0, 50);
     }
 
     default:

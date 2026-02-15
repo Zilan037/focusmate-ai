@@ -460,7 +460,23 @@ function drawHourlyChart(hourly) {
   const { ctx, w, h } = data;
   const colors = getChartColors();
   ctx.clearRect(0, 0, w, h);
-  if (!hourly || hourly.length === 0) return;
+  if (!hourly || hourly.length === 0) {
+    ctx.fillStyle = colors.textMuted;
+    ctx.font = "600 13px 'Plus Jakarta Sans', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Start browsing to see your activity here", w / 2, h / 2);
+    return;
+  }
+  
+  // Check if all values are zero
+  const hasData = hourly.some(hr => hr.productive > 0 || hr.distracted > 0);
+  if (!hasData) {
+    ctx.fillStyle = colors.textMuted;
+    ctx.font = "600 13px 'Plus Jakarta Sans', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("No activity recorded yet today", w / 2, h / 2);
+    return;
+  }
 
   const padding = { top: 20, right: 20, bottom: 36, left: 36 };
   const chartW = w - padding.left - padding.right;
@@ -511,7 +527,13 @@ function drawWeeklyChart(weekData) {
   const { ctx, w, h } = data;
   const colors = getChartColors();
   ctx.clearRect(0, 0, w, h);
-  if (!weekData || weekData.length === 0) return;
+  if (!weekData || weekData.length === 0) {
+    ctx.fillStyle = colors.textMuted;
+    ctx.font = "600 13px 'Plus Jakarta Sans', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Not enough data yet — check back after a few days", w / 2, h / 2);
+    return;
+  }
 
   const days = weekData.slice(0, 7).reverse();
   const padding = { top: 20, right: 20, bottom: 36, left: 50 };
@@ -858,7 +880,7 @@ async function loadBlocklist() {
   
   document.getElementById("btn-add-block").addEventListener("click", async () => {
     const input = document.getElementById("input-block-domain");
-    const domain = input.value.trim().replace(/^www\./, "").toLowerCase();
+    const domain = normalizeDomainInput(input.value);
     if (!domain) return;
     await chrome.runtime.sendMessage({ action: "blockDomain", domain });
     input.value = "";
@@ -1598,7 +1620,7 @@ function renderFocusTasks() {
 function addFocusSite(type) {
   const inputId = type === "block" ? "focus-block-input" : "focus-allow-input";
   const input = document.getElementById(inputId);
-  const domain = input.value.trim().replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/.*$/, "").toLowerCase();
+  const domain = normalizeDomainInput(input.value);
   if (!domain) return;
   if (type === "block" && !focusBlockedSites.includes(domain)) {
     focusBlockedSites.push(domain);
