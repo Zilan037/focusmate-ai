@@ -498,6 +498,58 @@ body {
 
 /* Tabs */
 .tab-content { display: none; }
+
+/* ─── Safety Shield Banner ─── */
+.safety-shield-banner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 32px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.03));
+  border: 1px solid rgba(16,185,129,0.15);
+  margin-bottom: 20px;
+}
+[data-theme="dark"] .safety-shield-banner,
+:root:not([data-theme="light"]) .safety-shield-banner {
+  background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.03));
+  border-color: rgba(16,185,129,0.2);
+}
+.safety-shield-icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: rgba(16,185,129,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.safety-shield-content { flex: 1; }
+.safety-shield-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #10B981;
+  margin-bottom: 4px;
+}
+.safety-shield-desc {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+.safety-shield-badge {
+  flex-shrink: 0;
+  padding: 6px 16px;
+  border-radius: 20px;
+  background: rgba(16,185,129,0.15);
+  color: #10B981;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
 .tab-content.active { display: block; animation: fadeUp 0.35s var(--ease-out); }
 
 /* ─── Page Header ─── */

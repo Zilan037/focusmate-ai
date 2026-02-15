@@ -429,13 +429,19 @@
             </div>
           </div>
 
-          <!-- Safety Mode Toggle -->
-          <div class="premium-card fade-up" style="padding:24px 32px;border-radius:28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">
-            <div>
-              <h3 class="settings-group-title" style="margin-bottom:2px;">🛡️ Strict Safety Mode</h3>
-              <p class="settings-group-desc" style="margin-bottom:0;">Automatically blocks Adult (18+), Gambling, Scam & Spam sites at all times.</p>
+          <!-- Safety Shield Banner -->
+          <div class="safety-shield-banner fade-up">
+            <div class="safety-shield-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="rgba(16,185,129,0.15)" stroke="#10B981" stroke-width="1.5"/>
+                <path d="M9 12l2 2 4-4" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
-            <div class="toggle active" id="toggle-strict-safety"></div>
+            <div class="safety-shield-content">
+              <h3 class="safety-shield-title">🛡️ Safety Shield — Always Active</h3>
+              <p class="safety-shield-desc">FocusGuard automatically blocks <strong>all adult, gambling, and scam websites</strong>. This protection is permanently enabled and cannot be disabled. Your browsing is always safe.</p>
+            </div>
+            <div class="safety-shield-badge">PROTECTED</div>
           </div>
 
           <!-- Daily Time Limits Section -->
@@ -457,10 +463,10 @@
             <div id="daily-limits-list" class="daily-limits-list"></div>
           </div>
 
-          <!-- Quick Add Categories -->
+          <!-- Quick Add Categories (no Adult/Gambling) -->
           <div class="premium-card fade-up delay-1" style="padding:32px;border-radius:28px;margin-bottom:20px;">
             <h3 class="settings-group-title">⚡ Quick Block Categories</h3>
-            <p class="settings-group-desc">One-click block entire categories. Adds all default domains to your block list.</p>
+            <p class="settings-group-desc">One-click block entire categories. Adult and Gambling sites are already blocked by Safety Shield.</p>
             <div class="quick-category-grid" id="quick-category-grid">
               <button class="quick-cat-btn" data-category="Social Media">
                 <span class="quick-cat-icon">💬</span>
@@ -476,16 +482,6 @@
                 <span class="quick-cat-icon">🛒</span>
                 <span class="quick-cat-label">Shopping</span>
                 <span class="quick-cat-count">8 sites</span>
-              </button>
-              <button class="quick-cat-btn danger" data-category="Adult">
-                <span class="quick-cat-icon">🔞</span>
-                <span class="quick-cat-label">Adult (18+)</span>
-                <span class="quick-cat-count">12 sites</span>
-              </button>
-              <button class="quick-cat-btn danger" data-category="Gambling">
-                <span class="quick-cat-icon">🎰</span>
-                <span class="quick-cat-label">Gambling</span>
-                <span class="quick-cat-count">12 sites</span>
               </button>
             </div>
           </div>
