@@ -778,7 +778,7 @@ function renderDomainsTable(domains, settings) {
     
     tr.innerHTML = `
       <td style="font-weight:600;">
-        <img class="domain-row-favicon" src="${faviconUrl}" onerror="this.style.display='none'" />
+        <img class="domain-row-favicon" src="${faviconUrl}" />
         ${domain}
       </td>
       <td><span class="category-pill" style="background:${color}22;color:${color};border:1px solid ${color}33;">${info.category || "Other"}</span></td>
@@ -789,6 +789,7 @@ function renderDomainsTable(domains, settings) {
       ${limitCell}
       <td><div class="toggle ${isBlocked ? 'active' : ''}" data-domain="${domain}"></div></td>
     `;
+    tr.querySelector(".domain-row-favicon")?.addEventListener("error", function() { this.style.display = "none"; });
     
     // Block toggle
     tr.querySelector(".toggle").addEventListener("click", async function() {
@@ -917,7 +918,7 @@ function renderBlocklistItems(settings) {
     item.className = `blocklist-item glass-card fade-up${locked ? ' is-locked' : ''}`;
     item.style.animationDelay = `${i * 40}ms`;
     item.innerHTML = `
-      <img class="blocklist-favicon" src="${faviconUrl}" onerror="this.style.display='none'" />
+      <img class="blocklist-favicon" src="${faviconUrl}" />
       <div class="blocklist-info">
         <span class="blocklist-domain">${domain}</span>
         <span class="blocklist-date">Added ${dateAdded}${locked ? ' · <span class="blocklist-locked-badge">🔒 Locked</span>' : ''}</span>
@@ -928,6 +929,7 @@ function renderBlocklistItems(settings) {
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M5 4V3a1 1 0 011-1h2a1 1 0 011 1v1M8.5 6.5v4M5.5 6.5v4M3.5 4l.5 8a1 1 0 001 1h4a1 1 0 001-1l.5-8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
       </button>
     `;
+    item.querySelector(".blocklist-favicon")?.addEventListener("error", function() { this.style.display = "none"; });
     
     // Lock/Unlock
     item.querySelector(".blocklist-lock").addEventListener("click", async function() {
@@ -1121,11 +1123,14 @@ async function loadScheduledBlocks() {
         <span class="schedule-domain">${s.domain}</span>
         <span class="schedule-time">${s.start} - ${s.end}</span>
         <span class="schedule-days-display">${s.days.map(d => ['Su','Mo','Tu','We','Th','Fr','Sa'][d]).join(', ')}</span>
-        <button class="blocklist-delete" data-index="${i}" onclick="deleteSchedule(${i})">
+        <button class="blocklist-delete" data-index="${i}">
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
       </div>
     `).join("");
+    container.querySelectorAll(".blocklist-delete[data-index]").forEach(btn => {
+      btn.addEventListener("click", () => deleteSchedule(parseInt(btn.dataset.index)));
+    });
   } catch (e) {}
 }
 
@@ -1158,7 +1163,7 @@ function renderDailyLimits(settings, usage) {
     const item = document.createElement("div");
     item.className = "daily-limit-item";
     item.innerHTML = `
-      <img class="daily-limit-favicon" src="${faviconUrl}" onerror="this.style.display='none'" />
+      <img class="daily-limit-favicon" src="${faviconUrl}" />
       <div class="daily-limit-info">
         <span class="daily-limit-domain">${domain}</span>
         <span class="daily-limit-meta">${usedMins}/${limitMins} min used</span>
@@ -1171,6 +1176,7 @@ function renderDailyLimits(settings, usage) {
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
     `;
+    item.querySelector(".daily-limit-favicon")?.addEventListener("error", function() { this.style.display = "none"; });
 
     item.querySelector(".blocklist-delete").addEventListener("click", async () => {
       delete settings.dailyLimits[domain];
@@ -1303,7 +1309,7 @@ async function loadReports(range) {
         const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
         const dailyAvg = formatTime((info.time || 0) / nDays);
         return `<tr>
-          <td style="font-weight:600;"><img class="domain-row-favicon" src="${faviconUrl}" onerror="this.style.display='none'" />${domain}</td>
+          <td style="font-weight:600;"><img class="domain-row-favicon" src="${faviconUrl}" />${domain}</td>
           <td><span class="category-pill" style="background:${color}22;color:${color};border:1px solid ${color}33;">${info.category || "Other"}</span></td>
           <td class="number-mono">${formatTime(info.time || 0)}</td>
           <td>${info.visits || 0}</td>
@@ -1311,6 +1317,7 @@ async function loadReports(range) {
         </tr>`;
       }).join("");
     }
+    topSitesBody.querySelectorAll(".domain-row-favicon").forEach(img => img.addEventListener("error", function() { this.style.display = "none"; }));
   } catch (e) {
     console.error("Reports error:", e);
   }
@@ -1475,13 +1482,14 @@ function renderLimits(settings) {
     const card = document.createElement("div");
     card.className = "limit-card";
     card.innerHTML = `
-      <img class="limit-favicon" src="${faviconUrl}" onerror="this.style.display='none'" />
+      <img class="limit-favicon" src="${faviconUrl}" />
       <span class="limit-domain">${domain}</span>
       <span class="limit-value">${mins}m</span>
       <button class="blocklist-delete" data-domain="${domain}">
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><line x1="2" y1="2" x2="12" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="2" x2="2" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
     `;
+    card.querySelector(".limit-favicon")?.addEventListener("error", function() { this.style.display = "none"; });
     card.querySelector(".blocklist-delete").addEventListener("click", async () => {
       delete settings.dailyLimits[domain];
       await chrome.runtime.sendMessage({ action: "saveSettings", settings });

@@ -170,7 +170,7 @@ function renderDomainBars(domains) {
     
     bar.innerHTML = `
       <div class="domain-favicon" style="background:${color}">
-        <img src="${faviconUrl}" onerror="this.style.display='none';this.parentElement.textContent='${letter}'" />
+        <img src="${faviconUrl}" data-fallback="${letter}" />
       </div>
       <div class="domain-info">
         <span class="domain-name">${domain}</span>
@@ -180,6 +180,7 @@ function renderDomainBars(domains) {
       </div>
       <span class="domain-time">${mins}m</span>
     `;
+    bar.querySelector("img[data-fallback]").addEventListener("error", function() { this.style.display = "none"; this.parentElement.textContent = this.dataset.fallback; });
     container.appendChild(bar);
   });
 }
@@ -210,11 +211,12 @@ function setupAutocomplete(inputId, dropdownId, onSelect) {
 
     dropdown.innerHTML = suggestions.map(s => `
       <div class="autocomplete-item${s.recent ? ' recent' : ''}" data-domain="${s.domain}">
-        <img class="autocomplete-favicon" src="https://www.google.com/s2/favicons?domain=${s.domain}&sz=16" onerror="this.style.display='none'" />
+        <img class="autocomplete-favicon" src="https://www.google.com/s2/favicons?domain=${s.domain}&sz=16" />
         <span class="autocomplete-domain">${s.domain}</span>
         ${s.recent ? '<span class="autocomplete-badge">Recent</span>' : ''}
       </div>
     `).join("");
+    dropdown.querySelectorAll("img.autocomplete-favicon").forEach(img => img.addEventListener("error", function() { this.style.display = "none"; }));
     dropdown.style.display = "block";
 
     dropdown.querySelectorAll(".autocomplete-item").forEach(item => {
@@ -616,11 +618,12 @@ async function loadBlockedSitesList() {
       const domain = typeof entry === "string" ? entry : entry.domain;
       const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
       return `<div class="blocked-site-item fade-up" style="animation-delay:${i * 30}ms">
-        <img class="blocked-site-favicon" src="${faviconUrl}" onerror="this.style.display='none'" />
+        <img class="blocked-site-favicon" src="${faviconUrl}" />
         <span class="blocked-site-domain">${domain}</span>
         <button class="blocked-site-unblock" data-domain="${domain}" title="Unblock">✕</button>
       </div>`;
     }).join("");
+    container.querySelectorAll("img.blocked-site-favicon").forEach(img => img.addEventListener("error", function() { this.style.display = "none"; }));
 
     if (userBlocked.length > 10) {
       container.innerHTML += `<div class="blocked-site-more" style="text-align:center;padding:4px;">
