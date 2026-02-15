@@ -47,6 +47,86 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
+// ─── Strict Navigation Interception (webNavigation) ───
+// This ensures "Allow Only" whitelist mode catches ALL navigations,
+// including SPA-style navigations, new tabs, and address bar entries.
+chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
+  // Only intercept main frame navigations
+  if (details.frameId !== 0) return;
+  
+  try {
+    const url = details.url;
+    // Always allow extension pages and chrome internal pages
+    if (!url || url.startsWith("chrome") || url.startsWith("about:") || url.startsWith("edge:")) return;
+    
+    const domain = extractDomain(url);
+    if (!domain) return;
+    
+    const focusState = await Storage.getFocusState();
+    if (!focusState.active) return;
+    
+    const allowedSites = focusState.allowedSites || [];
+    
+    // STRICT WHITELIST: if allowedSites is set, ONLY those domains pass
+    if (allowedSites.length > 0) {
+      const isAllowed = isDomainAllowed(domain, allowedSites);
+      if (!isAllowed) {
+        redirectToBlocked(details.tabId, domain, "Not in your Allowed Sites list — only whitelisted sites can be accessed during Focus Mode");
+        return;
+      }
+    }
+    
+    // BLACKLIST: check blockedSites
+    const blockedSites = focusState.blockedSites || [];
+    if (blockedSites.length > 0) {
+      const isBlocked = isDomainInList(domain, blockedSites);
+      if (isBlocked) {
+        redirectToBlocked(details.tabId, domain, "This site is on your Focus Mode block list");
+        return;
+      }
+    }
+    
+    // Block standard distractions during focus
+    const settings = await Storage.getSettings();
+    const category = Categories.categorize(domain, settings.categoryOverrides);
+    if (Categories.isDistraction(category)) {
+      redirectToBlocked(details.tabId, domain, `Focus Mode active — ${category} sites are blocked`);
+      return;
+    }
+    if (Categories.isDangerous(category)) {
+      redirectToBlocked(details.tabId, domain, `Focus Mode active — ${category} content is blocked`);
+      return;
+    }
+  } catch (e) {
+    console.log("[FocusGuard] webNavigation error:", e);
+  }
+});
+
+// Fallback: catch committed navigations that slipped through
+chrome.webNavigation.onCommitted.addListener(async (details) => {
+  if (details.frameId !== 0) return;
+  if (details.transitionType === "auto_subframe") return;
+  
+  try {
+    const url = details.url;
+    if (!url || url.startsWith("chrome") || url.startsWith("about:") || url.startsWith("edge:")) return;
+    
+    const domain = extractDomain(url);
+    if (!domain) return;
+    
+    const focusState = await Storage.getFocusState();
+    if (!focusState.active) return;
+    
+    const allowedSites = focusState.allowedSites || [];
+    if (allowedSites.length > 0) {
+      const isAllowed = isDomainAllowed(domain, allowedSites);
+      if (!isAllowed) {
+        redirectToBlocked(details.tabId, domain, "Not in your Allowed Sites list — only whitelisted sites can be accessed during Focus Mode");
+      }
+    }
+  } catch (e) {}
+});
+
 chrome.windows.onFocusChanged.addListener(async (windowId) => {
   if (windowId === chrome.windows.WINDOW_ID_NONE) {
     await commitSession();
@@ -78,11 +158,35 @@ chrome.idle.onStateChanged.addListener(async (state) => {
 function extractDomain(url) {
   try {
     const u = new URL(url);
-    if (u.protocol === "chrome:" || u.protocol === "chrome-extension:" || u.protocol === "about:") return null;
+    if (u.protocol === "chrome:" || u.protocol === "chrome-extension:" || u.protocol === "about:" || u.protocol === "edge:") return null;
     return u.hostname.replace(/^www\./, "");
   } catch {
     return null;
   }
+}
+
+// ─── Domain Matching Helpers ───
+// Normalizes domain for comparison: strips www. prefix
+function normalizeDomain(d) {
+  return d.replace(/^www\./, "").toLowerCase();
+}
+
+// Check if domain matches any in a list (with subdomain support)
+function isDomainInList(domain, list) {
+  const d = normalizeDomain(domain);
+  return list.some(s => {
+    const ns = normalizeDomain(s);
+    return d === ns || d.endsWith("." + ns);
+  });
+}
+
+// Check if domain is allowed (whitelist mode)
+function isDomainAllowed(domain, allowedSites) {
+  const d = normalizeDomain(domain);
+  return allowedSites.some(s => {
+    const ns = normalizeDomain(s);
+    return d === ns || d.endsWith("." + ns);
+  });
 }
 
 async function handleTabChange(tab) {
@@ -219,12 +323,9 @@ async function checkBlocking(domain, tabId) {
     const allowedSites = focusState.allowedSites || [];
     const blockedSites = focusState.blockedSites || [];
 
-    // Skip extension pages
-    if (domain.endsWith("chrome-extension")) return;
-
     // WHITELIST MODE: If any allowed sites are set, ONLY those are permitted
     if (allowedSites.length > 0) {
-      const isAllowed = allowedSites.some(s => domain === s || domain.endsWith("." + s));
+      const isAllowed = isDomainAllowed(domain, allowedSites);
       if (!isAllowed) {
         redirectToBlocked(tabId, domain, "Not in your Allowed Sites list — only whitelisted sites can be accessed during Focus Mode");
         return;
@@ -235,7 +336,7 @@ async function checkBlocking(domain, tabId) {
 
     // BLACKLIST MODE: Block explicitly listed sites + distraction categories
     if (blockedSites.length > 0) {
-      const isBlocked = blockedSites.some(s => domain === s || domain.endsWith("." + s));
+      const isBlocked = isDomainInList(domain, blockedSites);
       if (isBlocked) {
         redirectToBlocked(tabId, domain, "This site is on your Focus Mode block list");
         return;
