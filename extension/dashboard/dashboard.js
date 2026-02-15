@@ -1561,8 +1561,12 @@ function setupFocusMode() {
 
 async function loadFocusBlockedSites() {
   try {
+    // Don't auto-populate with system-default domains — start clean
+    // Only load user-blocked domains (non-system) for convenience
     const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
-    focusBlockedSites = (settings.blockedDomains || []).map(b => typeof b === "string" ? b : b.domain);
+    focusBlockedSites = (settings.blockedDomains || [])
+      .filter(b => !(typeof b === "object" && b.systemDefault))
+      .map(b => typeof b === "string" ? b : b.domain);
     renderFocusSitePills();
   } catch (e) {}
 }

@@ -42,15 +42,19 @@
       </div>
     </header>
 
-    <!-- Tab Navigation -->
+    <!-- Tab Navigation (4 tabs) -->
     <nav class="popup-nav fade-up">
       <button class="popup-nav-btn active" data-tab="overview">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 11V6M5 11V3M8 11V8M11 11V5M14 11V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Overview
+        Stats
+      </button>
+      <button class="popup-nav-btn" data-tab="focus">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 4v4l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Focus
       </button>
       <button class="popup-nav-btn" data-tab="controls">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/><line x1="3.5" y1="3.5" x2="12.5" y2="12.5" stroke="currentColor" stroke-width="1.5"/></svg>
-        Controls
+        Block
       </button>
       <button class="popup-nav-btn" data-tab="activity">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/></svg>
@@ -58,15 +62,8 @@
       </button>
     </nav>
 
-    <!-- ═══ OVERVIEW TAB ═══ -->
+    <!-- ═══ OVERVIEW TAB (Stats only, no focus controls) ═══ -->
     <div id="popup-tab-overview" class="popup-tab-content active">
-      <!-- Ticker -->
-      <div class="ticker">
-        <div class="ticker-track" id="ticker-track">
-          <span class="ticker-item" id="ticker-content">Loading stats...</span>
-        </div>
-      </div>
-
       <!-- Score Hero Card -->
       <div class="score-hero glass-card">
         <div class="score-ring-container">
@@ -128,28 +125,79 @@
         <span class="insight-text" id="insight-text">Loading insight...</span>
       </div>
 
-      <!-- Focus Mode (compact) -->
+      <!-- Top Sites Preview -->
       <section class="section">
-        <h2 class="section-title">Focus Mode</h2>
-        <div id="focus-inactive" class="focus-controls">
-          <div class="focus-task-input">
-            <input type="text" id="focus-tasks" class="input" placeholder="Tasks (comma separated)..." />
-          </div>
-          <div class="duration-selector">
-            <div class="dur-track">
-              <div class="dur-highlight" id="dur-highlight"></div>
-              <button class="dur-btn" data-dur="15">15m</button>
-              <button class="dur-btn active" data-dur="25">25m</button>
-              <button class="dur-btn" data-dur="45">45m</button>
-              <button class="dur-btn" data-dur="60">60m</button>
+        <h2 class="section-title">Top Sites Today</h2>
+        <div id="domain-bars" class="domain-bars">
+          <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:60%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:80%;border-radius:2px;"></div></div></div>
+          <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:45%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:55%;border-radius:2px;"></div></div></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ═══ FOCUS TAB (dedicated) ═══ -->
+    <div id="popup-tab-focus" class="popup-tab-content">
+      <!-- Inactive: Setup UI -->
+      <div id="focus-tab-inactive">
+        <!-- Mode Selector -->
+        <div class="focus-mode-cards">
+          <button class="focus-mode-option active" data-mode="allow">
+            <span class="focus-mode-icon">🔒</span>
+            <div class="focus-mode-info">
+              <span class="focus-mode-name">Allow Only</span>
+              <span class="focus-mode-desc">Only listed sites accessible</span>
             </div>
-          </div>
-          <button id="btn-start-focus" class="btn-focus-start">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 14,8 3,15"/></svg>
-            Start Focus
+          </button>
+          <button class="focus-mode-option" data-mode="block">
+            <span class="focus-mode-icon">🚫</span>
+            <div class="focus-mode-info">
+              <span class="focus-mode-name">Block Sites</span>
+              <span class="focus-mode-desc">Block listed, allow everything else</span>
+            </div>
           </button>
         </div>
-        <div id="focus-active" class="focus-active" style="display:none;">
+
+        <!-- Site Input -->
+        <div class="focus-site-input-section glass-card">
+          <h3 class="focus-input-label" id="focus-site-label">✅ Allowed Websites</h3>
+          <p class="focus-input-desc" id="focus-site-desc">Only these sites will be accessible. Everything else blocked.</p>
+          <div class="focus-site-input-row">
+            <input type="text" id="focus-site-input" class="input" placeholder="e.g. notion.so" />
+            <button id="btn-add-focus-site" class="btn-add-site">+ Add</button>
+          </div>
+          <div id="focus-site-pills" class="focus-site-pills-list"></div>
+        </div>
+
+        <!-- Tasks -->
+        <div class="focus-tasks-setup glass-card">
+          <h3 class="focus-input-label">📋 Tasks</h3>
+          <div class="focus-site-input-row">
+            <input type="text" id="focus-task-input-popup" class="input" placeholder="What will you work on?" />
+            <button id="btn-add-focus-task-popup" class="btn-add-site">+ Add</button>
+          </div>
+          <div id="focus-task-pills" class="focus-task-pills-list"></div>
+        </div>
+
+        <!-- Duration -->
+        <div class="focus-dur-section">
+          <div class="focus-dur-pills">
+            <button class="focus-dur-pill-popup" data-dur="15">15m</button>
+            <button class="focus-dur-pill-popup active" data-dur="25">25m</button>
+            <button class="focus-dur-pill-popup" data-dur="45">45m</button>
+            <button class="focus-dur-pill-popup" data-dur="60">60m</button>
+          </div>
+        </div>
+
+        <!-- Start Button -->
+        <button id="btn-deploy-focus-popup" class="btn-focus-start">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 14,8 3,15"/></svg>
+          Start Focus Session
+        </button>
+      </div>
+
+      <!-- Active: Timer + Tasks -->
+      <div id="focus-tab-active" style="display:none;">
+        <div class="focus-active-card glass-card">
           <div class="focus-timer-wrap">
             <svg class="focus-ring" viewBox="0 0 100 100">
               <circle class="focus-ring-bg" cx="50" cy="50" r="42" />
@@ -158,11 +206,11 @@
             </svg>
             <div class="focus-timer" id="focus-timer">25:00</div>
           </div>
-          <div class="focus-tasks-list" id="focus-tasks-list"></div>
           <div class="focus-session-meta">
             <span class="pomodoro-count" id="pomodoro-count">🍅 0</span>
             <span class="focus-status-label" id="focus-status-label">Focusing</span>
           </div>
+          <div class="focus-tasks-list" id="focus-tasks-list"></div>
           <div class="focus-actions">
             <button id="btn-pause-focus" class="btn-focus-action">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg>
@@ -172,7 +220,7 @@
             </button>
           </div>
         </div>
-      </section>
+      </div>
     </div>
 
     <!-- ═══ CONTROLS TAB ═══ -->
@@ -219,30 +267,14 @@
         </div>
       </div>
 
-      <!-- Quick Focus Start -->
-      <div class="ctrl-focus-section glass-card">
-        <h3 class="ctrl-section-title">⚡ Quick Focus</h3>
-        <p class="ctrl-section-desc">Start a focus session directly from here.</p>
-        <div class="ctrl-focus-dur-row">
-          <button class="ctrl-dur-btn" data-dur="15">15m</button>
-          <button class="ctrl-dur-btn active" data-dur="25">25m</button>
-          <button class="ctrl-dur-btn" data-dur="45">45m</button>
-          <button class="ctrl-dur-btn" data-dur="60">60m</button>
+      <!-- Quick Block Categories -->
+      <div class="ctrl-quick-block glass-card">
+        <h3 class="ctrl-section-title">🚫 Quick Block Categories</h3>
+        <div class="ctrl-cat-grid">
+          <button class="ctrl-cat-btn" data-category="Social Media">💬 Social</button>
+          <button class="ctrl-cat-btn" data-category="Entertainment">🎬 Entertainment</button>
+          <button class="ctrl-cat-btn" data-category="Shopping">🛒 Shopping</button>
         </div>
-        <div class="ctrl-focus-mode-row">
-          <label class="ctrl-radio-label">
-            <input type="radio" name="ctrl-focus-mode" value="block" checked />
-            Block distractions
-          </label>
-          <label class="ctrl-radio-label">
-            <input type="radio" name="ctrl-focus-mode" value="allow" />
-            Allow only current site
-          </label>
-        </div>
-        <button class="btn-focus-start ctrl-focus-start" id="ctrl-btn-start-focus">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><polygon points="3,1 14,8 3,15"/></svg>
-          Start Focus
-        </button>
       </div>
 
       <!-- Safety Shield Info -->
@@ -253,30 +285,10 @@
         </div>
         <p class="ctrl-safety-desc">Adult, gambling & scam sites are permanently blocked.</p>
       </div>
-
-      <!-- Quick Block Actions -->
-      <div class="ctrl-quick-block glass-card">
-        <h3 class="ctrl-section-title">🚫 Quick Block Categories</h3>
-        <div class="ctrl-cat-grid">
-          <button class="ctrl-cat-btn" data-category="Social Media">💬 Social</button>
-          <button class="ctrl-cat-btn" data-category="Entertainment">🎬 Entertainment</button>
-          <button class="ctrl-cat-btn" data-category="Shopping">🛒 Shopping</button>
-        </div>
-      </div>
     </div>
 
     <!-- ═══ ACTIVITY TAB ═══ -->
     <div id="popup-tab-activity" class="popup-tab-content">
-      <!-- Top Sites -->
-      <section class="section">
-        <h2 class="section-title">Top Sites Today</h2>
-        <div id="domain-bars" class="domain-bars">
-          <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:60%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:80%;border-radius:2px;"></div></div></div>
-          <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:45%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:55%;border-radius:2px;"></div></div></div>
-          <div class="skeleton-row"><div class="skeleton" style="width:24px;height:24px;border-radius:6px;"></div><div style="flex:1;"><div class="skeleton skeleton-text" style="width:35%;margin-bottom:4px;"></div><div class="skeleton" style="height:4px;width:40%;border-radius:2px;"></div></div></div>
-        </div>
-      </section>
-
       <!-- Category Breakdown -->
       <section class="section">
         <h2 class="section-title">Categories</h2>
@@ -298,18 +310,6 @@
           <span class="activity-stat-label">Blocked</span>
         </div>
       </div>
-    </div>
-
-    <!-- Quick Actions (always visible) -->
-    <div class="quick-actions fade-up delay-5">
-      <button id="btn-block-current" class="btn-action-glass btn-action-danger">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.5"/><line x1="3.5" y1="3.5" x2="10.5" y2="10.5" stroke="currentColor" stroke-width="1.5"/></svg>
-        Block Site
-      </button>
-      <button id="btn-dashboard-bottom" class="btn-action-glass">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 11V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5 11V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M11 11V5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Dashboard
-      </button>
     </div>
 
     <!-- Keyboard Shortcuts Hint -->
