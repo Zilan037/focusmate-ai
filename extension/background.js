@@ -529,6 +529,10 @@ async function handleMessage(msg) {
 
     case "unblockDomain": {
       const s = await Storage.getSettings();
+      const entry = (s.blockedDomains || []).find(d => (typeof d === "string" ? d : d.domain) === msg.domain);
+      if (entry && typeof entry === "object" && entry.locked && !msg.forceUnlock) {
+        return { success: false, error: "Domain is locked" };
+      }
       s.blockedDomains = (s.blockedDomains || []).filter((d) => {
         const dom = typeof d === "string" ? d : d.domain;
         return dom !== msg.domain;
@@ -543,9 +547,10 @@ async function handleMessage(msg) {
       const idx = list.findIndex(b => (typeof b === "string" ? b : b.domain) === msg.domain);
       if (idx !== -1) {
         if (typeof list[idx] === "string") {
-          list[idx] = { domain: list[idx], enabled: msg.enabled !== undefined ? msg.enabled : true, addedAt: new Date().toISOString() };
+          list[idx] = { domain: list[idx], enabled: msg.enabled !== undefined ? msg.enabled : true, addedAt: new Date().toISOString(), locked: false };
         } else {
           if (msg.enabled !== undefined) list[idx].enabled = msg.enabled;
+          if (msg.locked !== undefined) list[idx].locked = msg.locked;
         }
         st.blockedDomains = list;
         await Storage.saveSettings(st);
@@ -842,6 +847,11 @@ async function handleMessage(msg) {
       const current = await Storage.get(key) || 0;
       await Storage.set(key, current + 1);
       return { count: current + 1 };
+    }
+
+    case "getMonthUsage": {
+      const n = msg.days || 30;
+      return await Storage.getLastNDays(n);
     }
 
     default:

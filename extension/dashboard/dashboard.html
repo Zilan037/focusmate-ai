@@ -40,7 +40,7 @@
           </button>
           <button class="nav-item" data-tab="insights">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-            <span class="nav-label">Strategy Planner</span>
+            <span class="nav-label">Reports & Insights</span>
           </button>
         </div>
 
@@ -393,6 +393,7 @@
                   <th>% Total</th>
                   <th data-sort="visits">Sessions</th>
                   <th>Trend</th>
+                  <th>Limit</th>
                   <th>Blocked</th>
                 </tr>
               </thead>
@@ -435,6 +436,25 @@
               <p class="settings-group-desc" style="margin-bottom:0;">Automatically blocks Adult (18+), Gambling, Scam & Spam sites at all times.</p>
             </div>
             <div class="toggle active" id="toggle-strict-safety"></div>
+          </div>
+
+          <!-- Daily Time Limits Section -->
+          <div class="premium-card fade-up delay-1" style="padding:32px;border-radius:28px;margin-bottom:20px;">
+            <h3 class="settings-group-title">⏱️ Daily Time Limits</h3>
+            <p class="settings-group-desc">Set maximum daily usage for specific sites. Once the limit is reached, the site will be blocked for the rest of the day.</p>
+            <div class="input-row" style="margin-bottom:16px;">
+              <input type="text" id="input-daily-limit-domain" class="input" placeholder="e.g. youtube.com" style="flex:1;" />
+              <select id="select-daily-limit-mins" class="input" style="width:140px;">
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60" selected>1 hour</option>
+                <option value="120">2 hours</option>
+                <option value="custom">Custom...</option>
+              </select>
+              <input type="number" id="input-daily-limit-custom" class="input" placeholder="min" min="1" max="480" style="width:80px;display:none;" />
+              <button id="btn-add-daily-limit" class="btn-primary">+ Set Limit</button>
+            </div>
+            <div id="daily-limits-list" class="daily-limits-list"></div>
           </div>
 
           <!-- Quick Add Categories -->
@@ -542,9 +562,31 @@
               </div>
             </div>
 
-            <!-- Block & Allow Sites -->
-            <div class="premium-card fade-up delay-2" style="padding:32px;border-radius:28px;margin-bottom:20px;background:rgba(244,63,94,0.03);border:1px solid rgba(244,63,94,0.08);">
-              <h3 class="settings-group-title" style="color:var(--danger);">🚫 Block Sites During Focus</h3>
+            <!-- Mode Selector -->
+            <div class="premium-card fade-up delay-2" style="padding:32px;border-radius:28px;margin-bottom:20px;">
+              <h3 class="settings-group-title">🌐 Website Access Mode</h3>
+              <p class="settings-group-desc">Choose how websites are managed during your focus session.</p>
+              <div class="focus-mode-selector" id="focus-mode-selector">
+                <button class="focus-mode-card active" data-mode="block">
+                  <div class="focus-mode-card-icon">🚫</div>
+                  <div class="focus-mode-card-content">
+                    <span class="focus-mode-card-title">Block Distractions</span>
+                    <span class="focus-mode-card-desc">Block specific sites. Everything else stays accessible.</span>
+                  </div>
+                </button>
+                <button class="focus-mode-card" data-mode="allow">
+                  <div class="focus-mode-card-icon">🔒</div>
+                  <div class="focus-mode-card-content">
+                    <span class="focus-mode-card-title">Allow Only (Strict)</span>
+                    <span class="focus-mode-card-desc">ONLY these sites will work. Everything else is blocked.</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Block Sites Panel (shown when "Block Distractions" is selected) -->
+            <div id="focus-block-panel" class="premium-card fade-up delay-2" style="padding:32px;border-radius:28px;margin-bottom:20px;background:rgba(244,63,94,0.03);border:1px solid rgba(244,63,94,0.08);">
+              <h3 class="settings-group-title" style="color:var(--danger);">🚫 Sites to Block</h3>
               <p class="settings-group-desc">These sites will be blocked while Focus Mode is active. Your existing block list is automatically included.</p>
               <div id="focus-block-list" class="focus-site-pills"></div>
               <div class="input-row" style="margin-top:12px;">
@@ -553,9 +595,17 @@
               </div>
             </div>
 
-            <div class="premium-card fade-up delay-2" style="padding:32px;border-radius:28px;margin-bottom:20px;background:rgba(16,185,129,0.03);border:1px solid rgba(16,185,129,0.08);">
-              <h3 class="settings-group-title" style="color:var(--success);">🌐 Allow Only (Strict Whitelist)</h3>
-              <p class="settings-group-desc"><strong>⚠️ If you add ANY site here, ONLY these sites can be visited.</strong> Everything else will be blocked. Leave empty to use the block list above instead.</p>
+            <!-- Allow Sites Panel (shown when "Allow Only" is selected) -->
+            <div id="focus-allow-panel" class="premium-card fade-up delay-2" style="padding:32px;border-radius:28px;margin-bottom:20px;background:rgba(16,185,129,0.03);border:1px solid rgba(16,185,129,0.08);display:none;">
+              <div class="focus-allow-warning">
+                <span class="focus-allow-warning-icon">⚠️</span>
+                <div>
+                  <strong>Strict Mode Active</strong>
+                  <p style="margin:4px 0 0;font-size:12px;color:var(--text-muted);">Only websites listed below will be accessible. Everything else on the internet will be blocked.</p>
+                </div>
+              </div>
+              <h3 class="settings-group-title" style="color:var(--success);margin-top:16px;">🌐 Allowed Websites</h3>
+              <p class="settings-group-desc">Add the sites you need for your work session.</p>
               <div id="focus-allow-list" class="focus-site-pills"></div>
               <div class="input-row" style="margin-top:12px;">
                 <input type="text" id="focus-allow-input" class="input" placeholder="e.g. notion.so, docs.google.com" style="flex:1;" />
@@ -627,17 +677,75 @@
           </div>
         </div>
 
-        <!-- Insights -->
+        <!-- Reports & Insights (enhanced) -->
         <div id="tab-insights" class="tab-content">
           <div class="page-header-row">
             <div class="page-header-left">
               <p class="page-subtitle">Behavioral Analysis</p>
-              <h1 class="page-title">Strategy Planner</h1>
+              <h1 class="page-title">Reports & Insights</h1>
+            </div>
+            <div class="reports-date-range" id="reports-date-range">
+              <button class="report-range-btn active" data-range="today">Today</button>
+              <button class="report-range-btn" data-range="week">This Week</button>
+              <button class="report-range-btn" data-range="month">This Month</button>
             </div>
           </div>
-          <div id="insights-list" class="insights-grid"></div>
-          <h3 class="section-heading" style="margin-top:32px;">Distraction Loops</h3>
-          <div id="loops-list" class="loops-list"></div>
+
+          <!-- Summary Cards -->
+          <div class="stat-cards fade-up">
+            <div class="metric-card premium-card">
+              <div class="metric-top"><span class="metric-label">Sites Visited</span></div>
+              <div class="metric-bottom"><span class="metric-value" id="report-sites-visited">0</span></div>
+            </div>
+            <div class="metric-card premium-card">
+              <div class="metric-top"><span class="metric-label">Total Time</span></div>
+              <div class="metric-bottom"><span class="metric-value" id="report-total-time">0h 0m</span></div>
+            </div>
+            <div class="metric-card premium-card">
+              <div class="metric-top"><span class="metric-label">Top Category</span></div>
+              <div class="metric-bottom"><span class="metric-value" id="report-top-category" style="font-size:20px;">—</span></div>
+            </div>
+            <div class="metric-card premium-card">
+              <div class="metric-top"><span class="metric-label">Blocked Attempts</span></div>
+              <div class="metric-bottom"><span class="metric-value metric-danger" id="report-blocked">0</span></div>
+            </div>
+          </div>
+
+          <!-- Category Breakdown -->
+          <div class="premium-card fade-up delay-1" style="padding:32px;border-radius:28px;margin-bottom:20px;">
+            <h3 class="chart-title-lg" style="margin-bottom:24px;">Category Breakdown</h3>
+            <div id="report-category-breakdown" class="report-category-breakdown"></div>
+          </div>
+
+          <!-- Top 10 Sites -->
+          <div class="premium-card fade-up delay-2" style="padding:0;overflow:hidden;border-radius:28px;margin-bottom:20px;">
+            <div style="padding:32px 32px 0;">
+              <h3 class="chart-title-lg">Top Sites</h3>
+            </div>
+            <table class="domains-table" style="margin-top:16px;">
+              <thead>
+                <tr>
+                  <th>Domain</th>
+                  <th>Category</th>
+                  <th>Total Time</th>
+                  <th>Visits</th>
+                  <th>Daily Avg</th>
+                </tr>
+              </thead>
+              <tbody id="report-top-sites"></tbody>
+            </table>
+          </div>
+
+          <!-- Existing Insights & Loops -->
+          <div class="premium-card fade-up delay-3" style="padding:32px;border-radius:28px;margin-bottom:20px;">
+            <h3 class="chart-title-lg" style="margin-bottom:16px;">AI Insights</h3>
+            <div id="insights-list" class="insights-grid"></div>
+          </div>
+
+          <div class="premium-card fade-up delay-4" style="padding:32px;border-radius:28px;">
+            <h3 class="chart-title-lg" style="margin-bottom:16px;">Distraction Loops</h3>
+            <div id="loops-list" class="loops-list"></div>
+          </div>
         </div>
 
         <!-- Settings -->
@@ -738,6 +846,20 @@
           </div>
         </div>
       </main>
+    </div>
+  </div>
+
+  <!-- Unlock Confirmation Modal -->
+  <div id="unlock-modal" class="unlock-modal-overlay" style="display:none;">
+    <div class="unlock-modal-content premium-card" style="border-radius:28px;padding:40px;max-width:480px;width:90%;">
+      <h3 class="settings-group-title" style="text-align:center;">🔓 Unlock Domain</h3>
+      <p class="settings-group-desc" style="text-align:center;">To unlock this permanently blocked domain, type the confirmation phrase below:</p>
+      <div class="unlock-modal-phrase" id="unlock-modal-phrase"></div>
+      <input type="text" id="unlock-modal-input" class="input" placeholder="Type the phrase above..." style="margin-top:16px;text-align:center;" />
+      <div style="display:flex;gap:12px;margin-top:20px;justify-content:center;">
+        <button id="unlock-modal-cancel" class="btn-ghost" style="padding:10px 24px;border-radius:16px;">Cancel</button>
+        <button id="unlock-modal-confirm" class="btn-primary" style="padding:10px 24px;border-radius:16px;opacity:0.5;" disabled>Unlock</button>
+      </div>
     </div>
   </div>
 
