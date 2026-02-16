@@ -1,49 +1,56 @@
 
 
-# Fix: Allowed Sites Breaking and Blocked Page Refresh
+# Fix: Historical Data, Insights, and Analytics
 
-## Problem 1: Allowed websites not working (videos won't play, pages broken)
+## Problems Found
 
-**Root cause:** The declarativeNetRequest block-all rules block ALL resource types -- `script`, `image`, `media`, `xmlhttprequest`, `websocket`, `stylesheet`, etc. When you allow `youtube.com`, videos still break because YouTube loads content from CDN domains like `googlevideo.com`, `ytimg.com`, `googleapis.com`, and `gstatic.com`. These CDN domains are NOT in your allow list, so all sub-resources get blocked.
+### 1. Deep Stats / 30-Day Analytics Broken
+The `getDetailedStats` message handler returns raw `[{date, data: {...}}]` array from storage, but `loadDeepStats()` in the dashboard expects `{days: [...], peakWindows: [...]}` where each day object has flat properties like `totalActive`, `score`, and `focusSessions` (as a count, not an array). This causes the 30-day chart, total hours, total sessions, best/avg scores, and peak windows to all fail silently.
 
-**Fix:** Change the block-all rules to ONLY block `main_frame` (page navigation). This prevents the user from navigating to non-allowed sites, but lets all sub-resources (scripts, images, videos, API calls) load freely from any domain. The webNavigation listeners already handle the navigation blocking with the nice blocked page UI.
+### 2. Domain Sparklines Broken
+`getDomainHistory` returns `[{date, time}]` objects, but `drawSparkline()` treats the array as plain numbers (`Math.max(1, ...data)` and `v / maxVal`). This means all sparklines in the domains table render nothing.
 
-### Changes in `background.js` (`applyFocusBlockingRules`):
-- Change `resourceTypes` in the two block-all rules from the full list to just `["main_frame"]`
-- Keep the allow exception rules with `main_frame` only as well (for consistency)
-- This means: you can only NAVIGATE to allowed sites, but those sites can freely load their CDN resources
-
----
-
-## Problem 2: F5 refresh still shows blocked page after unblocking
-
-**Root cause:** When a site is blocked, the tab URL becomes `chrome-extension://...blocked.html?domain=youtube.com`. If the user unblocks from the popup (not from the blocked page's own unblock button), the tab still shows the blocked page URL. Pressing F5 just reloads `blocked.html`.
-
-**Fix:** Add auto-redirect logic to `blocked.js`. On page load, check with the background script whether the domain is still actually blocked. If it's no longer blocked, automatically redirect to the real site. Also re-check periodically (every 2 seconds) so if the user unblocks from the popup, the blocked page auto-redirects.
-
-### Changes in `blocked.js`:
-- Add `checkIfStillBlocked(domain)` function that sends a message to background to verify block status
-- Call it on page load and every 2 seconds via `setInterval`
-- If domain is no longer blocked, do `window.location.replace("https://" + domain)`
-
-### Changes in `background.js`:
-- Add a `checkDomainBlocked` message handler that checks if a domain is currently blocked (by checking focus state allowlist/blocklist, system blocks, and user blocks)
-- Returns `{ blocked: true/false }`
+### 3. Insights Require Sufficient Data
+The Insights engine itself works correctly, but it depends on having enough tracked browsing data. The real blocker is that all the analytical views (deep stats, sparklines, reports) that aggregate historical data are broken due to issues 1 and 2 above.
 
 ---
 
-## Technical Details
+## Technical Changes
 
-### Files Modified:
-1. **`extension/background.js`**
-   - `applyFocusBlockingRules`: Change block-all `resourceTypes` to `["main_frame"]` only
-   - Add `checkDomainBlocked` message handler
-2. **`extension/blocked/blocked.js`**
-   - Add auto-redirect check on load and periodic re-check
+### File: `extension/background.js`
 
-### Why This Works:
-- Blocking only `main_frame` means the user cannot navigate to non-allowed sites (they see the blocked page)
-- But allowed sites like YouTube can load all their resources from any CDN domain (googlevideo.com, ytimg.com, etc.)
-- The webNavigation listeners (`onBeforeNavigate`, `onCommitted`) still catch navigation attempts and show the blocked page
-- The auto-redirect check on the blocked page means F5 or unblocking from popup works seamlessly
+**Fix `getDetailedStats` handler** (line ~1207):
+- Transform the raw `[{date, data}]` array into the expected format
+- Map each day to flat properties: `{ date, totalActive, focusTime, distractedTime, score, focusSessions (count) }`
+- Calculate `peakWindows` by aggregating hourly activity across all 30 days and finding the top 2-hour windows with highest average productive time
+
+**Fix `getDomainHistory` handler** (line ~1213):
+- Return plain number array `[time1, time2, ...]` instead of objects, since `drawSparkline` expects numbers
+
+### File: `extension/dashboard/dashboard.js`
+
+**Fix `loadDeepStats()`** (line ~579):
+- Update to handle the corrected response format properly
+- Access `detailedStats.days` for the day array and `detailedStats.peakWindows` for peak data
+
+**Add "yearly" and "overall" range support to Reports tab**:
+- Add new range buttons for "year" (365 days) and "all" in the reports section
+- For "all", fetch all stored date keys from chrome.storage
+
+### File: `extension/background.js` (new message handler)
+
+**Add `getAllUsage` handler**:
+- Scan all keys in `chrome.storage.local` that match the date format `YYYY-MM-DD`
+- Return all historical data for "overall" view in reports
+
+---
+
+## Summary of Changes
+
+1. **`background.js` - `getDetailedStats`**: Transform raw storage data into `{days: [...flat day objects], peakWindows: [...]}` with calculated peak productivity windows
+2. **`background.js` - `getDomainHistory`**: Return `[number]` array instead of `[{date, time}]`
+3. **`background.js` - New `getAllUsage` handler**: Scan all date keys for "all time" reports
+4. **`dashboard.js` - `loadDeepStats`**: Properly consume the fixed response
+5. **`dashboard.js` - Reports tab**: Add "Year" and "All" range buttons, wire up data fetching for longer periods
+6. **`dashboard.html`**: Add the new range buttons to the Reports section UI
 
