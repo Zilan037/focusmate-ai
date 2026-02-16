@@ -1206,18 +1206,66 @@ async function handleMessage(msg) {
     // ─── Detailed Stats (30-day) ───
     case "getDetailedStats": {
       const data30 = await Storage.getLastNDays(30);
-      return data30;
+      const days = data30.map(d => ({
+        date: d.date,
+        totalActive: d.data.totalActive || 0,
+        focusTime: d.data.focusTime || 0,
+        distractedTime: d.data.distractedTime || 0,
+        score: d.data.score || 0,
+        focusSessions: Array.isArray(d.data.focusSessions) ? d.data.focusSessions.length : (d.data.focusSessions || 0),
+      }));
+
+      // Calculate peak productivity windows from hourly data
+      const hourlyTotals = Array.from({ length: 24 }, () => ({ productive: 0, count: 0 }));
+      data30.forEach(d => {
+        const hourly = d.data.hourlyActivity || [];
+        hourly.forEach((h, i) => {
+          if (h && h.productive > 0) {
+            hourlyTotals[i].productive += h.productive;
+            hourlyTotals[i].count += 1;
+          }
+        });
+      });
+
+      const peakWindows = [];
+      for (let i = 0; i < 22; i++) {
+        const t1 = hourlyTotals[i];
+        const t2 = hourlyTotals[i + 1];
+        const t3 = hourlyTotals[i + 2];
+        const totalProd = t1.productive + t2.productive + t3.productive;
+        const totalCount = Math.max(1, t1.count + t2.count + t3.count);
+        const avgScore = Math.round((totalProd / totalCount) * 10);
+        if (totalProd > 0) {
+          peakWindows.push({ start: i, end: i + 2, avgScore: Math.min(100, avgScore) });
+        }
+      }
+      peakWindows.sort((a, b) => b.avgScore - a.avgScore);
+
+      return { days, peakWindows: peakWindows.slice(0, 4) };
     }
 
     // ─── Domain History (7-day sparkline) ───
     case "getDomainHistory": {
       const week7 = await Storage.getLastNDays(7);
       const domain = msg.domain;
-      const history = week7.map(d => ({
-        date: d.date,
-        time: d.data.domains?.[domain]?.time || 0,
-      }));
-      return history.reverse();
+      return week7.map(d => d.data.domains?.[domain]?.time || 0).reverse();
+    }
+
+    // ─── All Usage (all-time) ───
+    case "getAllUsage": {
+      return new Promise((resolve) => {
+        chrome.storage.local.get(null, (allData) => {
+          const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+          const days = [];
+          for (const key of Object.keys(allData)) {
+            if (datePattern.test(key) && allData[key] && typeof allData[key] === "object") {
+              days.push({ date: key, data: allData[key] });
+            }
+          }
+          days.sort((a, b) => a.date.localeCompare(b.date));
+          resolve(days);
+        });
+      });
     }
 
     // ─── Goal Management ───
