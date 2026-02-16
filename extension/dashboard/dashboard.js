@@ -1235,9 +1235,19 @@ async function loadReports(range) {
   let nDays = 1;
   if (range === "week") nDays = 7;
   else if (range === "month") nDays = 30;
+  else if (range === "year") nDays = 365;
+  else if (range === "all") nDays = -1; // special: all time
 
   try {
-    const data = await chrome.runtime.sendMessage({ action: nDays === 1 ? "getTodayUsage" : "getMonthUsage", days: nDays });
+    let data;
+    if (nDays === -1) {
+      data = await chrome.runtime.sendMessage({ action: "getAllUsage" });
+      nDays = Math.max(1, (Array.isArray(data) ? data.length : 1));
+    } else if (nDays === 1) {
+      data = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+    } else {
+      data = await chrome.runtime.sendMessage({ action: "getMonthUsage", days: nDays });
+    }
     
     let allDomains = {};
     let totalActive = 0;
