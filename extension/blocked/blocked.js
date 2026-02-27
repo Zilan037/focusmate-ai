@@ -76,10 +76,39 @@ function init() {
 
   document.getElementById("btn-unlock").addEventListener("click", () => {
     chrome.runtime.sendMessage({ action: "unblockDomain", domain }, () => {
-      // Replace history entry so F5 refreshes the real site, not the blocked page
       window.location.replace("https://" + domain);
     });
   });
+
+  // Quick unblock button (for user-blocked, non-system sites only)
+  setupQuickUnblock(domain, reason);
+}
+
+async function setupQuickUnblock(domain, reason) {
+  // Don't show for system/safety blocks
+  if (reason.includes("Safety Shield") || reason.includes("Safety Mode")) return;
+  
+  try {
+    const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+    const entry = (settings.blockedDomains || []).find(b => {
+      const d = typeof b === "string" ? b : b.domain;
+      return d === domain;
+    });
+    // Only show for user-blocked (not system default, not locked)
+    if (entry && typeof entry === "object" && (entry.systemDefault || entry.locked)) return;
+    
+    // Also don't show during focus mode blocks
+    if (reason.includes("Focus Mode") || reason.includes("Allowed Sites")) return;
+    
+    const section = document.getElementById("quick-unblock-section");
+    if (section) {
+      section.style.display = "block";
+      document.getElementById("btn-quick-unblock").addEventListener("click", async () => {
+        await chrome.runtime.sendMessage({ action: "unblockDomain", domain });
+        window.location.replace("https://" + domain);
+      });
+    }
+  } catch (e) {}
 }
 
 function showQuote(index) {
