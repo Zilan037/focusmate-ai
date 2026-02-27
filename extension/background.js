@@ -99,7 +99,8 @@ async function initSystemBlocklist() {
 }
 
 async function ensureAlarms() {
-  chrome.alarms.create("session_tick", { periodInMinutes: 1 });
+  // Commit every 15 seconds for accurate screen time tracking
+  chrome.alarms.create("session_tick", { periodInMinutes: 0.25 });
   chrome.alarms.create("daily_reset", { periodInMinutes: 60 });
 }
 
@@ -334,8 +335,9 @@ async function handleTabChange(tab) {
 async function commitSession() {
   if (!currentSession) return;
 
-  const elapsed = (Date.now() - currentSession.startTime) / 1000 / 60;
-  if (elapsed < 0.083) return;
+  const now = Date.now();
+  const elapsed = (now - currentSession.startTime) / 1000 / 60; // minutes
+  if (elapsed < 0.05) return; // skip if less than 3 seconds
 
   const usage = await Storage.getTodayUsage();
   const settings = await Storage.getSettings();
@@ -346,7 +348,11 @@ async function commitSession() {
     usage.domains[domain] = { time: 0, category, visits: 0 };
   }
   usage.domains[domain].time += elapsed;
-  usage.domains[domain].visits += 1;
+  // Only count visits on first commit for this session, not on periodic ticks
+  if (!currentSession.committed) {
+    usage.domains[domain].visits += 1;
+    currentSession.committed = true;
+  }
   usage.domains[domain].category = category;
 
   usage.totalActive += elapsed;
@@ -368,6 +374,10 @@ async function commitSession() {
 
   usage.score = Scoring.calculate(usage);
   await Storage.saveTodayUsage(usage);
+  
+  // Reset the session start time so next tick only counts NEW elapsed time
+  currentSession.startTime = now;
+  
   await checkDailyLimit(domain, usage.domains[domain].time, settings);
 }
 

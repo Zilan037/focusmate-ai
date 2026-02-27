@@ -379,7 +379,7 @@ function drawDomainChart(domains) {
     const color = Categories.getCategoryColor(info.category || "Other");
 
     ctx.fillStyle = colors.text;
-    ctx.font = "800 12px 'Plus Jakarta Sans', sans-serif";
+    ctx.font = "700 12px 'Inter', sans-serif";
     ctx.textAlign = "right";
     ctx.fillText(domain.length > 18 ? domain.slice(0, 18) + "…" : domain, labelW - 12, y + barH / 2 + 4);
 
@@ -393,7 +393,7 @@ function drawDomainChart(domains) {
 
     ctx.fillStyle = colors.text;
     ctx.textAlign = "left";
-    ctx.font = "700 12px 'Plus Jakarta Sans', sans-serif";
+    ctx.font = "600 12px 'Inter', sans-serif";
     ctx.fillText(Math.round(info.time) + "m", labelW + barW + 10, y + barH / 2 + 4);
   });
 }
@@ -462,8 +462,7 @@ function drawHourlyChart(hourly) {
   ctx.clearRect(0, 0, w, h);
   if (!hourly || hourly.length === 0) {
     ctx.fillStyle = colors.textMuted;
-    ctx.font = "600 13px 'Plus Jakarta Sans', sans-serif";
-    ctx.textAlign = "center";
+    ctx.font = "600 13px 'Inter', sans-serif";
     ctx.fillText("Start browsing to see your activity here", w / 2, h / 2);
     return;
   }
@@ -472,7 +471,7 @@ function drawHourlyChart(hourly) {
   const hasData = hourly.some(hr => hr.productive > 0 || hr.distracted > 0);
   if (!hasData) {
     ctx.fillStyle = colors.textMuted;
-    ctx.font = "600 13px 'Plus Jakarta Sans', sans-serif";
+    ctx.font = "600 13px 'Inter', sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("No activity recorded yet today", w / 2, h / 2);
     return;
@@ -514,7 +513,7 @@ function drawHourlyChart(hourly) {
 
     if (i % 3 === 0) {
       ctx.fillStyle = colors.textMuted;
-      ctx.font = "800 10px 'Plus Jakarta Sans', sans-serif";
+      ctx.font = "700 10px 'Inter', sans-serif";
       ctx.textAlign = "center";
       ctx.fillText(i + ":00", x + barW / 2, h - 8);
     }
@@ -529,7 +528,7 @@ function drawWeeklyChart(weekData) {
   ctx.clearRect(0, 0, w, h);
   if (!weekData || weekData.length === 0) {
     ctx.fillStyle = colors.textMuted;
-    ctx.font = "600 13px 'Plus Jakarta Sans', sans-serif";
+    ctx.font = "600 13px 'Inter', sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("Not enough data yet — check back after a few days", w / 2, h / 2);
     return;
@@ -565,12 +564,12 @@ function drawWeeklyChart(weekData) {
 
     const dayName = new Date(day.date).toLocaleDateString("en", { weekday: "short" });
     ctx.fillStyle = colors.text;
-    ctx.font = "800 11px 'Plus Jakarta Sans', sans-serif";
+    ctx.font = "700 11px 'Inter', sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(dayName, x + barW, h - 8);
 
     ctx.fillStyle = "#2563EB";
-    ctx.font = "800 10px 'Plus Jakarta Sans', sans-serif";
+    ctx.font = "700 10px 'Inter', sans-serif";
     ctx.fillText(day.data.score || 0, x + barW, padding.top + chartH - Math.max(prodH, distH) - 8);
   });
 }
@@ -624,7 +623,7 @@ function draw30DayChart(days) {
     ctx.stroke();
     
     ctx.fillStyle = colors.textMuted;
-    ctx.font = "800 10px 'Plus Jakarta Sans', sans-serif";
+    ctx.font = "700 10px 'Inter', sans-serif";
     ctx.textAlign = "right";
     ctx.fillText(100 - i * 25, padding.left - 8, y + 3);
   }
@@ -1252,17 +1251,30 @@ async function loadReports(range) {
     let allDomains = {};
     let totalActive = 0;
     let totalBlocked = 0;
+    let totalFocus = 0;
+    let totalDistracted = 0;
+    let dayTrend = [];
 
     if (nDays === 1) {
       allDomains = data.domains || {};
       totalActive = data.totalActive || 0;
       totalBlocked = data.blockBypasses || 0;
+      totalFocus = data.focusTime || 0;
+      totalDistracted = data.distractedTime || 0;
     } else {
       const daysData = Array.isArray(data) ? data : (data.days || []);
       daysData.slice(0, nDays).forEach(day => {
         const d = day.data || day;
         totalActive += d.totalActive || 0;
         totalBlocked += d.blockBypasses || 0;
+        totalFocus += d.focusTime || 0;
+        totalDistracted += d.distractedTime || 0;
+        dayTrend.push({ 
+          date: day.date || '', 
+          focus: d.focusTime || 0, 
+          distracted: d.distractedTime || 0,
+          active: d.totalActive || 0
+        });
         Object.entries(d.domains || {}).forEach(([domain, info]) => {
           if (!allDomains[domain]) allDomains[domain] = { time: 0, category: info.category || "Other", visits: 0 };
           allDomains[domain].time += info.time || 0;
@@ -1286,6 +1298,41 @@ async function loadReports(range) {
     document.getElementById("report-total-time").textContent = formatTime(totalActive);
     document.getElementById("report-top-category").textContent = topCat ? topCat[0] : "—";
     document.getElementById("report-blocked").textContent = totalBlocked;
+
+    // Focus ratio
+    const focusRatio = totalActive > 0 ? Math.round((totalFocus / totalActive) * 100) : 0;
+    const focusRatioEl = document.getElementById("report-focus-ratio");
+    if (focusRatioEl) {
+      focusRatioEl.textContent = focusRatio + "%";
+      focusRatioEl.style.color = focusRatio >= 60 ? "var(--success)" : focusRatio >= 30 ? "var(--warning)" : "var(--danger)";
+    }
+
+    // Avg daily usage
+    const actualDays = Math.max(1, nDays);
+    const avgDailyEl = document.getElementById("report-avg-daily");
+    if (avgDailyEl) avgDailyEl.textContent = formatTime(totalActive / actualDays);
+
+    // Draw productivity trend chart
+    if (dayTrend.length > 1) {
+      drawReportTrendChart(dayTrend);
+    } else {
+      const trendCanvas = document.getElementById("report-trend-chart");
+      if (trendCanvas) {
+        const tCtx = trendCanvas.getContext("2d");
+        const dpr = window.devicePixelRatio || 1;
+        const rect = trendCanvas.parentElement.getBoundingClientRect();
+        const tw = rect.width - 40;
+        trendCanvas.width = tw * dpr;
+        trendCanvas.height = 220 * dpr;
+        trendCanvas.style.width = tw + "px";
+        trendCanvas.style.height = "220px";
+        tCtx.scale(dpr, dpr);
+        tCtx.fillStyle = getChartColors().textMuted;
+        tCtx.font = "600 13px 'Inter', sans-serif";
+        tCtx.textAlign = "center";
+        tCtx.fillText("Select a multi-day range to see trends", tw / 2, 110);
+      }
+    }
 
     // Category breakdown
     const catContainer = document.getElementById("report-category-breakdown");
@@ -1317,7 +1364,7 @@ async function loadReports(range) {
       topSitesBody.innerHTML = topSites.map(([domain, info]) => {
         const color = Categories.getCategoryColor(info.category || "Other");
         const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-        const dailyAvg = formatTime((info.time || 0) / nDays);
+        const dailyAvg = formatTime((info.time || 0) / actualDays);
         return `<tr>
           <td style="font-weight:600;"><img class="domain-row-favicon" src="${faviconUrl}" />${domain}</td>
           <td><span class="category-pill" style="background:${color}22;color:${color};border:1px solid ${color}33;">${info.category || "Other"}</span></td>
@@ -1331,6 +1378,106 @@ async function loadReports(range) {
   } catch (e) {
     console.error("Reports error:", e);
   }
+}
+
+// ─── Report Trend Chart ───
+function drawReportTrendChart(dayTrend) {
+  const canvas = document.getElementById("report-trend-chart");
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const w = rect.width - 40;
+  const h = 220;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + "px";
+  canvas.style.height = h + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const colors = getChartColors();
+  const padding = { top: 20, right: 20, bottom: 36, left: 50 };
+  const chartW = w - padding.left - padding.right;
+  const chartH = h - padding.top - padding.bottom;
+
+  const maxVal = Math.max(1, ...dayTrend.map(d => Math.max(d.focus, d.distracted)));
+  const stepX = chartW / (dayTrend.length - 1 || 1);
+
+  // Grid
+  for (let i = 0; i <= 4; i++) {
+    const y = padding.top + (chartH / 4) * i;
+    ctx.strokeStyle = colors.gridLine;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(w - padding.right, y);
+    ctx.stroke();
+  }
+
+  // Focus area fill
+  ctx.beginPath();
+  ctx.moveTo(padding.left, padding.top + chartH);
+  dayTrend.forEach((d, i) => {
+    const x = padding.left + i * stepX;
+    const y = padding.top + chartH - (d.focus / maxVal) * chartH;
+    ctx.lineTo(x, y);
+  });
+  ctx.lineTo(padding.left + (dayTrend.length - 1) * stepX, padding.top + chartH);
+  ctx.closePath();
+  const focusGrad = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartH);
+  focusGrad.addColorStop(0, "rgba(16,185,129,0.2)");
+  focusGrad.addColorStop(1, "rgba(16,185,129,0)");
+  ctx.fillStyle = focusGrad;
+  ctx.fill();
+
+  // Focus line
+  ctx.beginPath();
+  dayTrend.forEach((d, i) => {
+    const x = padding.left + i * stepX;
+    const y = padding.top + chartH - (d.focus / maxVal) * chartH;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = "#10B981";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Distraction line
+  ctx.beginPath();
+  dayTrend.forEach((d, i) => {
+    const x = padding.left + i * stepX;
+    const y = padding.top + chartH - (d.distracted / maxVal) * chartH;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = "#F43F5E";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Labels
+  const labelInterval = Math.max(1, Math.floor(dayTrend.length / 7));
+  dayTrend.forEach((d, i) => {
+    if (i % labelInterval === 0 || i === dayTrend.length - 1) {
+      const x = padding.left + i * stepX;
+      ctx.fillStyle = colors.textMuted;
+      ctx.font = "600 10px 'Inter', sans-serif";
+      ctx.textAlign = "center";
+      const label = d.date ? new Date(d.date).toLocaleDateString("en", { month: "short", day: "numeric" }) : "";
+      ctx.fillText(label, x, h - 8);
+    }
+  });
+
+  // Legend
+  ctx.fillStyle = "#10B981";
+  ctx.fillRect(padding.left, 4, 12, 3);
+  ctx.fillStyle = colors.text;
+  ctx.font = "600 10px 'Inter', sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("Focus", padding.left + 16, 8);
+
+  ctx.fillStyle = "#F43F5E";
+  ctx.fillRect(padding.left + 70, 4, 12, 3);
+  ctx.fillStyle = colors.text;
+  ctx.fillText("Distracted", padding.left + 86, 8);
 }
 
 // ─── Insights ───
