@@ -246,7 +246,13 @@ const Landing = () => {
   // Floating CTA visibility
   const [showFloatingCTA, setShowFloatingCTA] = useState(false);
   useEffect(() => {
-    const onScroll = () => setShowFloatingCTA(window.scrollY > 600);
+    const onScroll = () => {
+      const scrollY = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight;
+      const winHeight = window.innerHeight;
+      const nearBottom = scrollY + winHeight > docHeight - 300;
+      setShowFloatingCTA(scrollY > 600 && !nearBottom);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
