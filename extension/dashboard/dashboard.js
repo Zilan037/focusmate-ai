@@ -27,6 +27,7 @@ async function init() {
   await load7x24Grid();
   await loadAchievements();
   await drawCategoryFlow();
+  await drawCategorySankey();
   setupDataManagement();
   setupQuickActions();
   setupBlocklistActions();
@@ -3058,5 +3059,247 @@ async function loadSessionTimeline() {
       <div class="gantt-stat"><span class="gantt-stat-value">${formatTime(totalMinutes)}</span><span class="gantt-stat-label">Total Focus</span></div>
       <div class="gantt-stat"><span class="gantt-stat-value">${totalSessions > 0 ? Math.round(totalMinutes / totalSessions) + "m" : "0m"}</span><span class="gantt-stat-label">Avg Duration</span></div>
     `;
+  }
+}
+
+// ═══ CATEGORY TRANSITION SANKEY DIAGRAM ═══
+async function drawCategorySankey() {
+  try {
+    const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+    const transitions = usage.categoryTransitions || {};
+    const canvas = document.getElementById("chart-sankey");
+    if (!canvas) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const wrap = canvas.parentElement;
+    const w = wrap.clientWidth;
+    const h = 380;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
+
+    const isLight = document.documentElement.getAttribute("data-theme") === "light";
+    const textColor = isLight ? "#475569" : "#94A3B8";
+    const textMuted = isLight ? "#94A3B8" : "#64748B";
+
+    const catColors = {
+      "Development": "#10B981", "Education": "#06B6D4", "Research": "#8B5CF6",
+      "Productivity": "#3B82F6", "Work": "#2563EB", "News": "#6366F1",
+      "Social Media": "#F43F5E", "Entertainment": "#F59E0B", "Shopping": "#EC4899",
+      "Other": "#64748B", "Communication": "#14B8A6",
+    };
+
+    // Parse transitions
+    const entries = Object.entries(transitions).map(([key, count]) => {
+      const [from, to] = key.split("→");
+      return { from, to, count };
+    }).sort((a, b) => b.count - a.count);
+
+    if (entries.length === 0) {
+      ctx.fillStyle = textMuted;
+      ctx.font = "600 13px 'Inter', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Category transitions will appear as you browse between different types of sites", w / 2, h / 2);
+      return;
+    }
+
+    // Get unique categories (left = sources, right = destinations)
+    const leftCats = [...new Set(entries.map(e => e.from))];
+    const rightCats = [...new Set(entries.map(e => e.to))];
+    // Deduplicate — categories can appear on both sides
+    const allCats = [...new Set([...leftCats, ...rightCats])];
+
+    // Calculate totals for sizing
+    const leftTotals = {};
+    const rightTotals = {};
+    entries.forEach(e => {
+      leftTotals[e.from] = (leftTotals[e.from] || 0) + e.count;
+      rightTotals[e.to] = (rightTotals[e.to] || 0) + e.count;
+    });
+
+    // Sort by total flow
+    leftCats.sort((a, b) => (leftTotals[b] || 0) - (leftTotals[a] || 0));
+    rightCats.sort((a, b) => (rightTotals[b] || 0) - (rightTotals[a] || 0));
+
+    const totalFlow = entries.reduce((s, e) => s + e.count, 0);
+    const maxFlow = Math.max(...Object.values(leftTotals), ...Object.values(rightTotals));
+
+    // Layout
+    const pad = { top: 30, bottom: 30, left: 20, right: 20 };
+    const nodeW = 18;
+    const colLeft = pad.left;
+    const colRight = w - pad.right - nodeW;
+    const availH = h - pad.top - pad.bottom;
+    const nodeGap = 8;
+
+    // Calculate node positions
+    const leftTotal = leftCats.reduce((s, c) => s + (leftTotals[c] || 0), 0);
+    const rightTotal = rightCats.reduce((s, c) => s + (rightTotals[c] || 0), 0);
+
+    function layoutNodes(cats, totals, totalSum) {
+      const totalGap = (cats.length - 1) * nodeGap;
+      const usableH = availH - totalGap;
+      let y = pad.top;
+      const nodes = {};
+      cats.forEach(cat => {
+        const ratio = (totals[cat] || 0) / totalSum;
+        const nodeH = Math.max(16, ratio * usableH);
+        nodes[cat] = { y, h: nodeH, total: totals[cat] || 0, usedY: 0 };
+        y += nodeH + nodeGap;
+      });
+      return nodes;
+    }
+
+    const leftNodes = layoutNodes(leftCats, leftTotals, leftTotal);
+    const rightNodes = layoutNodes(rightCats, rightTotals, rightTotal);
+
+    // Draw flow links (bezier curves)
+    // Sort entries to draw smaller flows first (larger on top)
+    const sortedEntries = [...entries].sort((a, b) => a.count - b.count);
+
+    sortedEntries.forEach(e => {
+      const ln = leftNodes[e.from];
+      const rn = rightNodes[e.to];
+      if (!ln || !rn) return;
+
+      const linkH = Math.max(2, (e.count / Math.max(ln.total, 1)) * ln.h);
+      const linkHR = Math.max(2, (e.count / Math.max(rn.total, 1)) * rn.h);
+
+      const y1 = ln.y + ln.usedY;
+      const y2 = rn.y + rn.usedY;
+      ln.usedY += linkH;
+      rn.usedY += linkHR;
+
+      const x1 = colLeft + nodeW;
+      const x2 = colRight;
+      const cpx = (x1 + x2) / 2;
+
+      const color = catColors[e.from] || "#64748B";
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.bezierCurveTo(cpx, y1, cpx, y2, x2, y2);
+      ctx.lineTo(x2, y2 + linkHR);
+      ctx.bezierCurveTo(cpx, y2 + linkHR, cpx, y1 + linkH, x1, y1 + linkH);
+      ctx.closePath();
+
+      const grad = ctx.createLinearGradient(x1, 0, x2, 0);
+      grad.addColorStop(0, color + "40");
+      grad.addColorStop(0.5, color + "25");
+      grad.addColorStop(1, (catColors[e.to] || "#64748B") + "40");
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Subtle border
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.bezierCurveTo(cpx, y1, cpx, y2, x2, y2);
+      ctx.strokeStyle = color + "30";
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    });
+
+    // Draw left nodes
+    leftCats.forEach(cat => {
+      const n = leftNodes[cat];
+      const color = catColors[cat] || "#64748B";
+
+      // Node bar
+      const grad = ctx.createLinearGradient(colLeft, n.y, colLeft, n.y + n.h);
+      grad.addColorStop(0, color);
+      grad.addColorStop(1, color + "AA");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(colLeft, n.y, nodeW, n.h, 4);
+      ctx.fill();
+
+      // Glow
+      ctx.shadowColor = color + "40";
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.roundRect(colLeft, n.y, nodeW, n.h, 4);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Label
+      ctx.font = "700 11px 'Inter', system-ui, sans-serif";
+      ctx.fillStyle = textColor;
+      ctx.textAlign = "left";
+      const labelY = n.y + n.h / 2 + 4;
+      ctx.fillText(cat, colLeft + nodeW + 8, labelY);
+
+      // Count
+      ctx.font = "600 9px 'Inter', system-ui, sans-serif";
+      ctx.fillStyle = textMuted;
+      ctx.fillText(`${n.total}×`, colLeft + nodeW + 8 + ctx.measureText(cat).width + 6, labelY);
+    });
+
+    // Draw right nodes
+    rightCats.forEach(cat => {
+      const n = rightNodes[cat];
+      const color = catColors[cat] || "#64748B";
+
+      const grad = ctx.createLinearGradient(colRight, n.y, colRight, n.y + n.h);
+      grad.addColorStop(0, color);
+      grad.addColorStop(1, color + "AA");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(colRight, n.y, nodeW, n.h, 4);
+      ctx.fill();
+
+      ctx.shadowColor = color + "40";
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.roundRect(colRight, n.y, nodeW, n.h, 4);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Label (right-aligned)
+      ctx.font = "700 11px 'Inter', system-ui, sans-serif";
+      ctx.fillStyle = textColor;
+      ctx.textAlign = "right";
+      const labelY = n.y + n.h / 2 + 4;
+      const countText = `${n.total}×`;
+      ctx.font = "600 9px 'Inter', system-ui, sans-serif";
+      const countW = ctx.measureText(countText).width;
+      ctx.fillText(countText, colRight - 8, labelY);
+
+      ctx.font = "700 11px 'Inter', system-ui, sans-serif";
+      ctx.fillText(cat, colRight - 8 - countW - 6, labelY);
+    });
+
+    // Column headers
+    ctx.font = "800 10px 'Inter', system-ui, sans-serif";
+    ctx.fillStyle = textMuted;
+    ctx.textAlign = "left";
+    ctx.fillText("FROM", colLeft, pad.top - 10);
+    ctx.textAlign = "right";
+    ctx.fillText("TO", colRight + nodeW, pad.top - 10);
+
+    // Stats row
+    const statsRow = document.getElementById("sankey-stats-row");
+    if (statsRow) {
+      const topTransition = entries[0];
+      const uniquePairs = entries.length;
+      statsRow.innerHTML = `
+        <div class="gantt-stat"><span class="gantt-stat-value">${totalFlow}</span><span class="gantt-stat-label">Total Switches</span></div>
+        <div class="gantt-stat"><span class="gantt-stat-value">${uniquePairs}</span><span class="gantt-stat-label">Unique Flows</span></div>
+        <div class="gantt-stat"><span class="gantt-stat-value">${allCats.length}</span><span class="gantt-stat-label">Categories</span></div>
+        <div class="gantt-stat"><span class="gantt-stat-value">${topTransition ? topTransition.from.split(" ")[0] + " → " + topTransition.to.split(" ")[0] : "—"}</span><span class="gantt-stat-label">Most Common</span></div>
+      `;
+    }
+
+    // Legend
+    const legendEl = document.getElementById("sankey-legend");
+    if (legendEl) {
+      legendEl.innerHTML = allCats.slice(0, 6).map(cat =>
+        `<span class="gantt-legend-item"><span class="gantt-legend-dot" style="background:${catColors[cat] || '#64748B'}"></span>${cat}</span>`
+      ).join("");
+    }
+  } catch (e) {
+    console.error("Sankey error:", e);
   }
 }

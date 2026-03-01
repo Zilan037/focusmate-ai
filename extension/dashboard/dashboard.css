@@ -2838,3 +2838,30 @@ canvas {
   letter-spacing: 0.1em;
   margin-top: 4px;
 }
+
+/* ═══ SANKEY DIAGRAM ═══ */
+.sankey-wrap {
+  position: relative;
+  margin-top: 16px;
+}
+.sankey-wrap canvas {
+  display: block;
+  width: 100%;
+}
+.sankey-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.sankey-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+[data-theme="light"] .sankey-stats-row {
+  border-top-color: rgba(0,0,0,0.06);
+}
