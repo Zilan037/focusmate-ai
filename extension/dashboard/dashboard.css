@@ -647,11 +647,11 @@ body {
 .stat-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--sp-8);
-  margin-bottom: var(--sp-10);
+  gap: var(--sp-5);
+  margin-bottom: var(--sp-8);
 }
 .metric-card {
-  padding: 28px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
 }
@@ -659,7 +659,7 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 .metric-label {
   font-size: 10px;
@@ -680,6 +680,7 @@ body {
   letter-spacing: -0.05em;
   color: #0F172A;
   font-family: var(--font-mono);
+  font-feature-settings: "zero" off;
 }
 [data-theme="dark"] .metric-value,
 :root:not([data-theme="light"]) .metric-value {
@@ -712,7 +713,7 @@ body {
   align-items: center;
   gap: var(--sp-2);
   margin-top: auto;
-  padding-top: 20px;
+  padding-top: 14px;
   font-size: 11px;
   font-weight: 700;
   color: var(--text-muted);
@@ -766,12 +767,12 @@ body {
 .viz-grid {
   display: grid;
   grid-template-columns: 8fr 4fr;
-  gap: var(--sp-8);
-  margin-bottom: var(--sp-10);
+  gap: var(--sp-6);
+  margin-bottom: var(--sp-8);
 }
 .viz-main {
-  padding: 40px;
-  border-radius: 36px;
+  padding: 28px 32px;
+  border-radius: 28px;
 }
 .viz-side {
   display: flex;
@@ -784,7 +785,7 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 40px;
+  margin-bottom: 28px;
 }
 .chart-title-lg {
   font-size: 20px;
@@ -814,8 +815,8 @@ body {
 /* ─── Streak Highlight Card ─── */
 .streak-highlight-card {
   background: #0F172A;
-  border-radius: 36px;
-  padding: 40px;
+  border-radius: 28px;
+  padding: 28px 32px;
   color: #fff;
   flex: 1;
   position: relative;
@@ -912,8 +913,8 @@ body {
 
 /* Category Donut */
 .category-donut-card {
-  padding: 40px;
-  border-radius: 36px;
+  padding: 28px 32px;
+  border-radius: 28px;
 }
 .category-donut-title {
   font-size: 14px;
@@ -938,16 +939,16 @@ body {
 .lower-grid {
   display: grid;
   grid-template-columns: 7fr 5fr;
-  gap: var(--sp-8);
-  margin-bottom: var(--sp-10);
+  gap: var(--sp-6);
+  margin-bottom: var(--sp-8);
 }
 .lower-main {
-  padding: 40px;
-  border-radius: 36px;
+  padding: 28px 32px;
+  border-radius: 28px;
 }
 .lower-side {
-  padding: 40px;
-  border-radius: 36px;
+  padding: 28px 32px;
+  border-radius: 28px;
 }
 
 /* Cognitive Assets (categories) */

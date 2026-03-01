@@ -13,11 +13,13 @@ let recentDomains = [];
 async function init() {
   setupPopupTabs();
   await loadRecentDomains();
+  await loadPowerState();
   await loadStats();
   await loadGoalProgress();
   await loadInsight();
   setupListeners();
   setupThemeToggle();
+  setupPowerToggle();
   await loadFocusTab();
   await loadControlsTab();
   await loadActivityTab();
@@ -205,6 +207,61 @@ function setupListeners() {
 
 function openDashboard() {
   chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/dashboard.html") });
+}
+
+// ─── Power Toggle (Master On/Off) ───
+async function loadPowerState() {
+  try {
+    const result = await chrome.runtime.sendMessage({ action: "getExtensionEnabled" });
+    const enabled = result.enabled !== false;
+    updatePowerUI(enabled);
+  } catch (e) {
+    updatePowerUI(true);
+  }
+}
+
+function setupPowerToggle() {
+  document.getElementById("btn-power").addEventListener("click", async () => {
+    try {
+      const result = await chrome.runtime.sendMessage({ action: "getExtensionEnabled" });
+      const currentlyEnabled = result.enabled !== false;
+      const newState = !currentlyEnabled;
+      await chrome.runtime.sendMessage({ action: "setExtensionEnabled", enabled: newState });
+      updatePowerUI(newState);
+    } catch (e) {
+      console.error("Power toggle error:", e);
+    }
+  });
+}
+
+function updatePowerUI(enabled) {
+  const btn = document.getElementById("btn-power");
+  const existingOverlay = document.getElementById("popup-disabled-overlay");
+  
+  if (enabled) {
+    btn.classList.remove("off");
+    btn.title = "Turn FocusGuard Off";
+    if (existingOverlay) existingOverlay.remove();
+  } else {
+    btn.classList.add("off");
+    btn.title = "Turn FocusGuard On";
+    if (!existingOverlay) {
+      const overlay = document.createElement("div");
+      overlay.id = "popup-disabled-overlay";
+      overlay.className = "popup-disabled-overlay";
+      overlay.innerHTML = `
+        <div class="popup-disabled-icon">⏸️</div>
+        <div class="popup-disabled-text">FocusGuard is Paused</div>
+        <div class="popup-disabled-sub">All tracking, blocking, and focus sessions are disabled.</div>
+        <button class="popup-disabled-btn" id="btn-reenable">Turn On</button>
+      `;
+      document.body.appendChild(overlay);
+      overlay.querySelector("#btn-reenable").addEventListener("click", async () => {
+        await chrome.runtime.sendMessage({ action: "setExtensionEnabled", enabled: true });
+        updatePowerUI(true);
+      });
+    }
+  }
 }
 
 // ═══ AUTOCOMPLETE ═══

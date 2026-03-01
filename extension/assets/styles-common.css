@@ -227,6 +227,7 @@ body::before {
 .number-mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "zero" off;
   font-weight: 700;
 }
 

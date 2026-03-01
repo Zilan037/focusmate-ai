@@ -122,6 +122,10 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   if (details.frameId !== 0) return;
   
+  // Master toggle check
+  const { focusguard_enabled } = await chrome.storage.local.get("focusguard_enabled");
+  if (focusguard_enabled === false) return;
+
   try {
     const url = details.url;
     if (!url || url.startsWith("chrome") || url.startsWith("about:") || url.startsWith("edge:")) return;
@@ -186,6 +190,10 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
   if (details.frameId !== 0) return;
   if (details.transitionType === "auto_subframe") return;
   
+  // Master toggle check
+  const { focusguard_enabled } = await chrome.storage.local.get("focusguard_enabled");
+  if (focusguard_enabled === false) return;
+
   try {
     const url = details.url;
     if (!url || url.startsWith("chrome") || url.startsWith("about:") || url.startsWith("edge:")) return;
@@ -310,6 +318,10 @@ async function checkSystemBlocks(domain, tabId) {
 
 async function handleTabChange(tab) {
   if (idleState !== "active") return;
+
+  // Master toggle check
+  const { focusguard_enabled } = await chrome.storage.local.get("focusguard_enabled");
+  if (focusguard_enabled === false) return;
 
   const domain = extractDomain(tab.url || "");
   if (!domain) {
@@ -1444,15 +1456,47 @@ async function handleMessage(msg) {
       const recentUsage = await Storage.getTodayUsage();
       const recentSettings = await Storage.getSettings();
       const domainList = Object.keys(recentUsage.domains || {});
-      // Also include user-blocked domains
       const userBlocked = (recentSettings.blockedDomains || [])
         .filter(b => !(typeof b === "object" && b.systemDefault))
         .map(b => typeof b === "string" ? b : b.domain);
-      // Merge and deduplicate, most-visited first
       const sorted = [...new Set([...domainList, ...userBlocked])];
-      // Save to storage for persistence
       await chrome.storage.local.set({ focusguard_recent_domains: sorted.slice(0, 50) });
       return sorted.slice(0, 50);
+    }
+
+    // ─── Master On/Off Toggle ───
+    case "getExtensionEnabled": {
+      const { focusguard_enabled } = await chrome.storage.local.get("focusguard_enabled");
+      return { enabled: focusguard_enabled !== false };
+    }
+
+    case "setExtensionEnabled": {
+      const newEnabled = msg.enabled !== false;
+      await chrome.storage.local.set({ focusguard_enabled: newEnabled });
+      
+      if (!newEnabled) {
+        // Disable everything: stop focus, clear all blocking rules
+        const focusS = await Storage.getFocusState();
+        if (focusS.active) {
+          await completeFocusSession(focusS, "failed");
+        }
+        // Clear ALL dynamic blocking rules
+        const allRules = await chrome.declarativeNetRequest.getDynamicRules();
+        const allIds = allRules.map(r => r.id);
+        if (allIds.length > 0) {
+          await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: allIds });
+        }
+        // Stop tracking
+        await commitSession();
+        currentSession = null;
+        chrome.action.setBadgeText({ text: "OFF" });
+        chrome.action.setBadgeBackgroundColor({ color: "#F43F5E" });
+      } else {
+        // Re-enable: restore persistent block rules
+        await applyPersistentBlockRules();
+        chrome.action.setBadgeText({ text: "" });
+      }
+      return { success: true };
     }
 
     default:
