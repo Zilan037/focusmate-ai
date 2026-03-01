@@ -896,9 +896,11 @@ const Landing = () => {
           SECTION 9 — FAQ
           ═══════════════════════════════════════ */}
       <Section id="faq" ariaLabel="Frequently asked questions">
-        <SectionLabel>FAQ</SectionLabel>
-        <SectionTitle>Common questions.</SectionTitle>
-        <SectionDesc>Everything you need to know about FocusGuard.</SectionDesc>
+        <div className="max-w-3xl mx-auto">
+          <SectionLabel>FAQ</SectionLabel>
+          <SectionTitle>Common questions.</SectionTitle>
+          <SectionDesc>Everything you need to know about FocusGuard.</SectionDesc>
+        </div>
 
         <motion.div variants={staggerContainer} className="mt-14 max-w-3xl mx-auto w-full">
           {[
