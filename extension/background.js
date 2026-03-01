@@ -542,19 +542,51 @@ async function checkBlocking(domain, tabId) {
 
 async function checkDailyLimit(domain, totalMinutes, settings) {
   const limit = settings.dailyLimits[domain];
-  if (limit) {
-    if (totalMinutes >= limit * 0.8 && totalMinutes < limit) {
-      await sendNotification("daily_limit", "Daily Limit Warning", `You've used 80% of your ${limit}min limit for ${domain}`);
-    }
-    if (totalMinutes >= limit) {
-      try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tab && extractDomain(tab.url) === domain) {
-          redirectToBlocked(tab.id, domain, `Daily limit of ${limit} minutes reached`);
-        }
-      } catch (e) {}
-    }
+  if (!limit) return;
+
+  // Track which thresholds we've already notified to avoid spam
+  const notifiedKey = `limit_notified_${Storage.todayKey()}`;
+  const notified = (await Storage.get(notifiedKey)) || {};
+  const domainNotified = notified[domain] || {};
+  const pct = Math.round((totalMinutes / limit) * 100);
+
+  // 80% warning
+  if (pct >= 80 && pct < 100 && !domainNotified.at80) {
+    await sendNotification("daily_limit", "⚠️ 80% Limit Reached", `You've used ${Math.round(totalMinutes)}/${limit} min on ${domain}`);
+    domainNotified.at80 = true;
+    notified[domain] = domainNotified;
+    await Storage.set(notifiedKey, notified);
+    // Broadcast to popup for warning animation
+    broadcastLimitWarning(domain, pct, limit, totalMinutes);
   }
+
+  // 100% — block + notify
+  if (pct >= 100 && !domainNotified.at100) {
+    await sendNotification("daily_limit", "🚫 Daily Limit Reached", `${domain} is now blocked — ${limit} min limit exceeded`);
+    domainNotified.at100 = true;
+    notified[domain] = domainNotified;
+    await Storage.set(notifiedKey, notified);
+    broadcastLimitWarning(domain, 100, limit, totalMinutes);
+  }
+
+  if (totalMinutes >= limit) {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab && extractDomain(tab.url) === domain) {
+        redirectToBlocked(tab.id, domain, `Daily limit of ${limit} minutes reached`);
+      }
+    } catch (e) {}
+  }
+}
+
+function broadcastLimitWarning(domain, pct, limit, used) {
+  chrome.runtime.sendMessage({
+    type: "LIMIT_WARNING",
+    domain,
+    pct,
+    limit,
+    used: Math.round(used),
+  }).catch(() => {}); // popup may not be open
 }
 
 function redirectToBlocked(tabId, domain, reason) {

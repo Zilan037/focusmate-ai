@@ -21,6 +21,8 @@ async function init() {
   await loadFocusTab();
   await loadControlsTab();
   await loadActivityTab();
+  setupLimitWarningListener();
+  await checkLimitsOnOpen();
   
   // Auto-refresh stats every 10 seconds for live accuracy
   setInterval(async () => {
@@ -657,4 +659,75 @@ async function loadBlockedSitesList() {
   } catch (e) {
     container.innerHTML = '<div class="empty-state">Could not load blocked sites</div>';
   }
+}
+
+// ═══ LIMIT WARNING TOAST ═══
+function setupLimitWarningListener() {
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.type === "LIMIT_WARNING") {
+      showLimitWarningToast(msg.domain, msg.pct, msg.limit, msg.used);
+    }
+  });
+
+  document.getElementById("limit-toast-close").addEventListener("click", () => {
+    const toast = document.getElementById("limit-warning-toast");
+    toast.style.display = "none";
+  });
+}
+
+function showLimitWarningToast(domain, pct, limit, used) {
+  const toast = document.getElementById("limit-warning-toast");
+  const icon = document.getElementById("limit-toast-icon");
+  const title = document.getElementById("limit-toast-title");
+  const desc = document.getElementById("limit-toast-desc");
+  const barFill = document.getElementById("limit-toast-bar-fill");
+  const isDanger = pct >= 100;
+
+  toast.className = "limit-warning-toast " + (isDanger ? "danger" : "warning");
+  icon.textContent = isDanger ? "🚫" : "⚠️";
+  title.textContent = isDanger ? `${domain} — Limit Reached!` : `${domain} — ${pct}% Used`;
+  desc.textContent = isDanger
+    ? `Daily limit of ${limit} min exceeded. Site is now blocked.`
+    : `${used}/${limit} min used. Consider wrapping up.`;
+
+  barFill.className = "limit-toast-bar-fill " + (isDanger ? "danger" : "warning");
+  barFill.style.width = "0%";
+  toast.style.display = "flex";
+
+  // Animate bar fill
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      barFill.style.width = Math.min(pct, 100) + "%";
+    });
+  });
+
+  // Pulse the Block tab button
+  const blockTab = document.querySelector('[data-tab="controls"]');
+  if (blockTab) {
+    blockTab.classList.add("limit-warning-pulse");
+    setTimeout(() => blockTab.classList.remove("limit-warning-pulse"), 5000);
+  }
+
+  // Auto-dismiss after 8s for warnings, keep for danger
+  if (!isDanger) {
+    setTimeout(() => { toast.style.display = "none"; }, 8000);
+  }
+}
+
+// Check limits when popup opens
+async function checkLimitsOnOpen() {
+  try {
+    const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+    const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+    const limits = settings.dailyLimits || {};
+
+    for (const [domain, limit] of Object.entries(limits)) {
+      const time = usage.domains?.[domain]?.time || 0;
+      const pct = Math.round((time / limit) * 100);
+      if (pct >= 80) {
+        showLimitWarningToast(domain, pct, limit, Math.round(time));
+        break; // Show only the most critical one
+      }
+    }
+  } catch (e) {}
 }
