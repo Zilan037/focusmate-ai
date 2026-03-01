@@ -617,8 +617,60 @@ async function loadControlsTab() {
         await loadBlockedSitesList();
       });
     });
+
+    // Load Quick Mode Presets
+    await loadPresetCards();
   } catch (e) {
     console.error("Controls tab error:", e);
+  }
+}
+
+// ═══ QUICK MODE PRESETS ═══
+async function loadPresetCards() {
+  try {
+    const presets = await chrome.runtime.sendMessage({ action: "getPresets" });
+    const activeResult = await chrome.runtime.sendMessage({ action: "getActivePreset" });
+    const activeKey = activeResult.preset;
+    const container = document.getElementById("preset-cards");
+    if (!container) return;
+    container.innerHTML = "";
+
+    const presetOrder = ["work", "study", "break"];
+    for (const key of presetOrder) {
+      const preset = presets[key];
+      if (!preset) continue;
+      const isActive = activeKey === key;
+      const card = document.createElement("button");
+      card.className = "preset-card" + (isActive ? " active" : "");
+      card.dataset.preset = key;
+      card.style.setProperty("--preset-color", preset.color);
+      
+      const siteCount = preset.mode === "block" ? preset.blockedSites.length : preset.allowedSites.length;
+      const modeLabel = preset.mode === "block" ? `${siteCount} blocked` : `${siteCount} allowed`;
+      
+      card.innerHTML = `
+        <span class="preset-icon">${preset.icon}</span>
+        <div class="preset-info">
+          <span class="preset-name">${preset.name}</span>
+          <span class="preset-meta">${preset.duration}m · ${modeLabel}</span>
+        </div>
+        <div class="preset-status">${isActive ? "✓ ON" : ""}</div>
+      `;
+      
+      card.addEventListener("click", async () => {
+        if (isActive) {
+          await chrome.runtime.sendMessage({ action: "deactivatePreset" });
+        } else {
+          await chrome.runtime.sendMessage({ action: "activatePreset", presetKey: key });
+        }
+        await loadPresetCards();
+        try { await loadFocusTab(); } catch(e) {}
+      });
+      
+      container.appendChild(card);
+    }
+  } catch (e) {
+    console.warn("Preset load error:", e);
   }
 }
 

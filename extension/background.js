@@ -1495,7 +1495,103 @@ async function handleMessage(msg) {
         // Re-enable: restore persistent block rules
         await applyPersistentBlockRules();
         chrome.action.setBadgeText({ text: "" });
+    }
+      return { success: true };
+    }
+
+    // ─── Quick Mode Presets ───
+    case "getPresets": {
+      return await Storage.getPresets();
+    }
+
+    case "savePresets": {
+      await Storage.savePresets(msg.presets);
+      return { success: true };
+    }
+
+    case "getActivePreset": {
+      return { preset: await Storage.getActivePreset() };
+    }
+
+    case "activatePreset": {
+      const presets = await Storage.getPresets();
+      const preset = presets[msg.presetKey];
+      if (!preset) return { error: "Preset not found" };
+
+      // Deactivate any existing preset first
+      const currentActive = await Storage.getActivePreset();
+      if (currentActive) {
+        const curPresets = await Storage.getPresets();
+        if (curPresets[currentActive]) {
+          curPresets[currentActive].enabled = false;
+          await Storage.savePresets(curPresets);
+        }
       }
+
+      // Start a focus session with the preset config
+      const focusState = await Storage.getFocusState();
+      if (focusState.active) {
+        await completeFocusSession(focusState, "cancelled");
+      }
+
+      // Mark preset as active
+      preset.enabled = true;
+      presets[msg.presetKey] = preset;
+      await Storage.savePresets(presets);
+      await Storage.setActivePreset(msg.presetKey);
+
+      // If break mode, just clear blocks and don't start focus
+      if (msg.presetKey === "break") {
+        // Clear focus blocking rules but keep persistent blocks
+        const allRules = await chrome.declarativeNetRequest.getDynamicRules();
+        const focusRuleIds = allRules.filter(r => r.id >= 1000 && r.id < 50000).map(r => r.id);
+        if (focusRuleIds.length > 0) {
+          await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: focusRuleIds });
+        }
+        chrome.action.setBadgeText({ text: "☕" });
+        chrome.action.setBadgeBackgroundColor({ color: "#10B981" });
+        return { success: true, mode: "break" };
+      }
+
+      // Deploy as focus session
+      await chrome.runtime.sendMessage({
+        action: "startFocus",
+        duration: preset.duration,
+        tasks: [],
+        blockedSites: preset.mode === "block" ? preset.blockedSites : [],
+        allowedSites: preset.mode === "allow" ? preset.allowedSites : [],
+      });
+
+      const badgeText = msg.presetKey === "work" ? "💼" : "📚";
+      chrome.action.setBadgeText({ text: badgeText });
+      chrome.action.setBadgeBackgroundColor({ color: preset.color });
+
+      return { success: true, mode: preset.mode };
+    }
+
+    case "deactivatePreset": {
+      const dPresets = await Storage.getPresets();
+      const activeKey = await Storage.getActivePreset();
+      if (activeKey && dPresets[activeKey]) {
+        dPresets[activeKey].enabled = false;
+        await Storage.savePresets(dPresets);
+      }
+      await Storage.setActivePreset(null);
+
+      // Stop any active focus session
+      const dFocus = await Storage.getFocusState();
+      if (dFocus.active) {
+        await completeFocusSession(dFocus, "cancelled");
+      }
+
+      // Clear focus blocking rules
+      const allRules2 = await chrome.declarativeNetRequest.getDynamicRules();
+      const focusIds = allRules2.filter(r => r.id >= 1000 && r.id < 50000).map(r => r.id);
+      if (focusIds.length > 0) {
+        await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: focusIds });
+      }
+
+      chrome.action.setBadgeText({ text: "" });
       return { success: true };
     }
 
