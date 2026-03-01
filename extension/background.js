@@ -1,7 +1,7 @@
 // background.js — Service worker V3: tracking, focus, blocking, notifications, shortcuts
 // Manifest V3 service worker — event-driven, no persistent state in memory
 
-importScripts("utils/storage.js", "utils/categories.js", "utils/scoring.js", "utils/insights.js", "utils/popular-sites.js");
+importScripts("utils/storage.js", "utils/categories.js", "utils/scoring.js", "utils/insights.js", "utils/achievements.js", "utils/popular-sites.js");
 
 // ─── NSFW/Gambling Keyword patterns for runtime detection ───
 const NSFW_KEYWORDS = /porn|xxx|nsfw|hentai|adult|sex|nude|naked|erotic|fetish|cam(girl|boy|show)|livecam|18\+|boob|milf|lesbian|gay|anal|blowjob|dildo|vibrator|orgasm|masturbat|escort|hookup|fap|rule34|doujin|lewd/i;
