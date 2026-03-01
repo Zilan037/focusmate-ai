@@ -4,8 +4,11 @@ import {
   Shield, BarChart3, Target, Lock, Brain, Zap, ArrowRight,
   EyeOff, Github, Check, X, ChevronRight, Clock, Flame, TrendingUp,
   Globe, CheckCircle, Timer, Sparkles, Eye, Activity, Layers,
-  ChevronDown, Plus, Minus,
+  ChevronDown, Plus, Minus, Monitor,
 } from "lucide-react";
+import extStats from "@/assets/ext-stats.png";
+import extFocus from "@/assets/ext-focus.png";
+import extDashboard from "@/assets/ext-dashboard.png";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import {
@@ -503,8 +506,122 @@ const Landing = () => {
         </motion.div>
       </Section>
 
-      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      {/* ═══════════════════════════════════════
+          SECTION 3.5 — PRODUCT SHOWCASE
+          Real extension screenshots as marketing images
+          ═══════════════════════════════════════ */}
+      <Section id="product" ariaLabel="Product showcase" className="bg-secondary/30 overflow-hidden">
+        <div className="text-center mb-16">
+          <SectionLabel>See It In Action</SectionLabel>
+          <SectionTitle>A glance at the real experience.</SectionTitle>
+          <SectionDesc>
+            <span className="mx-auto block">Three powerful views. One seamless productivity system — right inside your browser.</span>
+          </SectionDesc>
+        </div>
 
+        {/* Showcase Grid */}
+        <motion.div variants={staggerContainer} className="grid lg:grid-cols-3 gap-8 items-start">
+          {/* Card 1 — Stats Dashboard */}
+          <motion.div variants={fadeUp} className="flex flex-col items-center gap-5">
+            <TiltCard className="relative rounded-[20px] border border-border bg-card p-2 shadow-2xl shadow-primary/10 w-full max-w-[320px] group">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1 text-[11px] font-bold text-primary-foreground shadow-lg shadow-primary/30">
+                  <BarChart3 className="h-3 w-3" /> Stats View
+                </span>
+              </div>
+              <div className="rounded-[14px] overflow-hidden bg-background">
+                <img src={extDashboard} alt="FocusGuard Stats Dashboard showing productivity score and daily metrics" className="w-full h-auto" loading="lazy" />
+              </div>
+              {/* Floating badge */}
+              <motion.div
+                className="absolute -right-4 top-1/3 rounded-xl border border-border bg-card px-3 py-2 shadow-lg text-xs font-semibold hidden lg:flex items-center gap-1.5"
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <TrendingUp className="h-3.5 w-3.5 text-productive" />
+                <span className="text-foreground/80">Score: 87</span>
+              </motion.div>
+            </TiltCard>
+            <div className="text-center px-2">
+              <h3 className="text-base font-bold text-foreground">Productivity Dashboard</h3>
+              <p className="text-sm text-foreground/50 mt-1 leading-relaxed">Real-time score, focus vs. distraction time, daily goals & streak tracking.</p>
+            </div>
+          </motion.div>
+
+          {/* Card 2 — Focus Mode (featured/larger) */}
+          <motion.div variants={fadeUp} className="flex flex-col items-center gap-5 lg:-mt-6">
+            <TiltCard className="relative rounded-[20px] border-2 border-primary/30 bg-card p-2 shadow-2xl shadow-primary/15 w-full max-w-[320px] group ring-1 ring-primary/10">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-info px-4 py-1.5 text-[11px] font-bold text-primary-foreground shadow-lg shadow-primary/30">
+                  <Target className="h-3 w-3" /> Focus Mode
+                  <span className="ml-1 h-1.5 w-1.5 rounded-full bg-primary-foreground animate-pulse" />
+                </span>
+              </div>
+              <div className="rounded-[14px] overflow-hidden bg-background">
+                <img src={extFocus} alt="FocusGuard Focus Mode with Allow Only mode and task management" className="w-full h-auto" loading="lazy" />
+              </div>
+              {/* Floating badges */}
+              <motion.div
+                className="absolute -left-5 top-1/4 rounded-xl border border-border bg-card px-3 py-2 shadow-lg text-xs font-semibold hidden lg:flex items-center gap-1.5"
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+              >
+                <Lock className="h-3.5 w-3.5 text-primary" />
+                <span className="text-foreground/80">Allow Only</span>
+              </motion.div>
+              <motion.div
+                className="absolute -right-5 bottom-1/4 rounded-xl border border-productive/30 bg-card px-3 py-2 shadow-lg text-xs font-semibold hidden lg:flex items-center gap-1.5"
+                animate={{ y: [0, 6, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              >
+                <Timer className="h-3.5 w-3.5 text-productive" />
+                <span className="text-foreground/80">25m Session</span>
+              </motion.div>
+            </TiltCard>
+            <div className="text-center px-2">
+              <h3 className="text-base font-bold text-foreground">Deep Focus Sessions</h3>
+              <p className="text-sm text-foreground/50 mt-1 leading-relaxed">Allow-only or block mode, task tracking, and timed sessions for maximum productivity.</p>
+            </div>
+          </motion.div>
+
+          {/* Card 3 — Activity */}
+          <motion.div variants={fadeUp} className="flex flex-col items-center gap-5">
+            <TiltCard className="relative rounded-[20px] border border-border bg-card p-2 shadow-2xl shadow-primary/10 w-full max-w-[320px] group">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-info px-3.5 py-1 text-[11px] font-bold text-primary-foreground shadow-lg shadow-info/30">
+                  <Activity className="h-3 w-3" /> Activity
+                </span>
+              </div>
+              <div className="rounded-[14px] overflow-hidden bg-background">
+                <img src={extStats} alt="FocusGuard Activity view with category tracking and session stats" className="w-full h-auto" loading="lazy" />
+              </div>
+              {/* Floating badge */}
+              <motion.div
+                className="absolute -left-4 top-1/3 rounded-xl border border-border bg-card px-3 py-2 shadow-lg text-xs font-semibold hidden lg:flex items-center gap-1.5"
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+              >
+                <Eye className="h-3.5 w-3.5 text-info" />
+                <span className="text-foreground/80">3 Sites</span>
+              </motion.div>
+            </TiltCard>
+            <div className="text-center px-2">
+              <h3 className="text-base font-bold text-foreground">Activity Tracking</h3>
+              <p className="text-sm text-foreground/50 mt-1 leading-relaxed">Smart category detection, session counting, and site-level time insights.</p>
+            </div>
+          </motion.div>
+        </motion.div>
+
+        {/* Bottom trust line */}
+        <motion.div variants={fadeUp} className="mt-14 text-center">
+          <p className="text-xs text-foreground/40 flex items-center justify-center gap-2 flex-wrap">
+            <EyeOff className="h-3.5 w-3.5" />
+            100% local processing · No data ever leaves your browser · Open source
+          </p>
+        </motion.div>
+      </Section>
+
+      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       {/* ═══════════════════════════════════════
           SECTION 4 — FOCUS MODE
           ═══════════════════════════════════════ */}
