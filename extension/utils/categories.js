@@ -152,17 +152,17 @@ const Categories = {
       }
     }
 
-    // Keyword-based fallback (improved precision)
-    if (/porn|xxx|nsfw|hentai|adult|sex|nude|naked|erotic|fetish|cam(girl|boy|show)|livecam|18\+/i.test(clean)) return "Adult";
-    if (/bet|casino|gambl|poker|slots?|jackpot|wager|bookie|sportsbook|lottery|lotto|roulette|blackjack/i.test(clean)) return "Gambling";
+    // Keyword-based fallback (precise — avoid false positives on legitimate domains)
+    if (/^porn|\.porn|pornhub|xvideo|xnxx|xhamster|xxx|nsfw|hentai|erotic|fetish|camgirl|camboy|camshow|livecam|chaturbate|stripchat|onlyfans|fansly|redtube|youporn|spankbang|rule34|nhentai|literotica/i.test(clean)) return "Adult";
+    if (/^bet365|^betway|^betmgm|^betonline|casino|gambl|pokerstars|draftkings|fanduel|jackpot|sportsbook|roobet|bovada|1xbet|22bet|slotomania/i.test(clean)) return "Gambling";
     if (/\.edu$|learn|course|study|school|university|college|tutor|academy/i.test(clean)) return "Education";
     if (/github|gitlab|bitbucket|codepen|codesandbox|replit|npm|pypi|docker|deploy|api\.|dev\./i.test(clean)) return "Development";
     if (/docs\.|notion|trello|asana|slack|zoom|figma|miro|canva|calendar|office|drive\./i.test(clean)) return "Productivity";
     if (/scholar|research|arxiv|pubmed|jstor|ieee|acm\./i.test(clean)) return "Research";
-    if (/news|journal|times|post|tribune|herald|gazette/i.test(clean)) return "News";
-    if (/shop|store|buy|deal|market|mall|cart|checkout/i.test(clean)) return "Shopping";
-    if (/game|play|stream|watch|video|movie|music|listen|anime/i.test(clean)) return "Entertainment";
-    if (/social|chat|meet|friend|connect|community|forum/i.test(clean)) return "Social Media";
+    if (/^news\.|^journal|nytimes|washingtonpost|theguardian|reuters|apnews|bloomberg/i.test(clean)) return "News";
+    if (/^shop\.|^store\.|^buy\.|^deal\.|etsy|shopify|ebay|amazon|walmart/i.test(clean)) return "Shopping";
+    if (/netflix|twitch\.tv|hulu|disneyplus|spotify|soundcloud|crunchyroll|9gag|imgur|dailymotion|vimeo/i.test(clean)) return "Entertainment";
+    if (/^social\.|^chat\.|^meet\.|^forum\./i.test(clean)) return "Social Media";
 
     return "Other";
   },
