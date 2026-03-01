@@ -2933,7 +2933,6 @@ ${preview.innerHTML}
 </body></html>`;
   downloadFile(html, `focusguard-report-${new Date().toISOString().split("T")[0]}.html`, "text/html");
 }
-}
 
 // ═══ FOCUS SESSION GANTT TIMELINE ═══
 async function loadSessionTimeline() {
