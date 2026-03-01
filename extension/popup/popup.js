@@ -78,14 +78,13 @@ function animateNumber(el, target, duration = 600, suffix = "") {
 }
 
 function formatTime(minutes) {
-  if (!minutes || minutes === 0) return "0m";
-  if (minutes < 1) {
-    const secs = Math.round(minutes * 60);
-    return secs + "s";
-  }
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
+  if (!minutes || minutes <= 0) return "0m";
+  if (minutes < 1) return Math.round(minutes * 60) + "s";
+  const totalMins = Math.floor(minutes);
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
   if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
   return `${h}h ${m}m`;
 }
 
