@@ -16,6 +16,7 @@ async function init() {
   setupUnlockModal();
   setupSiteDeepDive();
   setupReportGenerator();
+  setupScheduleGrid();
   startAutoRefresh();
 
   // Load async data — wrap each in try/catch so failures don't cascade
@@ -43,6 +44,7 @@ async function init() {
   await safeLoad(loadAchievements);
   await safeLoad(drawCategoryFlow);
   await safeLoad(drawCategorySankey);
+  await safeLoad(loadScheduleData);
   startLiveRefresh();
 }
 
@@ -3432,5 +3434,253 @@ async function loadPresetConfig() {
     });
   } catch (e) {
     console.warn("Preset config error:", e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WEEKLY SCHEDULE GRID
+// ═══════════════════════════════════════════════════════════════
+
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const HOURS = 24;
+let scheduleBlockType = "block-all";
+let isDragging = false;
+let dragStart = null;
+let dragCurrent = null;
+let dragDay = null;
+
+function setupScheduleGrid() {
+  buildGrid();
+  setupSchedulePresetSelector();
+  setupScheduleClearAll();
+}
+
+function buildGrid() {
+  const grid = document.getElementById("schedule-grid");
+  if (!grid) return;
+  grid.innerHTML = "";
+
+  // Time labels
+  const timeCol = document.createElement("div");
+  timeCol.className = "schedule-time-labels";
+  // Empty header cell
+  const emptyHeader = document.createElement("div");
+  emptyHeader.className = "schedule-time-label";
+  emptyHeader.style.height = "32px";
+  timeCol.appendChild(emptyHeader);
+  
+  for (let h = 0; h < HOURS; h++) {
+    const label = document.createElement("div");
+    label.className = "schedule-time-label";
+    const ampm = h === 0 ? "12a" : h < 12 ? `${h}a` : h === 12 ? "12p" : `${h-12}p`;
+    label.textContent = ampm;
+    timeCol.appendChild(label);
+  }
+  grid.appendChild(timeCol);
+
+  // Day columns
+  const today = new Date().getDay();
+  for (let d = 0; d < 7; d++) {
+    const col = document.createElement("div");
+    col.className = "schedule-day-col";
+    
+    const header = document.createElement("div");
+    header.className = "schedule-day-header" + (d === today ? " is-today" : "");
+    header.textContent = DAYS[d];
+    col.appendChild(header);
+
+    for (let h = 0; h < HOURS; h++) {
+      const cell = document.createElement("div");
+      cell.className = "schedule-cell";
+      cell.dataset.day = d;
+      cell.dataset.hour = h;
+
+      cell.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        isDragging = true;
+        dragDay = d;
+        dragStart = h;
+        dragCurrent = h;
+        highlightDrag(d, h, h);
+      });
+
+      cell.addEventListener("mouseenter", () => {
+        if (isDragging && dragDay === d) {
+          dragCurrent = h;
+          highlightDrag(d, dragStart, dragCurrent);
+        }
+      });
+
+      col.appendChild(cell);
+    }
+    grid.appendChild(col);
+  }
+
+  // Global mouse up
+  document.addEventListener("mouseup", async () => {
+    if (!isDragging) return;
+    isDragging = false;
+    
+    const startH = Math.min(dragStart, dragCurrent);
+    const endH = Math.max(dragStart, dragCurrent);
+    
+    // Create the schedule block
+    const startTime = `${startH.toString().padStart(2, "0")}:00`;
+    const endTime = `${(endH + 1).toString().padStart(2, "0")}:00`;
+    
+    const block = {
+      startTime,
+      endTime,
+      days: [dragDay],
+      type: scheduleBlockType,
+      domains: scheduleBlockType === "block-all" ? ["__all_distractions__"] : [],
+      presetKey: scheduleBlockType !== "block-all" ? scheduleBlockType : null,
+    };
+
+    await chrome.runtime.sendMessage({ action: "saveScheduledBlock", block });
+    clearDragHighlight();
+    await loadScheduleData();
+  });
+}
+
+function highlightDrag(day, start, end) {
+  const minH = Math.min(start, end);
+  const maxH = Math.max(start, end);
+  
+  document.querySelectorAll(".schedule-cell").forEach(cell => {
+    cell.classList.remove("dragging");
+    if (parseInt(cell.dataset.day) === day) {
+      const h = parseInt(cell.dataset.hour);
+      if (h >= minH && h <= maxH) {
+        cell.classList.add("dragging");
+      }
+    }
+  });
+}
+
+function clearDragHighlight() {
+  document.querySelectorAll(".schedule-cell.dragging").forEach(c => c.classList.remove("dragging"));
+}
+
+async function loadScheduleData() {
+  try {
+    const blocks = await chrome.runtime.sendMessage({ action: "getScheduledBlocks" });
+    
+    // Clear filled cells
+    document.querySelectorAll(".schedule-cell").forEach(cell => {
+      cell.className = "schedule-cell";
+      const label = cell.querySelector(".schedule-block-label");
+      if (label) label.remove();
+    });
+
+    // Fill cells based on blocks
+    (blocks || []).forEach(block => {
+      const [startH] = block.startTime.split(":").map(Number);
+      let [endH] = block.endTime.split(":").map(Number);
+      if (endH === 0) endH = 24;
+      const type = block.type || (block.presetKey || "block-all");
+      const typeClass = type === "block-all" ? "block-all" : type;
+
+      (block.days || []).forEach(day => {
+        for (let h = startH; h < endH; h++) {
+          const cell = document.querySelector(`.schedule-cell[data-day="${day}"][data-hour="${h}"]`);
+          if (cell) {
+            cell.classList.add("filled", typeClass);
+            cell.dataset.blockId = block.id;
+            
+            // Add label on first cell
+            if (h === startH) {
+              const label = document.createElement("span");
+              label.className = "schedule-block-label";
+              const icon = type === "block-all" ? "🚫" : type === "work" ? "💼" : "📚";
+              const name = type === "block-all" ? "Block" : type === "work" ? "Work" : "Study";
+              label.textContent = `${icon} ${name}`;
+              label.style.height = `${(endH - startH) * 28}px`;
+              label.style.lineHeight = "14px";
+              label.style.paddingTop = "7px";
+              cell.appendChild(label);
+            }
+
+            // Click to delete
+            cell.addEventListener("click", async (e) => {
+              if (isDragging) return;
+              if (block.id && confirm(`Delete this ${type === "block-all" ? "block" : type + " mode"} schedule (${block.startTime}–${block.endTime})?`)) {
+                await chrome.runtime.sendMessage({ action: "deleteScheduledBlock", id: block.id });
+                await loadScheduleData();
+              }
+            });
+          }
+        }
+      });
+    });
+
+    // Update the list below
+    renderScheduleList(blocks || []);
+  } catch (e) {
+    console.warn("Schedule load error:", e);
+  }
+}
+
+function renderScheduleList(blocks) {
+  const container = document.getElementById("schedule-list-detailed");
+  const emptyEl = document.getElementById("schedule-empty");
+  if (!container) return;
+
+  if (!blocks.length) {
+    container.innerHTML = "";
+    if (emptyEl) emptyEl.style.display = "block";
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = "none";
+
+  container.innerHTML = blocks.map(block => {
+    const type = block.type || block.presetKey || "block-all";
+    const icon = type === "block-all" ? "🚫" : type === "work" ? "💼" : type === "study" ? "📚" : "📅";
+    const name = type === "block-all" ? "Block All Distractions" : type === "work" ? "Work Mode" : type === "study" ? "Study Mode" : "Custom Block";
+    const dayNames = (block.days || []).map(d => DAYS[d]).join(", ");
+    
+    return `
+      <div class="schedule-detail-item">
+        <div class="schedule-detail-icon">${icon}</div>
+        <div class="schedule-detail-info">
+          <div class="schedule-detail-title">${name}</div>
+          <div class="schedule-detail-meta">${dayNames}</div>
+        </div>
+        <div class="schedule-detail-time">${block.startTime} – ${block.endTime}</div>
+        <button class="schedule-detail-delete" data-id="${block.id}" title="Delete">✕</button>
+      </div>
+    `;
+  }).join("");
+
+  container.querySelectorAll(".schedule-detail-delete").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = parseInt(btn.dataset.id) || btn.dataset.id;
+      await chrome.runtime.sendMessage({ action: "deleteScheduledBlock", id });
+      await loadScheduleData();
+    });
+  });
+}
+
+function setupSchedulePresetSelector() {
+  document.querySelectorAll(".schedule-preset-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".schedule-preset-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      scheduleBlockType = btn.dataset.type;
+    });
+  });
+}
+
+function setupScheduleClearAll() {
+  const btn = document.getElementById("btn-clear-schedule");
+  if (btn) {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Clear all scheduled blocks?")) return;
+      const blocks = await chrome.runtime.sendMessage({ action: "getScheduledBlocks" });
+      for (const block of (blocks || [])) {
+        await chrome.runtime.sendMessage({ action: "deleteScheduledBlock", id: block.id });
+      }
+      await loadScheduleData();
+    });
   }
 }

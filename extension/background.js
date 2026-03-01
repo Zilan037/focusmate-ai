@@ -564,9 +564,32 @@ async function checkBlocking(domain, tabId) {
     const [startH, startM] = schedule.startTime.split(":").map(Number);
     const [endH, endM] = schedule.endTime.split(":").map(Number);
     const startMin = startH * 60 + startM;
-    const endMin = endH * 60 + endM;
-    if (currentTime >= startMin && currentTime <= endMin) {
-      if (schedule.domains.includes(domain)) {
+    const endMin = endH * 60 + (endM || 0);
+    if (currentTime >= startMin && currentTime < endMin) {
+      // "block-all" type blocks all distraction categories
+      if (schedule.type === "block-all" || (schedule.domains && schedule.domains.includes("__all_distractions__"))) {
+        const cat = Categories.categorize(domain, settings.categoryOverrides);
+        if (Categories.isDistraction(cat)) {
+          redirectToBlocked(tabId, domain, "Scheduled block: All distractions blocked");
+          return;
+        }
+      }
+      // Preset-based schedule (work/study mode block lists)
+      else if (schedule.presetKey) {
+        const presets = await Storage.getPresets();
+        const preset = presets[schedule.presetKey];
+        if (preset) {
+          if (preset.mode === "allow" && !preset.allowedSites.some(s => domain.includes(s) || s.includes(domain))) {
+            redirectToBlocked(tabId, domain, `Scheduled ${preset.name}: Not in allowed list`);
+            return;
+          } else if (preset.mode === "block" && preset.blockedSites.some(s => domain.includes(s) || s.includes(domain))) {
+            redirectToBlocked(tabId, domain, `Scheduled ${preset.name}: Site is blocked`);
+            return;
+          }
+        }
+      }
+      // Legacy: specific domain blocks
+      else if (schedule.domains && schedule.domains.includes(domain)) {
         redirectToBlocked(tabId, domain, "Scheduled block active");
         return;
       }

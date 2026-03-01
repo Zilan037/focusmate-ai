@@ -66,6 +66,10 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span class="nav-label">Focus Mode</span>
           </button>
+          <button class="nav-item" data-tab="schedule">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span class="nav-label">Weekly Schedule</span>
+          </button>
         </div>
 
         <div class="nav-group">
@@ -850,6 +854,48 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Weekly Schedule -->
+        <div id="tab-schedule" class="tab-content">
+          <div class="page-header-row">
+            <div class="page-header-left">
+              <p class="page-subtitle">Automation</p>
+              <h1 class="page-title">Weekly Schedule</h1>
+            </div>
+            <div class="schedule-header-actions">
+              <button id="btn-clear-schedule" class="btn-ghost btn-sm" style="color:var(--danger);border-color:rgba(244,63,94,0.2);">🗑 Clear All</button>
+            </div>
+          </div>
+
+          <div class="premium-card fade-up" style="padding:28px 32px;border-radius:28px;">
+            <p class="settings-group-desc" style="margin-bottom:20px;">Click and drag on the grid to create blocking schedules. Each block will enforce your configured preset or block all distractions during that time.</p>
+            
+            <!-- Preset selector for new blocks -->
+            <div class="schedule-preset-selector" id="schedule-preset-selector">
+              <span class="schedule-preset-label">Block type:</span>
+              <button class="schedule-preset-btn active" data-type="block-all">🚫 Block All Distractions</button>
+              <button class="schedule-preset-btn" data-type="work">💼 Work Mode</button>
+              <button class="schedule-preset-btn" data-type="study">📚 Study Mode</button>
+            </div>
+
+            <!-- The Grid -->
+            <div class="schedule-grid-wrapper">
+              <div class="schedule-grid" id="schedule-grid">
+                <!-- Time labels column -->
+                <div class="schedule-time-labels" id="schedule-time-labels"></div>
+                <!-- Day columns rendered by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Schedules List -->
+          <div class="premium-card fade-up delay-1" style="padding:28px 32px;border-radius:28px;margin-top:20px;">
+            <h3 class="settings-group-title">📋 Active Schedules</h3>
+            <p class="settings-group-desc">Your currently configured time-based rules.</p>
+            <div id="schedule-list-detailed" class="schedule-list-detailed"></div>
+            <div id="schedule-empty" class="empty-state" style="display:none;">No schedules yet. Drag on the grid above to create one.</div>
           </div>
         </div>
 
