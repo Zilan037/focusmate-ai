@@ -17,6 +17,8 @@ async function init() {
   setupSiteDeepDive();
   setupReportGenerator();
   setupScheduleGrid();
+  setupAutoDeployToggle();
+  setupWindDown();
   startAutoRefresh();
 
   // Load async data — wrap each in try/catch so failures don't cascade
@@ -3528,6 +3530,7 @@ function buildGrid() {
     const startTime = `${startH.toString().padStart(2, "0")}:00`;
     const endTime = `${(endH + 1).toString().padStart(2, "0")}:00`;
     
+    const autoDeployToggle = document.getElementById("schedule-auto-deploy");
     const block = {
       startTime,
       endTime,
@@ -3535,6 +3538,7 @@ function buildGrid() {
       type: scheduleBlockType,
       domains: scheduleBlockType === "block-all" ? ["__all_distractions__"] : [],
       presetKey: scheduleBlockType !== "block-all" ? scheduleBlockType : null,
+      autoDeploy: autoDeployToggle?.checked || false,
     };
 
     await chrome.runtime.sendMessage({ action: "saveScheduledBlock", block });
@@ -3683,4 +3687,170 @@ function setupScheduleClearAll() {
       await loadScheduleData();
     });
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AUTO-DEPLOY TOGGLE
+// ═══════════════════════════════════════════════════════════════
+
+function setupAutoDeployToggle() {
+  const toggle = document.getElementById("schedule-auto-deploy");
+  if (!toggle) return;
+
+  // Load current state
+  chrome.runtime.sendMessage({ action: "getSettings" }).then(settings => {
+    toggle.checked = settings.scheduleAutoDeploy !== false;
+  });
+
+  toggle.addEventListener("change", async () => {
+    const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+    settings.scheduleAutoDeploy = toggle.checked;
+    await chrome.runtime.sendMessage({ action: "saveSettings", settings });
+    
+    // Also update all existing blocks to have autoDeploy flag
+    const blocks = settings.scheduledBlocks || [];
+    for (const block of blocks) {
+      block.autoDeploy = toggle.checked;
+    }
+    settings.scheduledBlocks = blocks;
+    await chrome.runtime.sendMessage({ action: "saveSettings", settings });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WIND-DOWN MODE UI
+// ═══════════════════════════════════════════════════════════════
+
+function setupWindDown() {
+  const enabledToggle = document.getElementById("winddown-enabled");
+  const config = document.getElementById("winddown-config");
+  const bedtimeInput = document.getElementById("winddown-bedtime");
+  const leadtimeSelect = document.getElementById("winddown-leadtime");
+  
+  if (!enabledToggle) return;
+
+  // Load current settings
+  loadWindDownSettings();
+
+  enabledToggle.addEventListener("change", () => {
+    config.style.display = enabledToggle.checked ? "block" : "none";
+    saveWindDownSettings();
+  });
+
+  bedtimeInput?.addEventListener("change", () => {
+    saveWindDownSettings();
+    updateWindDownPhaseTimes();
+  });
+
+  leadtimeSelect?.addEventListener("change", () => {
+    saveWindDownSettings();
+    updateWindDownPhaseTimes();
+  });
+
+  // Day buttons
+  document.querySelectorAll(".winddown-day-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      btn.classList.toggle("active");
+      saveWindDownSettings();
+    });
+  });
+}
+
+async function loadWindDownSettings() {
+  try {
+    const windDown = await chrome.runtime.sendMessage({ action: "getWindDown" });
+    
+    const enabledToggle = document.getElementById("winddown-enabled");
+    const config = document.getElementById("winddown-config");
+    const bedtimeInput = document.getElementById("winddown-bedtime");
+    const leadtimeSelect = document.getElementById("winddown-leadtime");
+
+    if (enabledToggle) enabledToggle.checked = windDown.enabled || false;
+    if (config) config.style.display = windDown.enabled ? "block" : "none";
+    if (bedtimeInput) bedtimeInput.value = windDown.bedtime || "23:00";
+    if (leadtimeSelect) leadtimeSelect.value = String(windDown.leadTime || 60);
+
+    // Set day buttons
+    const activeDays = windDown.days || [0,1,2,3,4,5,6];
+    document.querySelectorAll(".winddown-day-btn").forEach(btn => {
+      const day = parseInt(btn.dataset.day);
+      btn.classList.toggle("active", activeDays.includes(day));
+    });
+
+    updateWindDownPhaseTimes();
+    updateWindDownStatus();
+  } catch (e) {
+    console.warn("Wind-down load error:", e);
+  }
+}
+
+async function saveWindDownSettings() {
+  const enabledToggle = document.getElementById("winddown-enabled");
+  const bedtimeInput = document.getElementById("winddown-bedtime");
+  const leadtimeSelect = document.getElementById("winddown-leadtime");
+
+  const days = [];
+  document.querySelectorAll(".winddown-day-btn.active").forEach(btn => {
+    days.push(parseInt(btn.dataset.day));
+  });
+
+  const windDown = {
+    enabled: enabledToggle?.checked || false,
+    bedtime: bedtimeInput?.value || "23:00",
+    leadTime: parseInt(leadtimeSelect?.value || "60"),
+    days,
+  };
+
+  await chrome.runtime.sendMessage({ action: "saveWindDown", windDown });
+}
+
+function updateWindDownPhaseTimes() {
+  const bedtimeInput = document.getElementById("winddown-bedtime");
+  const leadtimeSelect = document.getElementById("winddown-leadtime");
+  if (!bedtimeInput || !leadtimeSelect) return;
+
+  const [bedH, bedM] = bedtimeInput.value.split(":").map(Number);
+  const bedtimeMin = bedH * 60 + (bedM || 0);
+  const leadTime = parseInt(leadtimeSelect.value);
+
+  const warningStart = bedtimeMin - leadTime;
+  const softStart = bedtimeMin - Math.floor(leadTime * 0.5);
+  const hardStart = bedtimeMin - Math.floor(leadTime * 0.17);
+
+  const fmt = (min) => {
+    const h = Math.floor(((min % 1440) + 1440) % 1440 / 60);
+    const m = ((min % 1440) + 1440) % 1440 % 60;
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${h12}:${m.toString().padStart(2, "0")} ${ampm}`;
+  };
+
+  const p1 = document.getElementById("winddown-phase1-time");
+  const p2 = document.getElementById("winddown-phase2-time");
+  const p3 = document.getElementById("winddown-phase3-time");
+  if (p1) p1.textContent = fmt(warningStart);
+  if (p2) p2.textContent = fmt(softStart);
+  if (p3) p3.textContent = fmt(hardStart);
+}
+
+async function updateWindDownStatus() {
+  try {
+    const { phase } = await chrome.runtime.sendMessage({ action: "getWindDownPhase" });
+    const statusEl = document.getElementById("winddown-status");
+    if (!statusEl) return;
+
+    if (phase === "none" || !phase) {
+      statusEl.className = "winddown-status inactive";
+      statusEl.textContent = "Wind-down is not active right now.";
+    } else if (phase === "warning") {
+      statusEl.className = "winddown-status active-phase";
+      statusEl.textContent = "🌙 Phase 1 Active — Warning phase. Notifications on distraction sites.";
+    } else if (phase === "soft") {
+      statusEl.className = "winddown-status active-phase";
+      statusEl.textContent = "🌙 Phase 2 Active — Entertainment & social media blocked.";
+    } else if (phase === "hard" || phase === "bedtime") {
+      statusEl.className = "winddown-status active-phase";
+      statusEl.textContent = "🌙 Phase 3 Active — All distracting sites blocked. Time for bed!";
+    }
+  } catch (e) {}
 }

@@ -3204,3 +3204,135 @@ canvas {
   font-weight: 600;
   color: var(--text-muted);
 }
+
+/* ═══ Wind-Down Mode ═══ */
+.winddown-config {
+  margin-top: 8px;
+}
+.winddown-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.winddown-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.winddown-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.winddown-input {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--bg-glass-border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  outline: none;
+  transition: border-color 0.15s;
+}
+[data-theme="light"] .winddown-input {
+  background: rgba(0,0,0,0.02);
+}
+.winddown-input:focus {
+  border-color: var(--accent);
+}
+.winddown-days {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.winddown-day-btn {
+  width: 40px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--bg-glass-border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.winddown-day-btn:hover {
+  border-color: var(--bg-glass-border-hover);
+}
+.winddown-day-btn.active {
+  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  color: #fff;
+  border-color: transparent;
+}
+.winddown-phases {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.winddown-phase {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 14px;
+}
+[data-theme="light"] .winddown-phase {
+  background: rgba(0,0,0,0.015);
+  border-color: rgba(0,0,0,0.06);
+}
+.winddown-phase-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.winddown-phase-info {
+  flex: 1;
+  min-width: 0;
+}
+.winddown-phase-info strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.winddown-phase-info span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.winddown-phase-time {
+  font-size: 12px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--accent);
+  white-space: nowrap;
+}
+.winddown-status {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.winddown-status.active-phase {
+  background: rgba(99,102,241,0.1);
+  border: 1px solid rgba(99,102,241,0.2);
+  color: #A78BFA;
+}
+.winddown-status.inactive {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-muted);
+}

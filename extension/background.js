@@ -102,6 +102,8 @@ async function ensureAlarms() {
   // Commit every 10 seconds for maximum screen time precision
   chrome.alarms.create("session_tick", { periodInMinutes: 1/6 });
   chrome.alarms.create("daily_reset", { periodInMinutes: 60 });
+  // Schedule checker: every minute, check if a scheduled block should auto-deploy
+  chrome.alarms.create("schedule_check", { periodInMinutes: 1 });
 }
 
 // ─── Tab Tracking ───
@@ -592,8 +594,27 @@ async function checkBlocking(domain, tabId) {
       else if (schedule.domains && schedule.domains.includes(domain)) {
         redirectToBlocked(tabId, domain, "Scheduled block active");
         return;
+    }
+  }
+
+  // ── 5. Wind-Down Mode blocking ──
+  const windDownPhase = await Storage.get("focusguard_winddown_phase");
+  if (windDownPhase && windDownPhase !== "none") {
+    const category = Categories.categorize(domain, settings.categoryOverrides);
+    if (windDownPhase === "bedtime" || windDownPhase === "hard") {
+      // Hard block: all distractions + entertainment + social
+      if (Categories.isDistraction(category)) {
+        redirectToBlocked(tabId, domain, "🌙 Wind-Down Mode — it's almost bedtime. Distracting sites are blocked.");
+        return;
+      }
+    } else if (windDownPhase === "soft") {
+      // Soft block: entertainment + social only
+      if (["Entertainment", "Social"].includes(category)) {
+        redirectToBlocked(tabId, domain, "🌙 Wind-Down Mode — entertainment and social sites are soft-blocked as bedtime approaches.");
+        return;
       }
     }
+    // "warning" phase: no blocking, just notifications (handled in checkWindDown)
   }
 }
 
@@ -686,7 +707,157 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       }
     }
   }
+  if (alarm.name === "schedule_check") {
+    await checkScheduleAutoDeploy();
+    await checkWindDown();
+  }
 });
+
+// ─── Schedule Auto-Deploy: auto-start focus sessions at scheduled times ───
+async function checkScheduleAutoDeploy() {
+  try {
+    const { focusguard_enabled } = await chrome.storage.local.get("focusguard_enabled");
+    if (focusguard_enabled === false) return;
+
+    const settings = await Storage.getSettings();
+    const blocks = settings.scheduledBlocks || [];
+    if (!blocks.length) return;
+
+    const now = new Date();
+    const currentDay = now.getDay();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+    const currentTime = currentHour * 60 + currentMin;
+
+    // Track which schedules we've already auto-deployed today
+    const deployedKey = `schedule_deployed_${Storage.todayKey()}`;
+    const deployed = (await Storage.get(deployedKey)) || {};
+
+    for (const block of blocks) {
+      if (!block.days || !block.days.includes(currentDay)) continue;
+      if (!block.autoDeploy) continue; // Only auto-deploy blocks flagged for it
+
+      const [startH, startM] = block.startTime.split(":").map(Number);
+      const [endH, endM] = block.endTime.split(":").map(Number);
+      const startMin = startH * 60 + (startM || 0);
+      const endMin = endH * 60 + (endM || 0);
+      const duration = endMin - startMin;
+
+      // Send 5-minute warning notification
+      if (currentTime === startMin - 5 && !deployed[`warn_${block.id}`]) {
+        const typeName = block.type === "block-all" ? "Block All Distractions" :
+          block.presetKey === "work" ? "Work Mode" : block.presetKey === "study" ? "Study Mode" : "Scheduled Block";
+        await sendNotification("schedule_warning", "⏰ Scheduled Block in 5 Minutes",
+          `${typeName} starts at ${block.startTime}. Get ready!`);
+        deployed[`warn_${block.id}`] = true;
+        await Storage.set(deployedKey, deployed);
+      }
+
+      // Auto-deploy at start time (within a 2-minute window)
+      if (currentTime >= startMin && currentTime < startMin + 2 && !deployed[`deploy_${block.id}`]) {
+        deployed[`deploy_${block.id}`] = true;
+        await Storage.set(deployedKey, deployed);
+
+        // Don't auto-deploy if a focus session is already active
+        const focusState = await Storage.getFocusState();
+        if (focusState.active) continue;
+
+        if (block.presetKey && block.presetKey !== "block-all") {
+          const presets = await Storage.getPresets();
+          const preset = presets[block.presetKey];
+          if (preset) {
+            await startFocusMode(
+              duration > 0 ? duration : preset.duration,
+              [],
+              preset.mode === "block" ? preset.blockedSites : [],
+              preset.mode === "allow" ? preset.allowedSites : []
+            );
+            preset.enabled = true;
+            presets[block.presetKey] = preset;
+            await Storage.savePresets(presets);
+            await Storage.setActivePreset(block.presetKey);
+
+            chrome.action.setBadgeText({ text: block.presetKey === "work" ? "💼" : "📚" });
+            chrome.action.setBadgeBackgroundColor({ color: preset.color });
+
+            await sendNotification("schedule_deploy", `${preset.name} Auto-Started`,
+              `Your scheduled ${preset.name} session (${duration}min) has begun. Stay focused!`);
+          }
+        } else {
+          await startFocusMode(duration > 0 ? duration : 60, [], [], []);
+          await sendNotification("schedule_deploy", "🚫 Scheduled Block Active",
+            `All distractions are now blocked for ${duration > 0 ? duration : 60} minutes.`);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[FocusGuard] Schedule auto-deploy error:", e);
+  }
+}
+
+// ─── Wind-Down Mode: Progressive restrictions as bedtime approaches ───
+async function checkWindDown() {
+  try {
+    const { focusguard_enabled } = await chrome.storage.local.get("focusguard_enabled");
+    if (focusguard_enabled === false) return;
+
+    const settings = await Storage.getSettings();
+    const windDown = settings.windDown;
+    if (!windDown || !windDown.enabled) return;
+
+    const now = new Date();
+    const currentDay = now.getDay();
+    const currentMin = now.getHours() * 60 + now.getMinutes();
+
+    const activeDays = windDown.days || [0, 1, 2, 3, 4, 5, 6];
+    if (!activeDays.includes(currentDay)) return;
+
+    const [bedH, bedM] = windDown.bedtime.split(":").map(Number);
+    const bedtimeMin = bedH * 60 + (bedM || 0);
+
+    const totalLeadMin = windDown.leadTime || 60;
+    const warningStart = bedtimeMin - totalLeadMin;
+    const softBlockStart = bedtimeMin - Math.floor(totalLeadMin * 0.5);
+    const hardBlockStart = bedtimeMin - Math.floor(totalLeadMin * 0.17);
+
+    const windDownNotifKey = `winddown_notif_${Storage.todayKey()}`;
+    const notified = (await Storage.get(windDownNotifKey)) || {};
+
+    let phase = "none";
+    if (currentMin >= bedtimeMin) {
+      phase = "bedtime";
+    } else if (currentMin >= hardBlockStart) {
+      phase = "hard";
+    } else if (currentMin >= softBlockStart) {
+      phase = "soft";
+    } else if (currentMin >= warningStart) {
+      phase = "warning";
+    }
+
+    await Storage.set("focusguard_winddown_phase", phase);
+
+    if (phase === "warning" && !notified.warning) {
+      await sendNotification("winddown", "🌙 Wind-Down Starting",
+        `Bedtime is in ${bedtimeMin - currentMin} minutes. Entertainment sites will show warnings.`);
+      notified.warning = true;
+      await Storage.set(windDownNotifKey, notified);
+    }
+    if (phase === "soft" && !notified.soft) {
+      await sendNotification("winddown", "🌙 Wind-Down: Soft Block",
+        `${bedtimeMin - currentMin} minutes to bedtime. Social and entertainment sites are now soft-blocked.`);
+      notified.soft = true;
+      await Storage.set(windDownNotifKey, notified);
+    }
+    if (phase === "hard" && !notified.hard) {
+      await sendNotification("winddown", "🌙 Wind-Down: Hard Block",
+        `Only ${bedtimeMin - currentMin} minutes to bedtime. All distracting sites are now blocked.`);
+      notified.hard = true;
+      await Storage.set(windDownNotifKey, notified);
+    }
+  } catch (e) {
+    console.warn("[FocusGuard] Wind-down check error:", e);
+  }
+}
 
 async function startFocusMode(duration, tasks = [], blockedSites = [], allowedSites = []) {
   const state = {
@@ -1616,6 +1787,29 @@ async function handleMessage(msg) {
 
       chrome.action.setBadgeText({ text: "" });
       return { success: true };
+    }
+
+    // ─── Wind-Down Settings ───
+    case "getWindDown": {
+      const wSettings = await Storage.getSettings();
+      return wSettings.windDown || {
+        enabled: false,
+        bedtime: "23:00",
+        leadTime: 60,
+        days: [0, 1, 2, 3, 4, 5, 6],
+      };
+    }
+
+    case "saveWindDown": {
+      const ws = await Storage.getSettings();
+      ws.windDown = msg.windDown;
+      await Storage.saveSettings(ws);
+      return { success: true };
+    }
+
+    case "getWindDownPhase": {
+      const phase = await Storage.get("focusguard_winddown_phase");
+      return { phase: phase || "none" };
     }
 
     default:
