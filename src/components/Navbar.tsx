@@ -11,6 +11,7 @@ const sectionLinks = [
   { id: "how", label: "How It Works" },
   { id: "compare", label: "Compare" },
   { id: "testimonials", label: "Testimonials" },
+  { id: "faq", label: "FAQ" },
 ];
 
 const pageLinks = [
