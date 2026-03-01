@@ -91,7 +91,7 @@ const Navbar = () => {
             : "bg-transparent"
         }`}
       >
-        <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-6">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
           {/* Logo */}
           <Link
             to="/"
@@ -107,7 +107,7 @@ const Navbar = () => {
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground text-background transition-transform duration-300 group-hover:scale-105">
               <Shield className="h-3.5 w-3.5" />
             </div>
-            <span className="text-sm font-semibold tracking-tight text-foreground hidden sm:inline">
+            <span className="text-sm font-bold tracking-tight text-foreground hidden sm:inline">
               FocusGuard
             </span>
           </Link>
@@ -120,10 +120,10 @@ const Navbar = () => {
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className={`relative px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
+                  className={`relative px-3 py-1.5 text-[13px] font-semibold rounded-lg transition-all duration-200 ${
                     activeSection === item.id
                       ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-foreground/60 hover:text-foreground"
                   }`}
                 >
                   {item.label}
@@ -141,10 +141,10 @@ const Navbar = () => {
               pageLinks.map((item) => (
                 <Link key={item.path} to={item.path}>
                   <button
-                    className={`relative px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
+                    className={`relative px-3 py-1.5 text-[13px] font-semibold rounded-lg transition-all duration-200 ${
                       location.pathname === item.path
                         ? "text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
+                        : "text-foreground/60 hover:text-foreground"
                     }`}
                   >
                     {item.label}
@@ -196,7 +196,7 @@ const Navbar = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-x-0 top-12 z-40 bg-background/95 backdrop-blur-2xl border-b border-border/40 sm:hidden"
+            className="fixed inset-x-0 top-14 z-40 bg-background/95 backdrop-blur-2xl border-b border-border/40 sm:hidden"
           >
             <div className="flex flex-col p-4 gap-1">
               {isLanding
