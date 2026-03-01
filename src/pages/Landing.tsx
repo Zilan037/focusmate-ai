@@ -73,7 +73,7 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 );
 
 const SectionDesc = ({ children }: { children: React.ReactNode }) => (
-  <motion.p variants={fadeUp} className="mt-5 text-lg sm:text-xl text-foreground/70 leading-relaxed max-w-2xl">
+  <motion.p variants={fadeUp} className="mt-5 text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl">
     {children}
   </motion.p>
 );
