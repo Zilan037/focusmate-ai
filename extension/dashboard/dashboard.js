@@ -3,23 +3,25 @@
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
-  // Setup synchronous UI first — these must always run
-  setupTabs();
-  setupSidebar();
-  setupTheme();
-  setupDataManagement();
-  setupQuickActions();
-  setupBlocklistActions();
-  setupFocusMode();
-  setupReportsTab();
-  setupDailyLimitsActions();
-  setupUnlockModal();
-  setupSiteDeepDive();
-  setupReportGenerator();
-  setupAIConfig();
-  setupScheduleGrid();
-  setupAutoDeployToggle();
-  setupWindDown();
+  // Setup synchronous UI first — wrap each in try/catch to prevent cascading failures
+  const safeSetup = (fn, name) => { try { fn(); } catch (e) { console.warn(`[FocusGuard] ${name} error:`, e); } };
+  
+  safeSetup(setupTabs, "setupTabs");
+  safeSetup(setupSidebar, "setupSidebar");
+  safeSetup(setupTheme, "setupTheme");
+  safeSetup(setupDataManagement, "setupDataManagement");
+  safeSetup(setupQuickActions, "setupQuickActions");
+  safeSetup(setupBlocklistActions, "setupBlocklistActions");
+  safeSetup(setupFocusMode, "setupFocusMode");
+  safeSetup(setupReportsTab, "setupReportsTab");
+  safeSetup(setupDailyLimitsActions, "setupDailyLimitsActions");
+  safeSetup(setupUnlockModal, "setupUnlockModal");
+  safeSetup(setupSiteDeepDive, "setupSiteDeepDive");
+  safeSetup(setupReportGenerator, "setupReportGenerator");
+  safeSetup(setupAIConfig, "setupAIConfig");
+  safeSetup(setupScheduleGrid, "setupScheduleGrid");
+  safeSetup(setupAutoDeployToggle, "setupAutoDeployToggle");
+  safeSetup(setupWindDown, "setupWindDown");
   startAutoRefresh();
 
   // Load async data — wrap each in try/catch so failures don't cascade
@@ -138,18 +140,31 @@ function setupSidebar() {
 
 // ─── Tab Switching ───
 function setupTabs() {
-  document.querySelectorAll(".nav-item").forEach((btn) => {
-    btn.addEventListener("click", () => {
+  const navItems = document.querySelectorAll(".nav-item");
+  console.log("[FocusGuard] Setting up tabs, found", navItems.length, "nav items");
+  
+  navItems.forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      console.log("[FocusGuard] Tab clicked:", btn.dataset.tab);
+      
       document.querySelectorAll(".nav-item").forEach((b) => b.classList.remove("active"));
       document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
       btn.classList.add("active");
       const tabId = "tab-" + btn.dataset.tab;
-      document.getElementById(tabId).classList.add("active");
+      const tabEl = document.getElementById(tabId);
+      if (tabEl) {
+        tabEl.classList.add("active");
+      } else {
+        console.warn("[FocusGuard] Tab content not found:", tabId);
+      }
       
       // Update navbar title
-      const label = btn.querySelector(".nav-label").textContent;
+      const label = btn.querySelector(".nav-label");
       const navTitle = document.getElementById("navbar-title");
-      if (navTitle) navTitle.textContent = label;
+      if (navTitle && label) navTitle.textContent = label.textContent;
     });
   });
 
