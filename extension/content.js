@@ -121,14 +121,14 @@
 
   function generateStyles(c) {
     return `
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap');
 
     #${WIDGET_ID} {
       position: fixed;
       bottom: 20px;
       right: 20px;
       z-index: 2147483647;
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       user-select: none;
     }
 
@@ -317,7 +317,7 @@
       background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(99,102,241,0.1));
       border: 1px solid rgba(37,99,235,0.15); border-radius: 12px;
       color: #2563EB; cursor: pointer;
-      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700;
+      font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
       transition: all 0.2s;
     }
     .fg-focus-btn:hover { background: linear-gradient(135deg, rgba(37,99,235,0.18), rgba(99,102,241,0.18)); border-color: rgba(37,99,235,0.3); }
@@ -327,7 +327,7 @@
       width: 100%; margin-top: 2px; padding: 8px;
       background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.12);
       border-radius: 12px; color: #F43F5E; cursor: pointer;
-      font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; font-weight: 700;
+      font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700;
       transition: all 0.2s;
     }
     .fg-block-btn:hover { background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.25); }

@@ -1,4 +1,4 @@
-// categories.js — Domain categorization engine V3
+// categories.js — Domain categorization engine V4 (improved accuracy)
 
 const CategoryPatterns = {
   "Social Media": [
@@ -15,6 +15,40 @@ const CategoryPatterns = {
     "academia.edu", "mit.edu", "stanford.edu", "coursehero.com",
     "pluralsight.com", "lynda.com", "treehouse.com", "datacamp.com",
     "exercism.io", "codewars.com", "kaggle.com", "topcoder.com",
+    "w3schools.com", "geeksforgeeks.org", "tutorialspoint.com",
+    "developer.mozilla.org", "learn.microsoft.com", "cloud.google.com/training",
+  ],
+  Development: [
+    "github.com", "gitlab.com", "bitbucket.org", "stackoverflow.com",
+    "stackexchange.com", "dev.to", "medium.com", "hashnode.dev",
+    "vercel.com", "netlify.com", "heroku.com", "railway.app",
+    "supabase.com", "firebase.google.com", "aws.amazon.com",
+    "console.cloud.google.com", "azure.microsoft.com",
+    "npmjs.com", "pypi.org", "crates.io", "pkg.go.dev",
+    "codepen.io", "codesandbox.io", "replit.com", "glitch.com",
+    "docker.com", "hub.docker.com", "kubernetes.io",
+    "digitalocean.com", "linode.com", "vultr.com",
+    "postman.com", "swagger.io", "insomnia.rest",
+  ],
+  Productivity: [
+    "docs.google.com", "drive.google.com", "sheets.google.com", "slides.google.com",
+    "notion.so", "trello.com", "asana.com", "jira.atlassian.com",
+    "slack.com", "teams.microsoft.com", "zoom.us", "figma.com",
+    "mail.google.com", "outlook.com", "calendar.google.com",
+    "dropbox.com", "airtable.com", "miro.com", "canva.com",
+    "linear.app", "clickup.com", "monday.com", "basecamp.com",
+    "confluence.atlassian.com", "loom.com", "krisp.ai",
+    "grammarly.com", "hemingwayapp.com", "excalidraw.com",
+    "office.com", "onedrive.live.com", "evernote.com",
+    "todoist.com", "ticktick.com", "any.do", "things.app",
+    "1password.com", "lastpass.com", "bitwarden.com",
+  ],
+  Research: [
+    "scholar.google.com", "pubmed.ncbi.nlm.nih.gov", "jstor.org",
+    "sciencedirect.com", "springer.com", "nature.com", "ieee.org",
+    "acm.org", "wolframalpha.com", "mathway.com",
+    "translate.google.com", "deepl.com",
+    "perplexity.ai", "you.com", "phind.com",
   ],
   Entertainment: [
     "youtube.com", "netflix.com", "twitch.tv", "hulu.com", "disneyplus.com",
@@ -24,18 +58,11 @@ const CategoryPatterns = {
     "tubi.tv", "peacocktv.com", "deezer.com", "pandora.com",
     "apple.com/tv", "music.apple.com",
   ],
-  Work: [
-    "docs.google.com", "drive.google.com", "sheets.google.com", "slides.google.com",
-    "github.com", "gitlab.com", "bitbucket.org", "stackoverflow.com",
-    "notion.so", "trello.com", "asana.com", "jira.atlassian.com",
-    "slack.com", "teams.microsoft.com", "zoom.us", "figma.com",
-    "vercel.com", "netlify.com", "heroku.com", "aws.amazon.com",
-    "console.cloud.google.com", "azure.microsoft.com",
-    "mail.google.com", "outlook.com", "calendar.google.com",
-    "dropbox.com", "airtable.com", "miro.com", "canva.com",
-    "linear.app", "clickup.com", "monday.com", "basecamp.com",
-    "confluence.atlassian.com", "loom.com", "krisp.ai",
-    "grammarly.com", "hemingwayapp.com", "excalidraw.com",
+  Shopping: [
+    "amazon.com", "ebay.com", "walmart.com", "target.com", "etsy.com",
+    "aliexpress.com", "shopify.com", "bestbuy.com", "newegg.com",
+    "wish.com", "shein.com", "zappos.com", "wayfair.com",
+    "costco.com", "ikea.com", "homedepot.com", "lowes.com",
   ],
   News: [
     "cnn.com", "bbc.com", "nytimes.com", "theguardian.com", "reuters.com",
@@ -43,12 +70,6 @@ const CategoryPatterns = {
     "techcrunch.com", "theverge.com", "arstechnica.com", "wired.com",
     "hackernews.com", "news.ycombinator.com",
     "npr.org", "aljazeera.com", "ft.com", "economist.com",
-  ],
-  Shopping: [
-    "amazon.com", "ebay.com", "walmart.com", "target.com", "etsy.com",
-    "aliexpress.com", "shopify.com", "bestbuy.com", "newegg.com",
-    "wish.com", "shein.com", "zappos.com", "wayfair.com",
-    "costco.com", "ikea.com", "homedepot.com", "lowes.com",
   ],
   Adult: [
     "pornhub.com", "xvideos.com", "xnxx.com", "xhamster.com", "redtube.com",
@@ -77,8 +98,7 @@ const CategoryPatterns = {
   ],
   Neutral: [
     "google.com", "bing.com", "duckduckgo.com", "yahoo.com",
-    "weather.com", "maps.google.com", "translate.google.com",
-    "stackoverflow.com",
+    "weather.com", "maps.google.com",
   ],
 };
 
@@ -132,22 +152,23 @@ const Categories = {
       }
     }
 
-    // Keyword-based fallback
+    // Keyword-based fallback (improved precision)
     if (/porn|xxx|nsfw|hentai|adult|sex|nude|naked|erotic|fetish|cam(girl|boy|show)|livecam|18\+/i.test(clean)) return "Adult";
     if (/bet|casino|gambl|poker|slots?|jackpot|wager|bookie|sportsbook|lottery|lotto|roulette|blackjack/i.test(clean)) return "Gambling";
-    if (/edu|learn|course|study|school|university|college|tutor|academy/i.test(clean)) return "Education";
+    if (/\.edu$|learn|course|study|school|university|college|tutor|academy/i.test(clean)) return "Education";
+    if (/github|gitlab|bitbucket|codepen|codesandbox|replit|npm|pypi|docker|deploy|api\.|dev\./i.test(clean)) return "Development";
+    if (/docs\.|notion|trello|asana|slack|zoom|figma|miro|canva|calendar|office|drive\./i.test(clean)) return "Productivity";
+    if (/scholar|research|arxiv|pubmed|jstor|ieee|acm\./i.test(clean)) return "Research";
     if (/news|journal|times|post|tribune|herald|gazette/i.test(clean)) return "News";
     if (/shop|store|buy|deal|market|mall|cart|checkout/i.test(clean)) return "Shopping";
     if (/game|play|stream|watch|video|movie|music|listen|anime/i.test(clean)) return "Entertainment";
     if (/social|chat|meet|friend|connect|community|forum/i.test(clean)) return "Social Media";
-    if (/work|project|task|manage|team|office|doc|code|dev|api|deploy/i.test(clean)) return "Work";
-    if (/scam|phish|spam|malware|trojan|virus|hack/i.test(clean)) return "Adult"; // Treat scam sites as blocked too
 
     return "Other";
   },
 
   isProductive(category) {
-    return ["Work", "Education"].includes(category);
+    return ["Development", "Productivity", "Education", "Research"].includes(category);
   },
 
   isDistraction(category) {
@@ -164,8 +185,10 @@ const Categories = {
 
   getCategoryColor(category) {
     const colors = {
-      Work: "#3b82f6",
+      Development: "#3b82f6",
+      Productivity: "#0ea5e9",
       Education: "#8b5cf6",
+      Research: "#a855f7",
       Entertainment: "#f59e0b",
       "Social Media": "#ef4444",
       News: "#6366f1",
@@ -174,14 +197,18 @@ const Categories = {
       Gambling: "#b91c1c",
       Neutral: "#94a3b8",
       Other: "#6b7280",
+      // Legacy compatibility
+      Work: "#3b82f6",
     };
     return colors[category] || colors.Other;
   },
 
   getCategoryIcon(category) {
     const icons = {
-      Work: "💼",
+      Development: "💻",
+      Productivity: "💼",
       Education: "📚",
+      Research: "🔬",
       Entertainment: "🎬",
       "Social Media": "💬",
       News: "📰",
@@ -190,12 +217,13 @@ const Categories = {
       Gambling: "🎰",
       Neutral: "🔘",
       Other: "🌐",
+      Work: "💼",
     };
     return icons[category] || icons.Other;
   },
 
   getAllCategories() {
-    return ["Work", "Education", "Entertainment", "Social Media", "News", "Shopping", "Adult", "Gambling", "Neutral", "Other"];
+    return ["Development", "Productivity", "Education", "Research", "Entertainment", "Social Media", "News", "Shopping", "Adult", "Gambling", "Neutral", "Other"];
   },
 
   getDistractionDefaults() {
@@ -206,4 +234,5 @@ const Categories = {
 if (typeof globalThis !== "undefined") {
   globalThis.Categories = Categories;
   globalThis.DistractionDefaults = DistractionDefaults;
+  globalThis.CategoryPatterns = CategoryPatterns;
 }

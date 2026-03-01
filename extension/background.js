@@ -99,8 +99,8 @@ async function initSystemBlocklist() {
 }
 
 async function ensureAlarms() {
-  // Commit every 15 seconds for accurate screen time tracking
-  chrome.alarms.create("session_tick", { periodInMinutes: 0.25 });
+  // Commit every 10 seconds for maximum screen time precision
+  chrome.alarms.create("session_tick", { periodInMinutes: 1/6 });
   chrome.alarms.create("daily_reset", { periodInMinutes: 60 });
 }
 
@@ -337,7 +337,7 @@ async function commitSession() {
 
   const now = Date.now();
   const elapsed = (now - currentSession.startTime) / 1000 / 60; // minutes
-  if (elapsed < 0.05) return; // skip if less than 3 seconds
+  if (elapsed < 0.03) return; // skip if less than ~2 seconds
 
   const usage = await Storage.getTodayUsage();
   const settings = await Storage.getSettings();
@@ -345,9 +345,10 @@ async function commitSession() {
   const category = Categories.categorize(domain, settings.categoryOverrides);
 
   if (!usage.domains[domain]) {
-    usage.domains[domain] = { time: 0, category, visits: 0 };
+    usage.domains[domain] = { time: 0, category, visits: 0, firstSeen: now, lastSeen: now };
   }
   usage.domains[domain].time += elapsed;
+  usage.domains[domain].lastSeen = now;
   // Only count visits on first commit for this session, not on periodic ticks
   if (!currentSession.committed) {
     usage.domains[domain].visits += 1;
@@ -362,14 +363,22 @@ async function commitSession() {
   } else if (Categories.isDistraction(category)) {
     usage.distractedTime += elapsed;
   }
+  // Track neutral time separately for better analytics
+  if (!usage.neutralTime) usage.neutralTime = 0;
+  if (Categories.isNeutral(category)) {
+    usage.neutralTime += elapsed;
+  }
 
   const hour = new Date().getHours();
   if (usage.hourlyActivity && usage.hourlyActivity[hour]) {
     if (Categories.isProductive(category)) {
       usage.hourlyActivity[hour].productive += elapsed;
-    } else {
+    } else if (Categories.isDistraction(category)) {
       usage.hourlyActivity[hour].distracted += elapsed;
     }
+    // Track total per hour for better heatmap accuracy
+    if (!usage.hourlyActivity[hour].total) usage.hourlyActivity[hour].total = 0;
+    usage.hourlyActivity[hour].total += elapsed;
   }
 
   usage.score = Scoring.calculate(usage);

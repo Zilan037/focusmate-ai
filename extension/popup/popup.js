@@ -21,6 +21,12 @@ async function init() {
   await loadFocusTab();
   await loadControlsTab();
   await loadActivityTab();
+  
+  // Auto-refresh stats every 10 seconds for live accuracy
+  setInterval(async () => {
+    await loadStats();
+    await loadGoalProgress();
+  }, 10000);
 }
 
 // ─── Recent domains for autocomplete ───
@@ -72,9 +78,14 @@ function animateNumber(el, target, duration = 600, suffix = "") {
 }
 
 function formatTime(minutes) {
-  if (!minutes || minutes === 0) return "0h 0m";
+  if (!minutes || minutes === 0) return "0m";
+  if (minutes < 1) {
+    const secs = Math.round(minutes * 60);
+    return secs + "s";
+  }
   const h = Math.floor(minutes / 60);
   const m = Math.round(minutes % 60);
+  if (h === 0) return `${m}m`;
   return `${h}h ${m}m`;
 }
 
@@ -159,7 +170,8 @@ function renderDomainBars(domains) {
   sorted.forEach(([domain, info], i) => {
     const pct = Math.round(((info.time || 0) / maxTime) * 100);
     const color = Categories.getCategoryColor(info.category || "Other");
-    const mins = Math.round(info.time || 0);
+    const mins = info.time || 0;
+    const timeDisplay = mins < 1 ? Math.round(mins * 60) + "s" : Math.round(mins) + "m";
 
     const bar = document.createElement("div");
     bar.className = "domain-bar fade-up";
@@ -178,7 +190,7 @@ function renderDomainBars(domains) {
           <div class="domain-bar-fill" style="width:${pct}%;background:${color};"></div>
         </div>
       </div>
-      <span class="domain-time">${mins}m</span>
+      <span class="domain-time">${timeDisplay}</span>
     `;
     bar.querySelector("img[data-fallback]").addEventListener("error", function() { this.style.display = "none"; this.parentElement.textContent = this.dataset.fallback; });
     container.appendChild(bar);
