@@ -894,8 +894,87 @@
           <div class="premium-card fade-up delay-1" style="padding:28px 32px;border-radius:28px;margin-top:20px;">
             <h3 class="settings-group-title">📋 Active Schedules</h3>
             <p class="settings-group-desc">Your currently configured time-based rules.</p>
+            <div style="margin-bottom:12px;">
+              <label class="toggle-row" style="gap:10px;cursor:pointer;">
+                <input type="checkbox" id="schedule-auto-deploy" style="width:16px;height:16px;accent-color:var(--accent);">
+                <span class="settings-label" style="font-size:12px;">⚡ Auto-deploy focus sessions when blocks start</span>
+              </label>
+            </div>
             <div id="schedule-list-detailed" class="schedule-list-detailed"></div>
             <div id="schedule-empty" class="empty-state" style="display:none;">No schedules yet. Drag on the grid above to create one.</div>
+          </div>
+
+          <!-- Wind-Down Mode -->
+          <div class="premium-card fade-up delay-2" style="padding:28px 32px;border-radius:28px;margin-top:20px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+              <div>
+                <h3 class="settings-group-title">🌙 Wind-Down Mode</h3>
+                <p class="settings-group-desc">Gradually restrict sites as bedtime approaches. Three phases: Warnings → Soft blocks → Hard blocks.</p>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="winddown-enabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div id="winddown-config" class="winddown-config" style="display:none;">
+              <div class="winddown-row">
+                <div class="winddown-field">
+                  <label class="winddown-label">🛏 Bedtime</label>
+                  <input type="time" id="winddown-bedtime" class="winddown-input" value="23:00">
+                </div>
+                <div class="winddown-field">
+                  <label class="winddown-label">⏱ Lead Time</label>
+                  <select id="winddown-leadtime" class="winddown-input">
+                    <option value="30">30 minutes</option>
+                    <option value="45">45 minutes</option>
+                    <option value="60" selected>60 minutes</option>
+                    <option value="90">90 minutes</option>
+                    <option value="120">2 hours</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="winddown-days" id="winddown-days">
+                <label class="winddown-label" style="width:100%;margin-bottom:8px;">Active days</label>
+                <button class="winddown-day-btn active" data-day="0">Sun</button>
+                <button class="winddown-day-btn active" data-day="1">Mon</button>
+                <button class="winddown-day-btn active" data-day="2">Tue</button>
+                <button class="winddown-day-btn active" data-day="3">Wed</button>
+                <button class="winddown-day-btn active" data-day="4">Thu</button>
+                <button class="winddown-day-btn active" data-day="5">Fri</button>
+                <button class="winddown-day-btn active" data-day="6">Sat</button>
+              </div>
+
+              <div class="winddown-phases">
+                <div class="winddown-phase">
+                  <div class="winddown-phase-dot" style="background:#FBBF24;"></div>
+                  <div class="winddown-phase-info">
+                    <strong>Phase 1 — Warning</strong>
+                    <span>Notifications when visiting distracting sites</span>
+                  </div>
+                  <div class="winddown-phase-time" id="winddown-phase1-time"></div>
+                </div>
+                <div class="winddown-phase">
+                  <div class="winddown-phase-dot" style="background:#F97316;"></div>
+                  <div class="winddown-phase-info">
+                    <strong>Phase 2 — Soft Block</strong>
+                    <span>Entertainment & social media blocked</span>
+                  </div>
+                  <div class="winddown-phase-time" id="winddown-phase2-time"></div>
+                </div>
+                <div class="winddown-phase">
+                  <div class="winddown-phase-dot" style="background:#EF4444;"></div>
+                  <div class="winddown-phase-info">
+                    <strong>Phase 3 — Hard Block</strong>
+                    <span>All distracting sites blocked</span>
+                  </div>
+                  <div class="winddown-phase-time" id="winddown-phase3-time"></div>
+                </div>
+              </div>
+
+              <div id="winddown-status" class="winddown-status"></div>
+            </div>
           </div>
         </div>
 
