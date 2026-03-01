@@ -89,6 +89,11 @@
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
+/* Global: disable dotted/slashed zero in all mono font usage */
+* {
+  font-feature-settings: "zero" off;
+}
+
 /* ─── Light Theme ─── */
 [data-theme="light"] {
   --bg-deep: #FDFDFD;
