@@ -16,6 +16,7 @@ async function init() {
   setupUnlockModal();
   setupSiteDeepDive();
   setupReportGenerator();
+  setupAIConfig();
   setupScheduleGrid();
   setupAutoDeployToggle();
   setupWindDown();
@@ -1596,6 +1597,16 @@ async function loadInsights() {
     });
   }
 
+  // Add AI-powered insight (non-blocking)
+  generateAIInsight(usage).then(aiText => {
+    if (aiText) {
+      const aiCard = document.createElement("div");
+      aiCard.className = "insight-card glass-card info fade-up";
+      aiCard.innerHTML = `<span class="insight-icon-wrap">🧠</span><div class="insight-text">AI Analysis</div><div class="insight-detail">${aiText}</div>`;
+      container.prepend(aiCard);
+    }
+  }).catch(() => {});
+
   const loopsContainer = document.getElementById("loops-list");
   loopsContainer.innerHTML = "";
   const loops = usage.distractionLoops || [];
@@ -2849,6 +2860,33 @@ async function generateReport() {
       </div>
     `;
 
+    // Try AI-powered summary (async, non-blocking)
+    try {
+      const cfg = await getAIConfig();
+      if (cfg.apiKey) {
+        const productiveSites = topSites.filter(([, i]) => ["Development", "Productivity", "Education", "Research"].includes(i.category)).map(([d]) => d).join(", ") || "None";
+        const distractingSites = topSites.filter(([, i]) => ["Social Media", "Entertainment", "Shopping"].includes(i.category)).map(([d]) => d).join(", ") || "None";
+        
+        const aiSummary = await generateAIReportSummary({
+          score: avgScore, grade: grade.letter, activeTime: formatTime(totalActive),
+          focusRatio, productiveSites, distractingSites, sessionsCompleted: completedSessions,
+        });
+
+        if (aiSummary) {
+          const aiDiv = document.createElement("div");
+          aiDiv.className = "report-ai-summary";
+          aiDiv.innerHTML = `
+            <h4 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:12px;">🧠 AI Summary</h4>
+            <p style="font-size:14px;line-height:1.7;color:var(--text-secondary);">${aiSummary}</p>
+          `;
+          const recsEl = preview.querySelector(".report-recommendations");
+          if (recsEl) recsEl.after(aiDiv);
+        }
+      }
+    } catch (aiErr) {
+      console.warn("AI summary skipped:", aiErr);
+    }
+
     btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v8M3 6l4-4 4 4M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Generate Report`;
     btn.disabled = false;
   } catch (e) {
@@ -3878,3 +3916,195 @@ async function updateWindDownStatus() {
     }
   } catch (e) {}
 }
+
+// ═══════════════════════════════════════════════════════════════
+// ─── AI Integration (User-Configurable) ───
+// ═══════════════════════════════════════════════════════════════
+
+const AI_PROVIDERS = {
+  openai: { url: "https://api.openai.com/v1/chat/completions", defaultModel: "gpt-4o-mini" },
+  anthropic: { url: "https://api.anthropic.com/v1/messages", defaultModel: "claude-3-haiku-20240307" },
+  google: { url: "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent", defaultModel: "gemini-1.5-flash" },
+  custom: { url: "", defaultModel: "" },
+};
+
+function setupAIConfig() {
+  const providerSelect = document.getElementById("ai-provider");
+  const modelInput = document.getElementById("ai-model");
+  const customUrlRow = document.querySelector(".ai-custom-url");
+
+  // Load saved config
+  chrome.storage.local.get("fg_ai_config", (data) => {
+    const cfg = data.fg_ai_config || {};
+    if (cfg.provider) providerSelect.value = cfg.provider;
+    if (cfg.apiKey) document.getElementById("ai-api-key").value = cfg.apiKey;
+    if (cfg.model) modelInput.value = cfg.model;
+    if (cfg.baseUrl) document.getElementById("ai-base-url").value = cfg.baseUrl;
+    updateProviderUI(cfg.provider || "openai");
+  });
+
+  providerSelect.addEventListener("change", () => {
+    updateProviderUI(providerSelect.value);
+  });
+
+  function updateProviderUI(provider) {
+    const info = AI_PROVIDERS[provider];
+    if (!modelInput.value || Object.values(AI_PROVIDERS).some(p => p.defaultModel === modelInput.value)) {
+      modelInput.value = info.defaultModel;
+    }
+    modelInput.placeholder = info.defaultModel || "model-name";
+    customUrlRow.style.display = provider === "custom" ? "" : "none";
+  }
+
+  document.getElementById("btn-save-ai").addEventListener("click", () => {
+    const cfg = {
+      provider: providerSelect.value,
+      apiKey: document.getElementById("ai-api-key").value.trim(),
+      model: modelInput.value.trim(),
+      baseUrl: document.getElementById("ai-base-url").value.trim(),
+    };
+    chrome.storage.local.set({ fg_ai_config: cfg }, () => {
+      const status = document.getElementById("ai-status");
+      status.textContent = "✅ Saved!";
+      status.style.color = "#10B981";
+      setTimeout(() => { status.textContent = ""; }, 3000);
+    });
+  });
+
+  document.getElementById("btn-test-ai").addEventListener("click", async () => {
+    const status = document.getElementById("ai-status");
+    status.textContent = "⏳ Testing...";
+    status.style.color = "var(--text-muted)";
+    try {
+      const result = await callAI("Say 'FocusGuard AI connected!' in 5 words or less.");
+      if (result) {
+        status.textContent = "✅ " + result.slice(0, 50);
+        status.style.color = "#10B981";
+      } else {
+        status.textContent = "❌ No response received";
+        status.style.color = "#F43F5E";
+      }
+    } catch (e) {
+      status.textContent = "❌ " + (e.message || "Connection failed");
+      status.style.color = "#F43F5E";
+    }
+  });
+}
+
+async function getAIConfig() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get("fg_ai_config", (data) => {
+      resolve(data.fg_ai_config || {});
+    });
+  });
+}
+
+async function callAI(prompt, systemPrompt = "You are a concise productivity analyst for FocusGuard.") {
+  const cfg = await getAIConfig();
+  if (!cfg.apiKey) throw new Error("No API key configured. Go to Settings > AI Integration.");
+
+  const provider = cfg.provider || "openai";
+  const model = cfg.model || AI_PROVIDERS[provider]?.defaultModel || "gpt-4o-mini";
+
+  if (provider === "anthropic") {
+    const url = AI_PROVIDERS.anthropic.url;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": cfg.apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+    if (!res.ok) throw new Error(`Anthropic API error: ${res.status}`);
+    const data = await res.json();
+    return data.content?.[0]?.text || "";
+  }
+
+  if (provider === "google") {
+    const url = AI_PROVIDERS.google.url.replace("{model}", model) + `?key=${cfg.apiKey}`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: systemPrompt + "\n\n" + prompt }] }],
+      }),
+    });
+    if (!res.ok) throw new Error(`Google AI error: ${res.status}`);
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  }
+
+  // OpenAI-compatible (openai + custom)
+  const url = provider === "custom" && cfg.baseUrl
+    ? cfg.baseUrl.replace(/\/$/, "") + "/chat/completions"
+    : AI_PROVIDERS.openai.url;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${cfg.apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 1024,
+    }),
+  });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || "";
+}
+
+// ─── AI-Powered Insights ───
+async function generateAIInsight(usageData) {
+  try {
+    const cfg = await getAIConfig();
+    if (!cfg.apiKey) return null;
+
+    const prompt = `Analyze this productivity data and give 2-3 specific, actionable tips (each 1 sentence max):
+- Active time: ${formatTime(usageData.totalActive || 0)}
+- Focus ratio: ${usageData.totalActive > 0 ? Math.round(((usageData.focusTime || 0) / usageData.totalActive) * 100) : 0}%
+- Top domains: ${Object.entries(usageData.domains || {}).sort((a, b) => (b[1].time || 0) - (a[1].time || 0)).slice(0, 5).map(([d, i]) => `${d} (${Math.round(i.time)}m, ${i.category})`).join(", ")}
+Keep it brief and motivational.`;
+
+    return await callAI(prompt);
+  } catch (e) {
+    console.warn("AI insight error:", e);
+    return null;
+  }
+}
+
+// ─── AI-Enhanced Report Summary ───
+async function generateAIReportSummary(reportData) {
+  try {
+    const cfg = await getAIConfig();
+    if (!cfg.apiKey) return null;
+
+    const prompt = `Write a 3-sentence executive summary for this productivity report:
+- Score: ${reportData.score}/100 (Grade: ${reportData.grade})
+- Active time: ${reportData.activeTime}
+- Focus ratio: ${reportData.focusRatio}%
+- Top productive sites: ${reportData.productiveSites}
+- Top distracting sites: ${reportData.distractingSites}
+- Focus sessions completed: ${reportData.sessionsCompleted}
+Be professional but encouraging.`;
+
+    return await callAI(prompt, "You are a professional productivity coach writing report summaries for FocusGuard.");
+  } catch (e) {
+    console.warn("AI report summary error:", e);
+    return null;
+  }
+}
+
