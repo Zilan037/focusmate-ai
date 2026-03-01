@@ -5,13 +5,12 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const sectionLinks = [
-  { id: "problem", label: "Problem" },
   { id: "features", label: "Features" },
   { id: "focus", label: "Focus" },
   { id: "analytics", label: "Analytics" },
   { id: "how", label: "How It Works" },
   { id: "compare", label: "Compare" },
-  { id: "download", label: "Download" },
+  { id: "testimonials", label: "Testimonials" },
 ];
 
 const pageLinks = [

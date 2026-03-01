@@ -558,6 +558,49 @@ const Landing = () => {
       </Section>
 
       {/* ═══════════════════════════════════════
+          SECTION 8 — TESTIMONIALS
+          User quotes with star ratings
+          ═══════════════════════════════════════ */}
+      <Section id="testimonials" ariaLabel="What users say">
+        <AnimatedBlock>
+          <SectionLabel>Testimonials</SectionLabel>
+          <SectionTitle>Loved by focused people.</SectionTitle>
+          <SectionDesc>
+            Hear from people who took back control of their digital habits.
+          </SectionDesc>
+
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { name: "Sarah Chen", role: "Software Engineer", quote: "FocusGuard helped me realize I was losing 3 hours daily to tab-hopping. My deep work sessions went from 45 min to 2.5 hours.", stars: 5 },
+              { name: "Marcus Rivera", role: "Product Designer", quote: "The behavioral insights are incredible. It predicted my distraction patterns before I even noticed them. Game changer.", stars: 5 },
+              { name: "Aisha Patel", role: "PhD Researcher", quote: "I've tried every blocker out there. FocusGuard is the first one that actually understands why I get distracted, not just what I visit.", stars: 5 },
+              { name: "Jake Thompson", role: "Freelance Writer", quote: "The focus mode with task-based unlock is brilliant. I can't cheat my way out of it, and my writing output has doubled.", stars: 4 },
+              { name: "Emily Nakamura", role: "Startup Founder", quote: "100% local processing sold me. No data leaves my machine, and the Sankey diagrams make my workflow visible for the first time.", stars: 5 },
+              { name: "Daniel Okonkwo", role: "Medical Student", quote: "During exam season, FocusGuard is non-negotiable. The productivity score keeps me accountable without being annoying.", stars: 5 },
+            ].map((t) => (
+              <div
+                key={t.name}
+                className="rounded-2xl border border-border/40 bg-card/50 p-6 flex flex-col gap-4 transition-all duration-300 hover:bg-card hover:shadow-md hover:-translate-y-0.5"
+              >
+                <div className="flex gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <svg key={i} className={`h-4 w-4 ${i < t.stars ? "text-warning" : "text-border"}`} fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed flex-1">"{t.quote}"</p>
+                <div>
+                  <p className="text-sm font-semibold">{t.name}</p>
+                  <p className="text-xs text-muted-foreground">{t.role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </AnimatedBlock>
+      </Section>
+
+      {/* ═══════════════════════════════════════
           SECTION 8 — CTA FOOTER
           Final call-to-action + footer
           ═══════════════════════════════════════ */}
