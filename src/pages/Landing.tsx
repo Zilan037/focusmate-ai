@@ -514,7 +514,7 @@ const Landing = () => {
           <SectionLabel>See It In Action</SectionLabel>
           <SectionTitle>A glance at the real experience.</SectionTitle>
           <SectionDesc>
-            <span className="mx-auto block">Three powerful views. One seamless productivity system — right inside your browser.</span>
+            Three powerful views. One seamless productivity system, right inside your browser.
           </SectionDesc>
         </div>
 
