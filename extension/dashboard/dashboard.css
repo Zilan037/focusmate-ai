@@ -2545,3 +2545,234 @@ canvas {
   letter-spacing: 0.1em;
   margin-top: 4px;
 }
+
+/* ─── Comparison Cards ─── */
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.comparison-card {
+  padding: 32px;
+  border-radius: 28px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.comparison-card-label {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+.comparison-card-score {
+  font-size: 52px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  letter-spacing: -0.05em;
+  color: var(--text-primary);
+}
+[data-theme="dark"] .comparison-card-score,
+:root:not([data-theme="light"]) .comparison-card-score { color: #fff; }
+.comparison-card-grade {
+  font-size: 18px;
+  font-weight: 900;
+  margin-top: 8px;
+  padding: 4px 16px;
+  border-radius: var(--radius-pill);
+  display: inline-block;
+}
+.comparison-card-stats {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.comparison-card-stats > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.comparison-stat-label {
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.comparison-stat-value {
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+[data-theme="dark"] .comparison-stat-value,
+:root:not([data-theme="light"]) .comparison-stat-value { color: #E2E8F0; }
+
+/* ─── Achievement Toast ─── */
+.achievement-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 10000;
+  animation: toastSlideIn 0.5s var(--ease-out), toastSlideOut 0.4s var(--ease-out) 4.6s forwards;
+}
+.achievement-toast-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  background: #0F172A;
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 40px rgba(255,215,0,0.15);
+  color: #fff;
+  min-width: 260px;
+}
+[data-theme="light"] .achievement-toast-inner {
+  background: #fff;
+  color: #0F172A;
+  border-color: rgba(255,215,0,0.4);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.1), 0 0 40px rgba(255,215,0,0.1);
+}
+.achievement-toast-icon {
+  font-size: 36px;
+  animation: achievePulse 0.6s ease-out 0.3s;
+}
+.achievement-toast-title {
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #FFD700;
+  display: block;
+}
+.achievement-toast-name {
+  font-size: 14px;
+  font-weight: 800;
+  display: block;
+  margin-top: 2px;
+}
+@keyframes toastSlideIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes toastSlideOut {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(120%); opacity: 0; }
+}
+@keyframes achievePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+/* ─── Session Analytics Grid ─── */
+.session-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.session-analytics-stat {
+  text-align: center;
+  padding: 24px 12px;
+  border-radius: 20px;
+  background: var(--bg-glass);
+  border: 1px solid var(--bg-glass-border);
+}
+.session-analytics-value {
+  font-size: 32px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+[data-theme="dark"] .session-analytics-value,
+:root:not([data-theme="light"]) .session-analytics-value { color: #fff; }
+.session-analytics-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 8px;
+}
+
+/* ─── Report Preview ─── */
+.report-preview {
+  margin-top: 24px;
+}
+.report-preview-card {
+  padding: 32px;
+  border-radius: 24px;
+  border: 1px solid var(--bg-glass-border);
+  background: var(--bg-glass);
+}
+.report-grade-hero {
+  text-align: center;
+  padding: 32px 0;
+}
+.report-grade-letter {
+  font-size: 72px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+.report-grade-label {
+  font-size: 14px;
+  font-weight: 800;
+  margin-top: 8px;
+  color: var(--text-muted);
+}
+.report-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 24px;
+}
+.report-metric-cell {
+  text-align: center;
+  padding: 16px 8px;
+  border-radius: 16px;
+  background: var(--bg-glass);
+  border: 1px solid var(--bg-glass-border);
+}
+.report-metric-value {
+  font-size: 20px;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+[data-theme="dark"] .report-metric-value,
+:root:not([data-theme="light"]) .report-metric-value { color: #fff; }
+.report-metric-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+  display: block;
+}
+.report-recommendations {
+  margin-top: 24px;
+}
+.report-rec-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--bg-glass-border);
+}
+.report-rec-item:last-child { border-bottom: none; }
+.report-rec-icon { font-size: 18px; flex-shrink: 0; }
+.report-rec-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.report-download-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  justify-content: center;
+}
+

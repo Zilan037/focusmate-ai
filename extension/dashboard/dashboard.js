@@ -9,10 +9,12 @@ async function init() {
   await loadOverview();
   await loadComparisons();
   await loadComparisonRow();
+  await loadComparisonCards();
   await loadTopSites();
   await loadDaily();
   await loadInsights();
   await loadSessions();
+  await loadSessionAnalytics();
   await loadDomains();
   await loadDeepStats();
   await loadBlocklist();
@@ -23,6 +25,7 @@ async function init() {
   await load365Heatmap();
   await load7x24Grid();
   await loadAchievements();
+  await drawCategoryFlow();
   setupDataManagement();
   setupQuickActions();
   setupBlocklistActions();
@@ -31,7 +34,9 @@ async function init() {
   setupDailyLimitsActions();
   setupUnlockModal();
   setupSiteDeepDive();
+  setupReportGenerator();
   startAutoRefresh();
+  startLiveRefresh();
 }
 
 // ─── Animated Number ───
@@ -2240,8 +2245,10 @@ async function loadAchievements() {
     const stats = await Achievements.buildStats();
     const newlyUnlocked = await Achievements.checkAll(stats);
     if (newlyUnlocked.length > 0) {
-      // Refresh display
-      loadAchievements();
+      // Show toast for first newly unlocked
+      showAchievementToast(newlyUnlocked[0]);
+      // Refresh display after a brief delay
+      setTimeout(() => loadAchievements(), 500);
     }
   } catch (e) {
     console.error("Achievements error:", e);
@@ -2423,5 +2430,442 @@ function drawSiteDiveChart(canvasId, data, color, isHourly = false) {
       const dayLabel = new Date(Date.now() - (data.length - 1 - i) * 86400000).toLocaleDateString("en", { weekday: "short" });
       ctx.fillText(dayLabel, x, h - 4);
     });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── Live Auto-Refresh (5 second interval) ───
+// ═══════════════════════════════════════════════════════════════
+
+function startLiveRefresh() {
+  setInterval(async () => {
+    try {
+      await loadOverview();
+      await loadSidebarStats();
+      await loadTopSites();
+    } catch (e) {}
+  }, 5000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── Achievement Unlock Toast ───
+// ═══════════════════════════════════════════════════════════════
+
+function showAchievementToast(achievement) {
+  const toast = document.getElementById("achievement-toast");
+  if (!toast) return;
+  document.getElementById("achievement-toast-icon").textContent = achievement.icon;
+  document.getElementById("achievement-toast-name").textContent = achievement.name;
+  toast.style.display = "block";
+  toast.style.animation = "none";
+  toast.offsetHeight; // trigger reflow
+  toast.style.animation = "";
+  setTimeout(() => { toast.style.display = "none"; }, 5000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── Comparison Cards (Today vs Yesterday vs Best) ───
+// ═══════════════════════════════════════════════════════════════
+
+async function loadComparisonCards() {
+  try {
+    const weekData = await chrome.runtime.sendMessage({ action: "getWeekUsage" });
+    const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+    const scoreData = await chrome.runtime.sendMessage({ action: "getScore" });
+
+    const todayScore = scoreData.score || 0;
+    const todayGrade = getLetterGrade(todayScore);
+    setComparisonCard("today", todayScore, todayGrade, {
+      active: formatTime(usage.totalActive || 0),
+      focus: formatTime(usage.focusTime || 0),
+      sessions: (usage.focusSessions || []).length,
+    });
+
+    if (weekData && weekData.length > 0) {
+      const yest = weekData[0]?.data || {};
+      const yestScore = yest.score || 0;
+      const yestGrade = getLetterGrade(yestScore);
+      setComparisonCard("yest", yestScore, yestGrade, {
+        active: formatTime(yest.totalActive || 0),
+        focus: formatTime(yest.focusTime || 0),
+        sessions: (yest.focusSessions || []).length,
+      });
+
+      // Find best day in last 30
+      const allDays = await chrome.runtime.sendMessage({ action: "getMonthUsage", days: 30 });
+      const daysArr = Array.isArray(allDays) ? allDays : (allDays?.days || []);
+      let bestDay = { score: 0, data: {}, date: "" };
+      daysArr.forEach(d => {
+        const dd = d.data || d;
+        if ((dd.score || 0) > bestDay.score) {
+          bestDay = { score: dd.score, data: dd, date: d.date || "" };
+        }
+      });
+      const bestGrade = getLetterGrade(bestDay.score);
+      const el = (id) => document.getElementById(id);
+      setComparisonCard("best", bestDay.score, bestGrade, {
+        active: formatTime(bestDay.data.totalActive || 0),
+        focus: formatTime(bestDay.data.focusTime || 0),
+      });
+      if (el("cmp2-best-date")) {
+        el("cmp2-best-date").textContent = bestDay.date
+          ? new Date(bestDay.date).toLocaleDateString("en", { month: "short", day: "numeric" })
+          : "—";
+      }
+    }
+  } catch (e) { console.error("Comparison cards:", e); }
+}
+
+function setComparisonCard(key, score, grade, stats) {
+  const el = (id) => document.getElementById(id);
+  if (el(`cmp2-${key}-score`)) el(`cmp2-${key}-score`).textContent = score;
+  if (el(`cmp2-${key}-grade`)) {
+    el(`cmp2-${key}-grade`).textContent = grade.letter;
+    el(`cmp2-${key}-grade`).style.background = grade.bg;
+    el(`cmp2-${key}-grade`).style.color = grade.color;
   }
+  if (stats.active && el(`cmp2-${key}-active`)) el(`cmp2-${key}-active`).textContent = stats.active;
+  if (stats.focus && el(`cmp2-${key}-focus`)) el(`cmp2-${key}-focus`).textContent = stats.focus;
+  if (stats.sessions !== undefined && el(`cmp2-${key}-sessions`)) el(`cmp2-${key}-sessions`).textContent = stats.sessions;
+}
+
+function getLetterGrade(score) {
+  if (score >= 93) return { letter: "A+", color: "#059669", bg: "rgba(16,185,129,0.12)" };
+  if (score >= 85) return { letter: "A", color: "#10B981", bg: "rgba(16,185,129,0.1)" };
+  if (score >= 80) return { letter: "A-", color: "#34D399", bg: "rgba(52,211,153,0.1)" };
+  if (score >= 77) return { letter: "B+", color: "#2563EB", bg: "rgba(37,99,235,0.1)" };
+  if (score >= 73) return { letter: "B", color: "#3B82F6", bg: "rgba(59,130,246,0.1)" };
+  if (score >= 70) return { letter: "B-", color: "#60A5FA", bg: "rgba(96,165,250,0.1)" };
+  if (score >= 67) return { letter: "C+", color: "#F59E0B", bg: "rgba(245,158,11,0.1)" };
+  if (score >= 63) return { letter: "C", color: "#F59E0B", bg: "rgba(245,158,11,0.08)" };
+  if (score >= 60) return { letter: "C-", color: "#D97706", bg: "rgba(217,119,6,0.1)" };
+  if (score >= 57) return { letter: "D+", color: "#F97316", bg: "rgba(249,115,22,0.1)" };
+  if (score >= 50) return { letter: "D", color: "#F97316", bg: "rgba(249,115,22,0.08)" };
+  return { letter: "F", color: "#EF4444", bg: "rgba(239,68,68,0.1)" };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── Category Flow Timeline (Stacked Area Chart) ───
+// ═══════════════════════════════════════════════════════════════
+
+async function drawCategoryFlow() {
+  try {
+    const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+    const data = getCtx("chart-category-flow");
+    if (!data) return;
+    const { ctx, w, h } = data;
+    const colors = getChartColors();
+    ctx.clearRect(0, 0, w, h);
+
+    const hourly = usage.hourlyActivity || [];
+    if (!hourly.some(hr => (hr.productive || 0) + (hr.distracted || 0) > 0)) {
+      ctx.fillStyle = colors.textMuted;
+      ctx.font = "600 13px 'Inter', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Activity data will appear here as you browse", w / 2, h / 2);
+      return;
+    }
+
+    // Build per-hour category data from domains
+    const catColors = {
+      "Development": "#10B981", "Education": "#06B6D4", "Research": "#8B5CF6",
+      "Productivity": "#3B82F6", "Work": "#2563EB", "News": "#6366F1",
+      "Social Media": "#F43F5E", "Entertainment": "#F59E0B", "Shopping": "#EC4899",
+      "Other": "#64748B",
+    };
+    const categories = Object.keys(catColors);
+
+    const padding = { top: 20, right: 20, bottom: 36, left: 40 };
+    const chartW = w - padding.left - padding.right;
+    const chartH = h - padding.top - padding.bottom;
+
+    // Use hourly data: productive → green stack, distracted → red stack
+    const maxVal = Math.max(1, ...hourly.map(hr => (hr.productive || 0) + (hr.distracted || 0)));
+
+    // Draw stacked areas
+    const prodData = hourly.map(hr => hr.productive || 0);
+    const distData = hourly.map(hr => hr.distracted || 0);
+
+    // Productive area
+    ctx.beginPath();
+    ctx.moveTo(padding.left, padding.top + chartH);
+    for (let i = 0; i < 24; i++) {
+      const x = padding.left + (i / 23) * chartW;
+      const y = padding.top + chartH - ((prodData[i] + distData[i]) / maxVal) * chartH;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(padding.left + chartW, padding.top + chartH);
+    ctx.closePath();
+    const prodGrad = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartH);
+    prodGrad.addColorStop(0, "rgba(16,185,129,0.35)");
+    prodGrad.addColorStop(1, "rgba(16,185,129,0.05)");
+    ctx.fillStyle = prodGrad;
+    ctx.fill();
+
+    // Distracted area (on top)
+    ctx.beginPath();
+    ctx.moveTo(padding.left, padding.top + chartH);
+    for (let i = 0; i < 24; i++) {
+      const x = padding.left + (i / 23) * chartW;
+      const y = padding.top + chartH - (distData[i] / maxVal) * chartH;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(padding.left + chartW, padding.top + chartH);
+    ctx.closePath();
+    const distGrad = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartH);
+    distGrad.addColorStop(0, "rgba(244,63,94,0.35)");
+    distGrad.addColorStop(1, "rgba(244,63,94,0.05)");
+    ctx.fillStyle = distGrad;
+    ctx.fill();
+
+    // Lines
+    ctx.beginPath();
+    for (let i = 0; i < 24; i++) {
+      const x = padding.left + (i / 23) * chartW;
+      const y = padding.top + chartH - ((prodData[i] + distData[i]) / maxVal) * chartH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = "#10B981";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    for (let i = 0; i < 24; i++) {
+      const x = padding.left + (i / 23) * chartW;
+      const y = padding.top + chartH - (distData[i] / maxVal) * chartH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = "#F43F5E";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // X labels
+    for (let i = 0; i < 24; i += 3) {
+      const x = padding.left + (i / 23) * chartW;
+      ctx.fillStyle = colors.textMuted;
+      ctx.font = "700 10px 'Inter', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(i + ":00", x, h - 8);
+    }
+
+    // Legend
+    ctx.fillStyle = "#10B981";
+    ctx.fillRect(padding.left, 4, 12, 3);
+    ctx.fillStyle = colors.text;
+    ctx.font = "600 10px 'Inter', sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("Productive", padding.left + 16, 8);
+    ctx.fillStyle = "#F43F5E";
+    ctx.fillRect(padding.left + 90, 4, 12, 3);
+    ctx.fillStyle = colors.text;
+    ctx.fillText("Distracted", padding.left + 106, 8);
+  } catch (e) {
+    console.error("Category flow error:", e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── Session Analytics ───
+// ═══════════════════════════════════════════════════════════════
+
+async function loadSessionAnalytics() {
+  try {
+    const allDays = await chrome.runtime.sendMessage({ action: "getMonthUsage", days: 30 });
+    const daysArr = Array.isArray(allDays) ? allDays : (allDays?.days || []);
+
+    let totalSessions = 0, completedSessions = 0;
+    let totalDuration = 0, totalInterruptions = 0, totalTasks = 0;
+    let bestStreak = 0, currentStreak = 0;
+
+    daysArr.forEach(day => {
+      const d = day.data || day;
+      const sessions = d.focusSessions || [];
+      sessions.forEach(s => {
+        totalSessions++;
+        totalDuration += s.duration || 0;
+        totalInterruptions += s.interruptions || 0;
+        totalTasks += s.tasksCompleted || 0;
+        if (s.status === "completed") {
+          completedSessions++;
+          currentStreak++;
+          if (currentStreak > bestStreak) bestStreak = currentStreak;
+        } else {
+          currentStreak = 0;
+        }
+      });
+    });
+
+    const el = (id) => document.getElementById(id);
+    const rate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
+    const avgDur = totalSessions > 0 ? Math.round(totalDuration / totalSessions) : 0;
+    const avgInt = totalSessions > 0 ? (totalInterruptions / totalSessions).toFixed(1) : "0";
+    const totalFocusH = (totalDuration / 60).toFixed(1);
+
+    if (el("sa-completion-rate")) el("sa-completion-rate").textContent = rate + "%";
+    if (el("sa-avg-duration")) el("sa-avg-duration").textContent = avgDur + "m";
+    if (el("sa-total-focus")) el("sa-total-focus").textContent = totalFocusH + "h";
+    if (el("sa-avg-interruptions")) el("sa-avg-interruptions").textContent = avgInt;
+    if (el("sa-tasks-completed")) el("sa-tasks-completed").textContent = totalTasks;
+    if (el("sa-best-streak")) el("sa-best-streak").textContent = bestStreak;
+
+    // Color the completion rate
+    if (el("sa-completion-rate")) {
+      el("sa-completion-rate").style.color = rate >= 80 ? "#10B981" : rate >= 50 ? "#F59E0B" : "#F43F5E";
+    }
+  } catch (e) {
+    console.error("Session analytics error:", e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── Report Generator with Letter Grades ───
+// ═══════════════════════════════════════════════════════════════
+
+function setupReportGenerator() {
+  document.getElementById("btn-generate-report")?.addEventListener("click", generateReport);
+}
+
+async function generateReport() {
+  try {
+    const btn = document.getElementById("btn-generate-report");
+    btn.textContent = "Generating...";
+    btn.disabled = true;
+
+    // Get active report range
+    const activeRange = document.querySelector(".report-range-btn.active");
+    const range = activeRange?.dataset.range || "week";
+    let nDays = range === "today" ? 1 : range === "week" ? 7 : range === "month" ? 30 : range === "year" ? 365 : 30;
+
+    let data;
+    if (nDays === 1) {
+      data = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+    } else {
+      data = await chrome.runtime.sendMessage({ action: "getMonthUsage", days: nDays });
+    }
+
+    let totalActive = 0, totalFocus = 0, totalDistracted = 0, totalSessions = 0, completedSessions = 0;
+    let allDomains = {};
+    const scores = [];
+
+    if (nDays === 1) {
+      totalActive = data.totalActive || 0;
+      totalFocus = data.focusTime || 0;
+      totalDistracted = data.distractedTime || 0;
+      totalSessions = (data.focusSessions || []).length;
+      completedSessions = (data.focusSessions || []).filter(s => s.status === "completed").length;
+      scores.push(data.score || 0);
+      allDomains = data.domains || {};
+    } else {
+      const daysArr = Array.isArray(data) ? data : (data?.days || []);
+      daysArr.forEach(day => {
+        const d = day.data || day;
+        totalActive += d.totalActive || 0;
+        totalFocus += d.focusTime || 0;
+        totalDistracted += d.distractedTime || 0;
+        scores.push(d.score || 0);
+        const sessions = d.focusSessions || [];
+        totalSessions += sessions.length;
+        completedSessions += sessions.filter(s => s.status === "completed").length;
+        Object.entries(d.domains || {}).forEach(([domain, info]) => {
+          if (!allDomains[domain]) allDomains[domain] = { time: 0, category: info.category || "Other", visits: 0 };
+          allDomains[domain].time += info.time || 0;
+          allDomains[domain].visits += info.visits || 0;
+        });
+      });
+    }
+
+    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+    const grade = getLetterGrade(avgScore);
+    const focusRatio = totalActive > 0 ? Math.round((totalFocus / totalActive) * 100) : 0;
+    const completionRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
+
+    // Top sites
+    const topSites = Object.entries(allDomains).sort((a, b) => b[1].time - a[1].time).slice(0, 5);
+
+    // Generate recommendations
+    const recs = [];
+    if (focusRatio < 50) recs.push({ icon: "⚠️", text: `Your focus ratio is ${focusRatio}%. Try blocking distracting sites during work hours to improve.` });
+    if (focusRatio >= 70) recs.push({ icon: "🏆", text: `Excellent focus ratio of ${focusRatio}%! You're in the top tier of productivity.` });
+    if (completionRate < 60 && totalSessions > 0) recs.push({ icon: "🎯", text: `Session completion is at ${completionRate}%. Try shorter 15-min sessions to build momentum.` });
+    if (completionRate >= 80 && totalSessions > 2) recs.push({ icon: "💪", text: `${completionRate}% session completion — outstanding discipline! Consider longer deep work sessions.` });
+    if (totalSessions === 0) recs.push({ icon: "📌", text: "You haven't used Focus Mode yet. Start a 25-min Pomodoro session to boost productivity." });
+    
+    const topDistractor = topSites.find(([, info]) => ["Social Media", "Entertainment"].includes(info.category));
+    if (topDistractor) {
+      recs.push({ icon: "🚫", text: `${topDistractor[0]} consumed ${formatTime(topDistractor[1].time)}. Consider setting a daily limit or blocking it.` });
+    }
+    if (recs.length === 0) recs.push({ icon: "✨", text: "Great job! Keep maintaining your productive habits." });
+
+    const rangeLabel = range === "today" ? "Today" : range === "week" ? "This Week" : range === "month" ? "This Month" : range === "year" ? "This Year" : "All Time";
+
+    const preview = document.getElementById("report-preview");
+    preview.innerHTML = `
+      <div class="report-preview-card">
+        <div style="text-align:center;margin-bottom:16px;">
+          <span style="font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:0.25em;color:var(--text-muted);">FocusGuard Report — ${rangeLabel}</span>
+        </div>
+        <div class="report-grade-hero">
+          <div class="report-grade-letter" style="color:${grade.color};">${grade.letter}</div>
+          <div class="report-grade-label">Overall Grade (Avg Score: ${avgScore})</div>
+        </div>
+        <div class="report-metrics-row">
+          <div class="report-metric-cell">
+            <div class="report-metric-value">${formatTime(totalActive)}</div>
+            <span class="report-metric-label">Screen Time</span>
+          </div>
+          <div class="report-metric-cell">
+            <div class="report-metric-value" style="color:#10B981;">${focusRatio}%</div>
+            <span class="report-metric-label">Focus Ratio</span>
+          </div>
+          <div class="report-metric-cell">
+            <div class="report-metric-value">${totalSessions}</div>
+            <span class="report-metric-label">Focus Sessions</span>
+          </div>
+          <div class="report-metric-cell">
+            <div class="report-metric-value" style="color:${completionRate >= 70 ? '#10B981' : '#F59E0B'};">${completionRate}%</div>
+            <span class="report-metric-label">Completion Rate</span>
+          </div>
+        </div>
+        <div class="report-recommendations">
+          <h4 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:16px;">📋 Recommendations</h4>
+          ${recs.map(r => `<div class="report-rec-item"><span class="report-rec-icon">${r.icon}</span><span class="report-rec-text">${r.text}</span></div>`).join("")}
+        </div>
+        <div class="report-download-row">
+          <button class="btn-sync" onclick="downloadReport()" style="border-radius:16px;padding:10px 24px;">
+            📥 Download as HTML
+          </button>
+        </div>
+      </div>
+    `;
+
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v8M3 6l4-4 4 4M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Generate Report`;
+    btn.disabled = false;
+  } catch (e) {
+    console.error("Report generation error:", e);
+    const btn = document.getElementById("btn-generate-report");
+    btn.textContent = "Generate Report";
+    btn.disabled = false;
+  }
+}
+
+function downloadReport() {
+  const preview = document.getElementById("report-preview");
+  if (!preview) return;
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FocusGuard Report</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0F172A;color:#E2E8F0;max-width:700px;margin:40px auto;padding:40px;border-radius:24px;border:1px solid rgba(255,255,255,0.06);}
+h1{text-align:center;font-size:14px;font-weight:900;letter-spacing:0.25em;text-transform:uppercase;color:#94A3B8;margin-bottom:32px;}
+.grade{text-align:center;font-size:80px;font-weight:900;font-family:monospace;}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:32px 0;}
+.metric{text-align:center;padding:20px;background:rgba(255,255,255,0.04);border-radius:16px;border:1px solid rgba(255,255,255,0.06);}
+.metric-value{font-size:24px;font-weight:900;font-family:monospace;}
+.metric-label{font-size:10px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.1em;margin-top:4px;display:block;}
+.rec{padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;gap:12px;font-size:14px;}
+.footer{text-align:center;margin-top:32px;font-size:11px;color:#475569;}
+</style></head><body>
+<h1>FocusGuard Productivity Report</h1>
+${preview.innerHTML}
+<div class="footer">Generated by FocusGuard · ${new Date().toLocaleDateString()}</div>
+</body></html>`;
+  downloadFile(html, `focusguard-report-${new Date().toISOString().split("T")[0]}.html`, "text/html");
+}
 }
