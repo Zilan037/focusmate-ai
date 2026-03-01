@@ -845,7 +845,7 @@ function renderDomainsTable(domains, settings) {
   const dailyLimits = settings.dailyLimits || {};
   
   visible.forEach(([domain, info], i) => {
-    const isBlocked = (settings.blockedDomains || []).some(b => (typeof b === "string" ? b : b.domain) === domain);
+    const isBlocked = (settings.blockedDomains || []).some(b => b && (typeof b === "string" ? b : b.domain) === domain);
     const color = Categories.getCategoryColor(info.category || "Other");
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
     const pctOfTotal = totalTime > 0 ? Math.round((info.time / totalTime) * 100) : 0;
@@ -1145,7 +1145,7 @@ function setupBlocklistActions() {
 
   document.getElementById("btn-export-blocklist")?.addEventListener("click", async () => {
     const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
-    const domains = (settings.blockedDomains || []).map(b => typeof b === "string" ? b : b.domain);
+    const domains = (settings.blockedDomains || []).filter(b => b).map(b => typeof b === "string" ? b : b.domain);
     const text = domains.join(", ");
     navigator.clipboard.writeText(text).then(() => alert("Blocklist copied to clipboard!"));
   });
@@ -1845,7 +1845,7 @@ async function loadFocusBlockedSites() {
     // Only load user-blocked domains (non-system) for convenience
     const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
     focusBlockedSites = (settings.blockedDomains || [])
-      .filter(b => !(typeof b === "object" && b.systemDefault))
+      .filter(b => b && !(typeof b === "object" && b.systemDefault))
       .map(b => typeof b === "string" ? b : b.domain);
     renderFocusSitePills();
   } catch (e) {}
@@ -2441,6 +2441,7 @@ function drawSiteDiveChart(canvasId, data, color, isHourly = false) {
       const dayLabel = new Date(Date.now() - (data.length - 1 - i) * 86400000).toLocaleDateString("en", { weekday: "short" });
       ctx.fillText(dayLabel, x, h - 4);
     });
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
