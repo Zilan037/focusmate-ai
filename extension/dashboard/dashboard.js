@@ -46,9 +46,11 @@ function animateNumber(el, target, duration = 600, suffix = "") {
 }
 
 function formatTime(m) {
-  if (!m) return "0h 0m";
+  if (!m || m === 0) return "0m";
+  if (m < 1) return Math.round(m * 60) + "s";
   const h = Math.floor(m / 60);
   const mins = Math.round(m % 60);
+  if (h === 0) return `${mins}m`;
   return `${h}h ${mins}m`;
 }
 
@@ -305,6 +307,7 @@ async function loadOverview() {
   drawCategoryDonut(usage.domains || {});
   drawHourlyChart(usage.hourlyActivity || []);
   drawWeeklyChart(weekData || []);
+  drawKpiSparklines(weekData || []);
 }
 
 // ─── Quick Actions ───
@@ -335,6 +338,74 @@ function getCtx(id) {
   const ctx = canvas.getContext("2d");
   ctx.scale(dpr, dpr);
   return { ctx, w, h };
+}
+
+// ─── KPI Sparklines (mini trend charts in overview cards) ───
+function drawKpiSparklines(weekData) {
+  if (!weekData || weekData.length < 2) return;
+  const days = weekData.slice(0, 7).reverse();
+  
+  drawMiniSparkline("spark-active", days.map(d => d.data.totalActive || 0), "#3B82F6");
+  drawMiniSparkline("spark-focus", days.map(d => {
+    const total = d.data.totalActive || 1;
+    return Math.round(((d.data.focusTime || 0) / total) * 100);
+  }), "#10B981");
+}
+
+function drawMiniSparkline(canvasId, data, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || data.length < 2) return;
+  const dpr = window.devicePixelRatio || 1;
+  const w = 96, h = 48;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + "px";
+  canvas.style.height = h + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  
+  const maxVal = Math.max(1, ...data);
+  const minVal = Math.min(...data);
+  const range = maxVal - minVal || 1;
+  const stepX = w / (data.length - 1);
+  const pad = 4;
+  
+  // Area fill
+  ctx.beginPath();
+  ctx.moveTo(0, h);
+  data.forEach((v, i) => {
+    const x = i * stepX;
+    const y = pad + ((1 - (v - minVal) / range) * (h - pad * 2));
+    ctx.lineTo(x, y);
+  });
+  ctx.lineTo(w, h);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, color + "30");
+  grad.addColorStop(1, color + "05");
+  ctx.fillStyle = grad;
+  ctx.fill();
+  
+  // Line
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = i * stepX;
+    const y = pad + ((1 - (v - minVal) / range) * (h - pad * 2));
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = "round";
+  ctx.stroke();
+  
+  // End dot
+  const lastX = (data.length - 1) * stepX;
+  const lastY = pad + ((1 - (data[data.length - 1] - minVal) / range) * (h - pad * 2));
+  ctx.beginPath();
+  ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
 }
 
 function getChartColors() {
