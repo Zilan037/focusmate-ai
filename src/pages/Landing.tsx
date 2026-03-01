@@ -508,10 +508,9 @@ const Landing = () => {
 
       {/* ═══════════════════════════════════════
           SECTION 3.5 — PRODUCT SHOWCASE
-          Real extension screenshots as marketing images
           ═══════════════════════════════════════ */}
-      <Section id="product" ariaLabel="Product showcase" className="bg-secondary/30 overflow-hidden">
-        <div className="text-center mb-16">
+      <Section id="product" ariaLabel="Product showcase">
+        <div className="text-center">
           <SectionLabel>See It In Action</SectionLabel>
           <SectionTitle>A glance at the real experience.</SectionTitle>
           <SectionDesc>
@@ -519,104 +518,74 @@ const Landing = () => {
           </SectionDesc>
         </div>
 
-        {/* Showcase Grid */}
-        <motion.div variants={staggerContainer} className="grid lg:grid-cols-3 gap-8 items-start">
-          {/* Card 1 — Stats Dashboard */}
-          <motion.div variants={fadeUp} className="flex flex-col items-center gap-5">
-            <TiltCard className="relative rounded-[20px] border border-border bg-card p-2 shadow-2xl shadow-primary/10 w-full max-w-[320px] group">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-1 text-[11px] font-bold text-primary-foreground shadow-lg shadow-primary/30">
-                  <BarChart3 className="h-3 w-3" /> Stats View
-                </span>
+        <motion.div variants={staggerContainer} className="mt-16 flex flex-col lg:flex-row items-end justify-center gap-6 lg:gap-10">
+          {/* Card 1 — Stats */}
+          <motion.div variants={fadeUp} className="flex flex-col items-center gap-6 w-full max-w-[280px]">
+            <div className="relative w-full">
+              <div className="rounded-2xl bg-gradient-to-b from-primary/[0.06] to-transparent p-[1px]">
+                <div className="rounded-2xl bg-card overflow-hidden shadow-xl shadow-primary/[0.06]">
+                  <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/40 bg-secondary/40">
+                    <div className="flex gap-1"><div className="h-2 w-2 rounded-full bg-destructive/40" /><div className="h-2 w-2 rounded-full bg-warning/40" /><div className="h-2 w-2 rounded-full bg-productive/40" /></div>
+                    <span className="flex-1 text-center text-[9px] font-mono text-foreground/30">Stats</span>
+                  </div>
+                  <img src={extDashboard} alt="FocusGuard Stats Dashboard showing productivity score" className="w-full h-auto block" loading="lazy" />
+                </div>
               </div>
-              <div className="rounded-[14px] overflow-hidden bg-background">
-                <img src={extDashboard} alt="FocusGuard Stats Dashboard showing productivity score and daily metrics" className="w-full h-auto" loading="lazy" />
-              </div>
-              {/* Floating badge */}
-              <motion.div
-                className="absolute -right-4 top-1/3 rounded-xl border border-border bg-card px-3 py-2 shadow-lg text-xs font-semibold hidden lg:flex items-center gap-1.5"
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <TrendingUp className="h-3.5 w-3.5 text-productive" />
-                <span className="text-foreground/80">Score: 87</span>
-              </motion.div>
-            </TiltCard>
-            <div className="text-center px-2">
-              <h3 className="text-base font-bold text-foreground">Productivity Dashboard</h3>
-              <p className="text-sm text-foreground/50 mt-1 leading-relaxed">Real-time score, focus vs. distraction time, daily goals & streak tracking.</p>
+            </div>
+            <div className="text-center">
+              <h3 className="text-[15px] font-bold text-foreground">Productivity Dashboard</h3>
+              <p className="text-[13px] text-foreground/50 mt-1.5 leading-relaxed">Real-time score, focus vs. distraction, daily goals & streaks.</p>
             </div>
           </motion.div>
 
-          {/* Card 2 — Focus Mode (featured/larger) */}
-          <motion.div variants={fadeUp} className="flex flex-col items-center gap-5 lg:-mt-6">
-            <TiltCard className="relative rounded-[20px] border-2 border-primary/30 bg-card p-2 shadow-2xl shadow-primary/15 w-full max-w-[320px] group ring-1 ring-primary/10">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-info px-4 py-1.5 text-[11px] font-bold text-primary-foreground shadow-lg shadow-primary/30">
-                  <Target className="h-3 w-3" /> Focus Mode
-                  <span className="ml-1 h-1.5 w-1.5 rounded-full bg-primary-foreground animate-pulse" />
-                </span>
+          {/* Card 2 — Focus Mode (hero, elevated) */}
+          <motion.div variants={fadeUp} className="flex flex-col items-center gap-6 w-full max-w-[300px] lg:-mb-4">
+            <div className="relative w-full">
+              <div className="absolute -inset-[1px] rounded-[18px] bg-gradient-to-b from-primary/30 via-primary/10 to-transparent blur-[1px]" />
+              <div className="relative rounded-[18px] bg-card overflow-hidden shadow-2xl shadow-primary/10 ring-1 ring-primary/15">
+                <div className="flex items-center gap-1.5 px-3 py-2.5 border-b border-border/40 bg-gradient-to-r from-primary/[0.06] to-transparent">
+                  <div className="flex gap-1"><div className="h-2 w-2 rounded-full bg-destructive/40" /><div className="h-2 w-2 rounded-full bg-warning/40" /><div className="h-2 w-2 rounded-full bg-productive/40" /></div>
+                  <span className="flex-1 text-center text-[9px] font-mono text-primary/60 font-semibold">Focus Mode</span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-productive animate-pulse" />
+                </div>
+                <img src={extFocus} alt="FocusGuard Focus Mode with task management and timed sessions" className="w-full h-auto block" loading="lazy" />
               </div>
-              <div className="rounded-[14px] overflow-hidden bg-background">
-                <img src={extFocus} alt="FocusGuard Focus Mode with Allow Only mode and task management" className="w-full h-auto" loading="lazy" />
+              {/* Subtle glow behind hero card */}
+              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-16 bg-primary/8 rounded-full blur-2xl pointer-events-none" />
+            </div>
+            <div className="text-center">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/8 border border-primary/15 px-3 py-1 text-[10px] font-bold text-primary mb-2">
+                <Target className="h-3 w-3" /> Most Popular
               </div>
-              {/* Floating badges */}
-              <motion.div
-                className="absolute -left-5 top-1/4 rounded-xl border border-border bg-card px-3 py-2 shadow-lg text-xs font-semibold hidden lg:flex items-center gap-1.5"
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-              >
-                <Lock className="h-3.5 w-3.5 text-primary" />
-                <span className="text-foreground/80">Allow Only</span>
-              </motion.div>
-              <motion.div
-                className="absolute -right-5 bottom-1/4 rounded-xl border border-productive/30 bg-card px-3 py-2 shadow-lg text-xs font-semibold hidden lg:flex items-center gap-1.5"
-                animate={{ y: [0, 6, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              >
-                <Timer className="h-3.5 w-3.5 text-productive" />
-                <span className="text-foreground/80">25m Session</span>
-              </motion.div>
-            </TiltCard>
-            <div className="text-center px-2">
-              <h3 className="text-base font-bold text-foreground">Deep Focus Sessions</h3>
-              <p className="text-sm text-foreground/50 mt-1 leading-relaxed">Allow-only or block mode, task tracking, and timed sessions for maximum productivity.</p>
+              <h3 className="text-[15px] font-bold text-foreground">Deep Focus Sessions</h3>
+              <p className="text-[13px] text-foreground/50 mt-1.5 leading-relaxed">Allow-only or block mode, task tracking & timed sessions.</p>
             </div>
           </motion.div>
 
           {/* Card 3 — Activity */}
-          <motion.div variants={fadeUp} className="flex flex-col items-center gap-5">
-            <TiltCard className="relative rounded-[20px] border border-border bg-card p-2 shadow-2xl shadow-primary/10 w-full max-w-[320px] group">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-info px-3.5 py-1 text-[11px] font-bold text-primary-foreground shadow-lg shadow-info/30">
-                  <Activity className="h-3 w-3" /> Activity
-                </span>
+          <motion.div variants={fadeUp} className="flex flex-col items-center gap-6 w-full max-w-[280px]">
+            <div className="relative w-full">
+              <div className="rounded-2xl bg-gradient-to-b from-info/[0.06] to-transparent p-[1px]">
+                <div className="rounded-2xl bg-card overflow-hidden shadow-xl shadow-info/[0.06]">
+                  <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/40 bg-secondary/40">
+                    <div className="flex gap-1"><div className="h-2 w-2 rounded-full bg-destructive/40" /><div className="h-2 w-2 rounded-full bg-warning/40" /><div className="h-2 w-2 rounded-full bg-productive/40" /></div>
+                    <span className="flex-1 text-center text-[9px] font-mono text-foreground/30">Activity</span>
+                  </div>
+                  <img src={extStats} alt="FocusGuard Activity view with category tracking" className="w-full h-auto block" loading="lazy" />
+                </div>
               </div>
-              <div className="rounded-[14px] overflow-hidden bg-background">
-                <img src={extStats} alt="FocusGuard Activity view with category tracking and session stats" className="w-full h-auto" loading="lazy" />
-              </div>
-              {/* Floating badge */}
-              <motion.div
-                className="absolute -left-4 top-1/3 rounded-xl border border-border bg-card px-3 py-2 shadow-lg text-xs font-semibold hidden lg:flex items-center gap-1.5"
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-              >
-                <Eye className="h-3.5 w-3.5 text-info" />
-                <span className="text-foreground/80">3 Sites</span>
-              </motion.div>
-            </TiltCard>
-            <div className="text-center px-2">
-              <h3 className="text-base font-bold text-foreground">Activity Tracking</h3>
-              <p className="text-sm text-foreground/50 mt-1 leading-relaxed">Smart category detection, session counting, and site-level time insights.</p>
+            </div>
+            <div className="text-center">
+              <h3 className="text-[15px] font-bold text-foreground">Activity Tracking</h3>
+              <p className="text-[13px] text-foreground/50 mt-1.5 leading-relaxed">Smart category detection, session counting & site insights.</p>
             </div>
           </motion.div>
         </motion.div>
 
-        {/* Bottom trust line */}
-        <motion.div variants={fadeUp} className="mt-14 text-center">
-          <p className="text-xs text-foreground/40 flex items-center justify-center gap-2 flex-wrap">
-            <EyeOff className="h-3.5 w-3.5" />
-            100% local processing · No data ever leaves your browser · Open source
+        <motion.div variants={fadeUp} className="mt-12 text-center">
+          <p className="text-[11px] text-foreground/35 flex items-center justify-center gap-2">
+            <EyeOff className="h-3 w-3" />
+            100% local · No data leaves your browser · Open source
           </p>
         </motion.div>
       </Section>
