@@ -17,6 +17,7 @@ body {
   inset: 0;
   background: var(--bg-deep);
   z-index: 0;
+  pointer-events: none;
 }
 
 .orb {

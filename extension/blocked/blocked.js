@@ -75,7 +75,7 @@ function init() {
   });
 
   document.getElementById("btn-unlock").addEventListener("click", () => {
-    chrome.runtime.sendMessage({ action: "unblockDomain", domain }, () => {
+    safeMessage({ action: "unblockDomain", domain }, () => {
       window.location.replace("https://" + domain);
     });
   });
@@ -84,16 +84,84 @@ function init() {
   setupQuickUnblock(domain, reason);
 }
 
+// ─── Safe messaging with fallback ───
+function safeMessage(msg, callback) {
+  try {
+    chrome.runtime.sendMessage(msg, (response) => {
+      if (chrome.runtime.lastError) {
+        console.warn("[FocusGuard] Message failed:", chrome.runtime.lastError.message);
+        // Fallback: try direct storage manipulation for unblock
+        if (msg.action === "unblockDomain") {
+          fallbackUnblock(msg.domain).then(() => {
+            if (callback) callback();
+          });
+          return;
+        }
+      }
+      if (callback) callback(response);
+    });
+  } catch (e) {
+    console.warn("[FocusGuard] sendMessage error:", e);
+    if (msg.action === "unblockDomain") {
+      fallbackUnblock(msg.domain).then(() => {
+        if (callback) callback();
+      });
+    }
+  }
+}
+
+// ─── Fallback: unblock domain directly via storage when service worker is down ───
+async function fallbackUnblock(domain) {
+  try {
+    const result = await chrome.storage.local.get("focusguard_settings");
+    const settings = result.focusguard_settings;
+    if (!settings || !settings.blockedDomains) return;
+    
+    const entry = settings.blockedDomains.find(b => {
+      const d = typeof b === "string" ? b : b.domain;
+      return d === domain;
+    });
+    
+    // Don't unblock system defaults
+    if (entry && typeof entry === "object" && entry.systemDefault) {
+      alert("This site is protected by FocusGuard Safety Shield and cannot be unblocked.");
+      return;
+    }
+    
+    settings.blockedDomains = settings.blockedDomains.filter(b => {
+      const d = typeof b === "string" ? b : b.domain;
+      return d !== domain;
+    });
+    
+    await chrome.storage.local.set({ focusguard_settings: settings });
+    
+    // Also try to clear declarativeNetRequest rules
+    try {
+      const rules = await chrome.declarativeNetRequest.getDynamicRules();
+      const ruleIds = rules.filter(r => r.id >= 20000 && r.id < 22500).map(r => r.id);
+      if (ruleIds.length > 0) {
+        await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: ruleIds });
+      }
+    } catch (e) {}
+  } catch (e) {
+    console.warn("[FocusGuard] Fallback unblock failed:", e);
+  }
+}
+
 async function setupQuickUnblock(domain, reason) {
   // Don't show for system/safety blocks
   if (reason.includes("Safety Shield") || reason.includes("Safety Mode")) return;
   
   try {
-    const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
-    const entry = (settings.blockedDomains || []).find(b => {
+    const result = await chrome.storage.local.get("focusguard_settings");
+    const settings = result.focusguard_settings || {};
+    const blockedDomains = settings.blockedDomains || [];
+    
+    const entry = blockedDomains.find(b => {
       const d = typeof b === "string" ? b : b.domain;
       return d === domain;
     });
+    
     // Only show for user-blocked (not system default, not locked)
     if (entry && typeof entry === "object" && (entry.systemDefault || entry.locked)) return;
     
@@ -104,7 +172,8 @@ async function setupQuickUnblock(domain, reason) {
     if (section) {
       section.style.display = "block";
       document.getElementById("btn-quick-unblock").addEventListener("click", async () => {
-        await chrome.runtime.sendMessage({ action: "unblockDomain", domain });
+        await fallbackUnblock(domain);
+        safeMessage({ action: "unblockDomain", domain }, () => {});
         window.location.replace("https://" + domain);
       });
     }
@@ -120,6 +189,29 @@ function showQuote(index) {
 // ─── Auto-redirect if domain is no longer blocked ───
 async function checkIfStillBlocked(domain) {
   try {
+    // First check via storage directly (works even if service worker is down)
+    const result = await chrome.storage.local.get("focusguard_settings");
+    const settings = result.focusguard_settings || {};
+    const blockedDomains = settings.blockedDomains || [];
+    
+    const isInList = blockedDomains.some(b => {
+      const d = typeof b === "string" ? b : b.domain;
+      const enabled = typeof b === "object" ? b.enabled !== false : true;
+      return enabled && (domain === d || domain.endsWith("." + d));
+    });
+    
+    if (!isInList) {
+      // Also check focus state
+      const focusResult = await chrome.storage.local.get("focusguard_focus");
+      const focusState = focusResult.focusguard_focus || {};
+      
+      if (!focusState.active) {
+        window.location.replace("https://" + domain);
+        return;
+      }
+    }
+    
+    // Also try messaging as backup
     const response = await chrome.runtime.sendMessage({ action: "checkDomainBlocked", domain });
     if (response && !response.blocked) {
       window.location.replace("https://" + domain);
@@ -195,6 +287,7 @@ function setupBreathing() {
 async function checkRequirements() {
   try {
     const reqs = await chrome.runtime.sendMessage({ action: "checkUnlockRequirements" });
+    if (!reqs || reqs.error) return;
 
     const focusPct = Math.min(100, (reqs.focusMinutes / reqs.focusRequired) * 100);
     document.getElementById("req-focus-status").textContent = `${reqs.focusMinutes}/${reqs.focusRequired} min`;
@@ -259,7 +352,7 @@ function setupOverride(domain) {
 
   overrideBtn.addEventListener("click", async () => {
     if (!reflectionComplete) return;
-    await chrome.runtime.sendMessage({ action: "recordBypass" });
+    safeMessage({ action: "recordBypass" }, () => {});
     window.location.replace("https://" + domain);
   });
 }
