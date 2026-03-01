@@ -163,14 +163,14 @@ const CompareRow = ({ feature, fg, others }: { feature: string; fg: boolean; oth
 const FaqItem = ({ q, a }: { q: string; a: string }) => {
   const [open, setOpen] = useState(false);
   return (
-    <motion.div variants={fadeUp} className="border-b border-border/40 last:border-0">
+    <motion.div variants={fadeUp} className="border-b border-border/20 last:border-0">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between py-5 text-left group"
+        className="flex w-full items-center justify-between py-6 text-left group"
       >
-        <span className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">{q}</span>
+        <span className="text-[15px] sm:text-base font-semibold text-foreground/90 group-hover:text-primary transition-colors">{q}</span>
         <motion.div animate={{ rotate: open ? 45 : 0 }} transition={{ duration: 0.2 }}>
-          <Plus className="h-5 w-5 text-foreground/40 shrink-0" />
+          <Plus className="h-4 w-4 text-muted-foreground shrink-0 ml-4" />
         </motion.div>
       </button>
       <AnimatePresence>
@@ -808,7 +808,7 @@ const Landing = () => {
         <SectionTitle>Common questions.</SectionTitle>
         <SectionDesc>Everything you need to know about FocusGuard.</SectionDesc>
 
-        <motion.div variants={staggerContainer} className="mt-14 max-w-2xl">
+        <motion.div variants={staggerContainer} className="mt-14 max-w-3xl mx-auto w-full">
           {[
             { q: "Is FocusGuard really free?", a: "Yes, completely free and open-source. No premium tiers, no hidden fees, no subscriptions. All features are available to everyone." },
             { q: "Does it collect my browsing data?", a: "Absolutely not. All data is processed and stored locally in your browser using Chrome's storage API. Nothing is ever sent to any server." },
