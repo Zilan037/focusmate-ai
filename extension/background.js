@@ -320,7 +320,14 @@ async function handleTabChange(tab) {
 
   if (currentSession && currentSession.domain === domain) return;
 
+  // Track category transition before committing old session
+  const prevDomain = currentSession ? currentSession.domain : null;
   await commitSession();
+
+  // Record category transition for Sankey
+  if (prevDomain && prevDomain !== domain) {
+    await recordCategoryTransition(prevDomain, domain);
+  }
 
   currentSession = {
     domain,
@@ -330,6 +337,21 @@ async function handleTabChange(tab) {
 
   trackDomainSwitch(domain);
   await checkBlocking(domain, tab.id);
+}
+
+async function recordCategoryTransition(fromDomain, toDomain) {
+  try {
+    const settings = await Storage.getSettings();
+    const fromCat = Categories.categorize(fromDomain, settings.categoryOverrides);
+    const toCat = Categories.categorize(toDomain, settings.categoryOverrides);
+    if (fromCat === toCat) return; // skip same-category transitions
+
+    const usage = await Storage.getTodayUsage();
+    if (!usage.categoryTransitions) usage.categoryTransitions = {};
+    const key = `${fromCat}→${toCat}`;
+    usage.categoryTransitions[key] = (usage.categoryTransitions[key] || 0) + 1;
+    await Storage.saveTodayUsage(usage);
+  } catch (e) {}
 }
 
 async function commitSession() {
