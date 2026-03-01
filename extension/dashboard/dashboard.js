@@ -34,6 +34,7 @@ async function init() {
   await safeLoad(loadDeepStats);
   await safeLoad(loadBlocklist);
   await safeLoad(loadSettings);
+  await safeLoad(loadPresetConfig);
   await safeLoad(loadSidebarStats);
   await safeLoad(() => loadDailyLimitsUI());
   await safeLoad(() => loadReports("today"));
@@ -3305,5 +3306,131 @@ async function drawCategorySankey() {
     }
   } catch (e) {
     console.error("Sankey error:", e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// QUICK MODE PRESETS (Dashboard Config)
+// ═══════════════════════════════════════════════════════════════
+
+async function loadPresetConfig() {
+  const container = document.getElementById("preset-config-cards");
+  if (!container) return;
+  
+  try {
+    const presets = await chrome.runtime.sendMessage({ action: "getPresets" });
+    container.innerHTML = "";
+    
+    const presetOrder = ["work", "study", "break"];
+    for (const key of presetOrder) {
+      const preset = presets[key];
+      if (!preset) continue;
+      
+      const card = document.createElement("div");
+      card.className = "preset-config-card";
+      card.innerHTML = `
+        <div class="preset-config-header">
+          <span class="preset-config-icon">${preset.icon}</span>
+          <div class="preset-config-title-wrap">
+            <span class="preset-config-title">${preset.name}</span>
+            <span class="preset-config-mode">${preset.mode === "block" ? "Block Mode" : "Allow Mode"} · ${preset.duration}m</span>
+          </div>
+          <button class="preset-config-toggle-mode btn-ghost btn-sm" data-key="${key}" title="Switch mode">
+            ${preset.mode === "block" ? "🚫 Block" : "🔒 Allow"}
+          </button>
+        </div>
+        <div class="preset-config-body">
+          <div class="preset-config-sites">
+            <label class="preset-config-label">${preset.mode === "block" ? "Blocked Sites" : "Allowed Sites"}</label>
+            <div class="preset-config-pills" id="preset-pills-${key}">
+              ${(preset.mode === "block" ? preset.blockedSites : preset.allowedSites).map((s, i) =>
+                `<span class="focus-site-pill ${preset.mode === "block" ? "danger" : "success"}"><span>${s}</span><button data-key="${key}" data-idx="${i}" class="preset-remove-site">✕</button></span>`
+              ).join("")}
+            </div>
+            <div class="input-row" style="margin-top:8px;">
+              <input type="text" class="input preset-site-input" data-key="${key}" placeholder="e.g. youtube.com" style="flex:1;" />
+              <button class="btn-ghost btn-sm preset-add-site" data-key="${key}" style="color:${preset.mode === "block" ? "var(--danger)" : "var(--success)"}">+ Add</button>
+            </div>
+          </div>
+          <div class="preset-config-duration" style="margin-top:12px;">
+            <label class="preset-config-label">Duration</label>
+            <div class="focus-duration-pills" style="gap:8px;">
+              ${[15, 25, 45, 60].map(d => `<button class="focus-dur-pill preset-dur-btn ${d === preset.duration ? "active" : ""}" data-key="${key}" data-dur="${d}">${d}m</button>`).join("")}
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    }
+    
+    // Event listeners
+    container.querySelectorAll(".preset-remove-site").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const k = btn.dataset.key;
+        const idx = parseInt(btn.dataset.idx);
+        const p = await chrome.runtime.sendMessage({ action: "getPresets" });
+        const list = p[k].mode === "block" ? "blockedSites" : "allowedSites";
+        p[k][list].splice(idx, 1);
+        await chrome.runtime.sendMessage({ action: "savePresets", presets: p });
+        loadPresetConfig();
+      });
+    });
+    
+    container.querySelectorAll(".preset-add-site").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const k = btn.dataset.key;
+        const input = container.querySelector(`.preset-site-input[data-key="${k}"]`);
+        const domain = normalizeDomainInput(input.value);
+        if (!domain) return;
+        const p = await chrome.runtime.sendMessage({ action: "getPresets" });
+        const list = p[k].mode === "block" ? "blockedSites" : "allowedSites";
+        if (!p[k][list].includes(domain)) {
+          p[k][list].push(domain);
+          await chrome.runtime.sendMessage({ action: "savePresets", presets: p });
+        }
+        input.value = "";
+        loadPresetConfig();
+      });
+    });
+    
+    container.querySelectorAll(".preset-site-input").forEach(input => {
+      input.addEventListener("keydown", async (e) => {
+        if (e.key !== "Enter") return;
+        const k = input.dataset.key;
+        const domain = normalizeDomainInput(input.value);
+        if (!domain) return;
+        const p = await chrome.runtime.sendMessage({ action: "getPresets" });
+        const list = p[k].mode === "block" ? "blockedSites" : "allowedSites";
+        if (!p[k][list].includes(domain)) {
+          p[k][list].push(domain);
+          await chrome.runtime.sendMessage({ action: "savePresets", presets: p });
+        }
+        input.value = "";
+        loadPresetConfig();
+      });
+    });
+    
+    container.querySelectorAll(".preset-dur-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const k = btn.dataset.key;
+        const dur = parseInt(btn.dataset.dur);
+        const p = await chrome.runtime.sendMessage({ action: "getPresets" });
+        p[k].duration = dur;
+        await chrome.runtime.sendMessage({ action: "savePresets", presets: p });
+        loadPresetConfig();
+      });
+    });
+    
+    container.querySelectorAll(".preset-config-toggle-mode").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const k = btn.dataset.key;
+        const p = await chrome.runtime.sendMessage({ action: "getPresets" });
+        p[k].mode = p[k].mode === "block" ? "allow" : "block";
+        await chrome.runtime.sendMessage({ action: "savePresets", presets: p });
+        loadPresetConfig();
+      });
+    });
+  } catch (e) {
+    console.warn("Preset config error:", e);
   }
 }

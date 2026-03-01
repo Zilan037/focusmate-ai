@@ -1524,3 +1524,89 @@ body {
   transition: all var(--duration-fast);
 }
 .popup-disabled-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-glow); }
+
+/* ═══ QUICK MODE PRESETS ═══ */
+.ctrl-section-desc-sm {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: var(--sp-3);
+}
+.preset-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.preset-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--bg-glass-border);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  font-family: var(--font-sans);
+  text-align: left;
+  width: 100%;
+}
+[data-theme="light"] .preset-card {
+  background: rgba(0, 0, 0, 0.02);
+}
+.preset-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--bg-glass-border-hover);
+  transform: translateY(-1px);
+}
+[data-theme="light"] .preset-card:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+.preset-card.active {
+  border-color: var(--preset-color, var(--accent));
+  background: rgba(37, 99, 235, 0.06);
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.08);
+}
+[data-theme="light"] .preset-card.active {
+  background: rgba(37, 99, 235, 0.06);
+}
+.preset-icon {
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--bg-glass-border);
+  flex-shrink: 0;
+}
+[data-theme="light"] .preset-icon {
+  background: rgba(0, 0, 0, 0.04);
+}
+.preset-info {
+  flex: 1;
+  min-width: 0;
+}
+.preset-name {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+.preset-meta {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.preset-status {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--success);
+  white-space: nowrap;
+  flex-shrink: 0;
+}

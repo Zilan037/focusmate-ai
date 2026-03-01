@@ -131,6 +131,55 @@ const Storage = {
     await this.set("focusguard_focus", state);
   },
 
+  // Quick Mode Presets
+  async getPresets() {
+    const presets = await this.get("focusguard_presets");
+    return presets || {
+      work: {
+        name: "Work Mode",
+        icon: "💼",
+        color: "#2563EB",
+        mode: "block",
+        blockedSites: ["youtube.com", "reddit.com", "twitter.com", "x.com", "instagram.com", "tiktok.com", "facebook.com"],
+        allowedSites: [],
+        duration: 45,
+        enabled: false,
+      },
+      study: {
+        name: "Study Mode",
+        icon: "📚",
+        color: "#6366F1",
+        mode: "allow",
+        blockedSites: [],
+        allowedSites: ["docs.google.com", "wikipedia.org", "github.com", "stackoverflow.com", "notion.so"],
+        duration: 25,
+        enabled: false,
+      },
+      break: {
+        name: "Break Mode",
+        icon: "☕",
+        color: "#10B981",
+        mode: "block",
+        blockedSites: [],
+        allowedSites: [],
+        duration: 10,
+        enabled: false,
+      },
+    };
+  },
+
+  async savePresets(presets) {
+    await this.set("focusguard_presets", presets);
+  },
+
+  async getActivePreset() {
+    return await this.get("focusguard_active_preset");
+  },
+
+  async setActivePreset(presetKey) {
+    await this.set("focusguard_active_preset", presetKey);
+  },
+
   // Streak tracking
   async getStreak() {
     const streak = await this.get("focusguard_streak");
