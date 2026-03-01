@@ -955,24 +955,24 @@ const Landing = () => {
             {/* Story */}
             <div className="max-w-2xl mx-auto space-y-5 mb-10">
               <div className="relative">
-                <span className="absolute -top-5 -left-3 text-6xl font-extrabold text-gradient opacity-20 select-none leading-none">"</span>
+                <span className="absolute -top-5 -left-3 text-6xl font-extrabold text-gradient opacity-20 select-none leading-none">&ldquo;</span>
                 <p className="text-muted-foreground leading-relaxed text-base pl-6">
                   I built FocusGuard because I saw how digital distractions were stealing hours from people
-                  who genuinely wanted to be productive — students cramming for exams, developers in deep work,
+                  who genuinely wanted to be productive. Students cramming for exams, developers in deep work,
                   researchers chasing breakthroughs.
                 </p>
               </div>
               <p className="text-muted-foreground leading-relaxed text-base">
-                Most blockers treat the symptom. I wanted to build something that understands the <span className="text-foreground font-semibold">behavior</span> —
+                Most blockers treat the symptom. I wanted to build something that understands the <span className="text-foreground font-semibold">behavior</span>,
                 why you get distracted, when it happens, and how to intervene without breaking your flow.
-                That's <span className="text-foreground font-semibold">FocusGuard</span>.
+                That&apos;s <span className="text-foreground font-semibold">FocusGuard</span>.
               </p>
               <p className="text-muted-foreground leading-relaxed text-base italic border-l-2 border-primary/30 pl-5">
-                "Every feature in FocusGuard exists because I needed it myself. No fluff, no tracking,
-                no cloud dependency — just honest tools for honest work."
+                &ldquo;Every feature in FocusGuard exists because I needed it myself. No fluff, no tracking,
+                no cloud dependency, just honest tools for honest work.&rdquo;
               </p>
               <p className="text-foreground font-semibold text-lg">
-                — Made with ❤️ for curious minds.
+                Made with ❤️ for curious minds.
               </p>
             </div>
 
