@@ -594,6 +594,7 @@ async function checkBlocking(domain, tabId) {
       else if (schedule.domains && schedule.domains.includes(domain)) {
         redirectToBlocked(tabId, domain, "Scheduled block active");
         return;
+      }
     }
   }
 
@@ -1816,3 +1817,4 @@ async function handleMessage(msg) {
       return { error: "Unknown action" };
   }
 }
+
