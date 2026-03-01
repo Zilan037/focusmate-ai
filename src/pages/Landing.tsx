@@ -825,7 +825,95 @@ const Landing = () => {
       <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
       {/* ═══════════════════════════════════════
-          SECTION 10 — CTA
+          SECTION 10 — AUTHOR
+          ═══════════════════════════════════════ */}
+      <Section id="author" ariaLabel="About the creator">
+        <motion.div variants={fadeUp} className="text-center mb-12">
+          <SectionLabel>The Creator</SectionLabel>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1]">
+            Meet <span className="text-gradient">Husna Ayoub</span>
+          </h2>
+        </motion.div>
+
+        <motion.div
+          variants={scaleIn}
+          className="rounded-3xl bg-card border border-border p-10 sm:p-14 relative overflow-hidden max-w-3xl mx-auto"
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-info/5 blur-[80px] pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col items-center text-center">
+            {/* Avatar */}
+            <motion.div
+              variants={scaleIn}
+              className="w-28 h-28 rounded-full bg-gradient-to-br from-primary via-info to-primary p-[3px] mb-7 shadow-2xl shadow-primary/20"
+            >
+              <div className="w-full h-full rounded-full bg-card flex items-center justify-center">
+                <span className="text-3xl font-extrabold text-gradient">HA</span>
+              </div>
+            </motion.div>
+
+            <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-1.5">
+              Husna Ayoub
+            </h3>
+            <p className="text-sm text-muted-foreground mb-8 flex items-center gap-1.5">
+              <span>🇦🇫</span> Kabul, Afghanistan · Co-Founder — HH Nexus
+            </p>
+
+            {/* Story */}
+            <div className="max-w-2xl mx-auto space-y-5 mb-10">
+              <div className="relative">
+                <span className="absolute -top-5 -left-3 text-6xl font-extrabold text-gradient opacity-20 select-none leading-none">"</span>
+                <p className="text-muted-foreground leading-relaxed text-base pl-6">
+                  I built FocusGuard because I saw how digital distractions were stealing hours from people
+                  who genuinely wanted to be productive — students cramming for exams, developers in deep work,
+                  researchers chasing breakthroughs.
+                </p>
+              </div>
+              <p className="text-muted-foreground leading-relaxed text-base">
+                Most blockers treat the symptom. I wanted to build something that understands the <span className="text-foreground font-semibold">behavior</span> —
+                why you get distracted, when it happens, and how to intervene without breaking your flow.
+                That's <span className="text-foreground font-semibold">FocusGuard</span>.
+              </p>
+              <p className="text-muted-foreground leading-relaxed text-base italic border-l-2 border-primary/30 pl-5">
+                "Every feature in FocusGuard exists because I needed it myself. No fluff, no tracking,
+                no cloud dependency — just honest tools for honest work."
+              </p>
+              <p className="text-foreground font-semibold text-lg">
+                — Made with ❤️ for curious minds.
+              </p>
+            </div>
+
+            {/* Social links */}
+            <div className="flex items-center gap-4">
+              {[
+                { name: "LinkedIn", url: "https://www.linkedin.com/in/husna-a-7971b7272/", gradient: "from-[hsl(210,80%,55%)] to-[hsl(210,90%,40%)]", shadow: "shadow-[0_8px_30px_hsl(210,80%,55%,0.35)]", icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg> },
+                { name: "GitHub", url: "https://github.com/20-Husna", gradient: "from-[hsl(270,60%,55%)] to-[hsl(280,70%,40%)]", shadow: "shadow-[0_8px_30px_hsl(270,60%,55%,0.35)]", icon: <Github className="w-5 h-5" /> },
+                { name: "Email", url: "mailto:ayoubhusna9462@gmail.com", gradient: "from-[hsl(340,70%,55%)] to-[hsl(350,80%,45%)]", shadow: "shadow-[0_8px_30px_hsl(340,70%,55%,0.35)]", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg> },
+              ].map((social, i) => (
+                <motion.a
+                  key={social.name}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variants={fadeUp}
+                  whileHover={{ scale: 1.15, y: -5 }}
+                  whileTap={{ scale: 0.9 }}
+                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${social.gradient} ${social.shadow} flex items-center justify-center text-primary-foreground transition-all duration-300`}
+                  title={social.name}
+                >
+                  {social.icon}
+                </motion.a>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      </Section>
+
+      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+      {/* ═══════════════════════════════════════
+          SECTION 11 — CTA
           ═══════════════════════════════════════ */}
       <Section id="download" ariaLabel="Download and get started">
         <motion.div variants={scaleIn} className="text-center">
@@ -841,7 +929,7 @@ const Landing = () => {
               <Button size="lg" className="rounded-full px-8 font-semibold text-sm gap-2 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all">
                 Add to Chrome — It's Free <ArrowRight className="h-4 w-4" />
               </Button>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+              <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer">
                 <Button size="lg" variant="outline" className="rounded-full px-8 font-semibold text-sm gap-2 hover:scale-[1.02] transition-transform">
                   <Github className="h-4 w-4" /> View Source
                 </Button>
@@ -852,20 +940,58 @@ const Landing = () => {
       </Section>
 
       {/* ─── Footer ─── */}
-      <footer className="border-t border-border/30 py-8" role="contentinfo">
-        <div className="mx-auto max-w-5xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="relative py-16" role="contentinfo">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
+        <div className="mx-auto max-w-5xl px-6 flex flex-col items-center gap-8">
+          {/* Logo + brand */}
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-foreground text-background">
-              <Shield className="h-3 w-3" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground text-background">
+              <Shield className="h-3.5 w-3.5" />
             </div>
-            <span className="text-sm font-semibold text-foreground">FocusGuard</span>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-foreground leading-tight">FocusGuard</span>
+              <span className="text-[9px] text-muted-foreground/60 leading-tight tracking-[0.15em] uppercase">
+                Your focus, protected.
+              </span>
+            </div>
           </div>
-          <p className="text-xs text-foreground/40">
-            Built for behavioral productivity · {new Date().getFullYear()}
-          </p>
-          <div className="flex items-center gap-4 text-xs text-foreground/40">
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1">
+
+          {/* Nav links */}
+          <nav className="flex items-center gap-6">
+            {["Features", "Focus", "Analytics", "How It Works", "Testimonials", "Creator"].map((label) => (
+              <button
+                key={label}
+                onClick={() => {
+                  const id = label === "Creator" ? "author" : label.toLowerCase().replace(/\s/g, "");
+                  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors duration-200"
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Divider */}
+          <div className="w-48 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+
+          <div className="flex flex-col sm:flex-row items-center gap-2 text-xs text-muted-foreground/50">
+            <p>
+              © {new Date().getFullYear()} FocusGuard. Built with ❤️ by{" "}
+              <span className="text-muted-foreground/70 font-medium">Husna Ayoub</span>
+              {" "}· Co-Founder — HH Nexus
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4 text-xs text-muted-foreground/50">
+            <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1">
               <Github className="h-3.5 w-3.5" /> GitHub
+            </a>
+            <a href="https://www.linkedin.com/in/husna-a-7971b7272/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+              LinkedIn
+            </a>
+            <a href="mailto:ayoubhusna9462@gmail.com" className="hover:text-foreground transition-colors">
+              Email
             </a>
           </div>
         </div>
