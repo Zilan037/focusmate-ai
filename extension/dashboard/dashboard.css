@@ -2776,3 +2776,65 @@ canvas {
   justify-content: center;
 }
 
+/* ═══ GANTT TIMELINE ═══ */
+.gantt-timeline-wrap {
+  position: relative;
+  overflow-x: auto;
+  margin-top: 16px;
+}
+.gantt-timeline-wrap canvas {
+  display: block;
+  width: 100%;
+}
+.gantt-legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.gantt-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.gantt-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+}
+.gantt-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+[data-theme="light"] .gantt-stats-row {
+  border-top-color: rgba(0,0,0,0.06);
+}
+.gantt-stat {
+  text-align: center;
+}
+.gantt-stat-value {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+[data-theme="light"] .gantt-stat-value {
+  color: #0F172A;
+}
+.gantt-stat-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 4px;
+}

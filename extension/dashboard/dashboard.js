@@ -14,6 +14,7 @@ async function init() {
   await loadDaily();
   await loadInsights();
   await loadSessions();
+  await loadSessionTimeline();
   await loadSessionAnalytics();
   await loadDomains();
   await loadDeepStats();
@@ -2868,4 +2869,194 @@ ${preview.innerHTML}
 </body></html>`;
   downloadFile(html, `focusguard-report-${new Date().toISOString().split("T")[0]}.html`, "text/html");
 }
+}
+
+// ═══ FOCUS SESSION GANTT TIMELINE ═══
+async function loadSessionTimeline() {
+  const weekData = await chrome.runtime.sendMessage({ action: "getWeekUsage" });
+  if (!weekData) return;
+
+  const canvas = document.getElementById("gantt-canvas");
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const wrap = canvas.parentElement;
+  const w = wrap.clientWidth;
+  const rowH = 40;
+  const headerH = 28;
+  const labelW = 80;
+  const h = headerH + 7 * rowH + 10;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + "px";
+  canvas.style.height = h + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+
+  const isLight = document.documentElement.getAttribute("data-theme") === "light";
+  const textColor = isLight ? "#475569" : "#94A3B8";
+  const textMuted = isLight ? "#94A3B8" : "#64748B";
+  const gridLine = isLight ? "#F1F5F9" : "rgba(255,255,255,0.04)";
+  const bgRow = isLight ? "rgba(0,0,0,0.015)" : "rgba(255,255,255,0.015)";
+
+  const chartW = w - labelW;
+
+  // Time axis: 0–24 hours
+  const hours = [0, 3, 6, 9, 12, 15, 18, 21, 24];
+
+  // Draw header time labels
+  ctx.font = "600 10px 'Inter', system-ui, sans-serif";
+  ctx.fillStyle = textMuted;
+  ctx.textAlign = "center";
+  hours.forEach(hr => {
+    const x = labelW + (hr / 24) * chartW;
+    const label = hr === 0 ? "12a" : hr === 12 ? "12p" : hr === 24 ? "12a" : hr < 12 ? hr + "a" : (hr - 12) + "p";
+    ctx.fillText(label, x, headerH - 6);
+  });
+
+  // Collect all days (reversed so most recent is at top)
+  const days = weekData.slice(0, 7);
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  let totalSessions = 0, totalCompleted = 0, totalMinutes = 0;
+
+  days.forEach((day, i) => {
+    const y = headerH + i * rowH;
+
+    // Alternating row bg
+    if (i % 2 === 0) {
+      ctx.fillStyle = bgRow;
+      ctx.fillRect(0, y, w, rowH);
+    }
+
+    // Grid lines
+    ctx.strokeStyle = gridLine;
+    ctx.lineWidth = 1;
+    hours.forEach(hr => {
+      const x = labelW + (hr / 24) * chartW;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y + rowH);
+      ctx.stroke();
+    });
+
+    // Day label
+    const d = new Date(day.date);
+    const dayLabel = dayNames[d.getDay()];
+    const dateLabel = `${d.getMonth() + 1}/${d.getDate()}`;
+
+    ctx.font = "700 11px 'Inter', system-ui, sans-serif";
+    ctx.fillStyle = textColor;
+    ctx.textAlign = "right";
+    ctx.fillText(dayLabel, labelW - 24, y + rowH / 2 + 1);
+    ctx.font = "600 9px 'Inter', system-ui, sans-serif";
+    ctx.fillStyle = textMuted;
+    ctx.fillText(dateLabel, labelW - 24, y + rowH / 2 + 13);
+
+    // Draw sessions as Gantt bars
+    const sessions = day.data.focusSessions || [];
+    sessions.forEach(s => {
+      totalSessions++;
+      totalMinutes += s.duration || 0;
+      if (s.status === "completed") totalCompleted++;
+
+      // Parse start time
+      let startHour = 0;
+      if (s.start) {
+        const parts = s.start.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+        if (parts) {
+          let hr = parseInt(parts[1]);
+          const min = parseInt(parts[2]);
+          if (parts[3]) {
+            if (parts[3].toUpperCase() === "PM" && hr !== 12) hr += 12;
+            if (parts[3].toUpperCase() === "AM" && hr === 12) hr = 0;
+          }
+          startHour = hr + min / 60;
+        }
+      }
+
+      const durHours = (s.duration || 25) / 60;
+      const x1 = labelW + (startHour / 24) * chartW;
+      const barW = Math.max(4, (durHours / 24) * chartW);
+      const barY = y + 8;
+      const barH = rowH - 16;
+
+      // Color based on status
+      let color, colorAlpha;
+      if (s.status === "completed") {
+        color = "#10B981"; colorAlpha = "rgba(16,185,129,0.2)";
+      } else if (s.status === "abandoned" || s.status === "stopped") {
+        color = "#F43F5E"; colorAlpha = "rgba(244,63,94,0.2)";
+      } else {
+        color = "#F59E0B"; colorAlpha = "rgba(245,158,11,0.2)";
+      }
+
+      // Bar background glow
+      ctx.fillStyle = colorAlpha;
+      ctx.beginPath();
+      ctx.roundRect(x1 - 2, barY - 2, barW + 4, barH + 4, 8);
+      ctx.fill();
+
+      // Main bar
+      const grad = ctx.createLinearGradient(x1, 0, x1 + barW, 0);
+      grad.addColorStop(0, color);
+      grad.addColorStop(1, color + "99");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(x1, barY, barW, barH, 6);
+      ctx.fill();
+
+      // Duration label inside bar if wide enough
+      if (barW > 30) {
+        ctx.font = "700 9px 'Inter', system-ui, sans-serif";
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "left";
+        ctx.fillText(s.duration + "m", x1 + 6, barY + barH / 2 + 3);
+      }
+
+      // Tasks badge
+      if (barW > 55 && s.tasksCompleted !== undefined) {
+        ctx.font = "600 8px 'Inter', system-ui, sans-serif";
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.textAlign = "right";
+        ctx.fillText(`✓${s.tasksCompleted}/${s.totalTasks || 0}`, x1 + barW - 6, barY + barH / 2 + 3);
+      }
+    });
+  });
+
+  // Now-indicator for today
+  const nowHour = new Date().getHours() + new Date().getMinutes() / 60;
+  const nowX = labelW + (nowHour / 24) * chartW;
+  ctx.strokeStyle = "#3B82F6";
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.moveTo(nowX, headerH);
+  ctx.lineTo(nowX, headerH + 7 * rowH);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // "Now" label
+  ctx.font = "700 9px 'Inter', system-ui, sans-serif";
+  ctx.fillStyle = "#3B82F6";
+  ctx.textAlign = "center";
+  ctx.fillText("NOW", nowX, headerH - 16);
+  ctx.beginPath();
+  ctx.moveTo(nowX, headerH - 12);
+  ctx.lineTo(nowX - 3, headerH - 6);
+  ctx.lineTo(nowX + 3, headerH - 6);
+  ctx.closePath();
+  ctx.fillStyle = "#3B82F6";
+  ctx.fill();
+
+  // Stats row
+  const statsRow = document.getElementById("gantt-stats-row");
+  if (statsRow) {
+    const completionRate = totalSessions > 0 ? Math.round((totalCompleted / totalSessions) * 100) : 0;
+    statsRow.innerHTML = `
+      <div class="gantt-stat"><span class="gantt-stat-value">${totalSessions}</span><span class="gantt-stat-label">Total Sessions</span></div>
+      <div class="gantt-stat"><span class="gantt-stat-value">${completionRate}%</span><span class="gantt-stat-label">Completion</span></div>
+      <div class="gantt-stat"><span class="gantt-stat-value">${formatTime(totalMinutes)}</span><span class="gantt-stat-label">Total Focus</span></div>
+      <div class="gantt-stat"><span class="gantt-stat-value">${totalSessions > 0 ? Math.round(totalMinutes / totalSessions) + "m" : "0m"}</span><span class="gantt-stat-label">Avg Duration</span></div>
+    `;
+  }
 }
