@@ -3455,6 +3455,28 @@ function setupScheduleGrid() {
   buildGrid();
   setupSchedulePresetSelector();
   setupScheduleClearAll();
+  updateNowIndicator();
+  setInterval(updateNowIndicator, 60000);
+}
+
+function updateNowIndicator() {
+  // Remove old indicators
+  document.querySelectorAll(".schedule-now-line").forEach(el => el.remove());
+
+  const now = new Date();
+  const dayIndex = now.getDay(); // 0=Sun
+  const col = document.querySelector(`.schedule-day-col.is-today-col`);
+  if (!col) return;
+
+  const headerH = 32; // header height
+  const cellH = 28;   // each hour cell height
+  const fractionalHour = now.getHours() + now.getMinutes() / 60;
+  const topPx = headerH + fractionalHour * cellH;
+
+  const line = document.createElement("div");
+  line.className = "schedule-now-line";
+  line.style.top = topPx + "px";
+  col.appendChild(line);
 }
 
 function buildGrid() {
@@ -3485,6 +3507,7 @@ function buildGrid() {
   for (let d = 0; d < 7; d++) {
     const col = document.createElement("div");
     col.className = "schedule-day-col";
+    if (d === today) col.classList.add("is-today-col");
     
     const header = document.createElement("div");
     header.className = "schedule-day-header" + (d === today ? " is-today" : "");
