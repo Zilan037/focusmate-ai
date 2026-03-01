@@ -53,19 +53,19 @@ const AnimatedBlock = ({ children, className = "" }: { children: React.ReactNode
 );
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-3">
+  <p className="text-sm font-bold uppercase tracking-[0.15em] text-primary mb-4">
     {children}
   </p>
 );
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <h2 className="text-3xl sm:text-4xl md:text-[44px] font-bold tracking-tight leading-[1.1]">
+  <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.08] text-foreground">
     {children}
   </h2>
 );
 
 const SectionDesc = ({ children }: { children: React.ReactNode }) => (
-  <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl">
+  <p className="mt-5 text-lg sm:text-xl text-foreground/70 leading-relaxed max-w-2xl">
     {children}
   </p>
 );
@@ -75,14 +75,14 @@ const FeatureCard = ({ icon: Icon, title, desc }: {
   icon: React.ElementType; title: string; desc: string;
 }) => (
   <div
-    className="group rounded-2xl border border-border/50 bg-card/50 p-6 transition-all duration-300 hover:bg-card hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5"
+    className="group rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:shadow-xl hover:shadow-primary/8 hover:-translate-y-1"
     role="article"
   >
-    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/8 text-primary transition-colors group-hover:bg-primary/12">
+    <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
       <Icon className="h-5 w-5" />
     </div>
-    <h3 className="text-base font-semibold tracking-tight">{title}</h3>
-    <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{desc}</p>
+    <h3 className="text-lg font-bold tracking-tight text-foreground">{title}</h3>
+    <p className="mt-2.5 text-[15px] text-foreground/65 leading-relaxed">{desc}</p>
   </div>
 );
 
@@ -90,19 +90,19 @@ const FeatureCard = ({ icon: Icon, title, desc }: {
 const StatCard = ({ label, value, icon: Icon, color }: {
   label: string; value: string; icon: React.ElementType; color: string;
 }) => (
-  <div className="rounded-2xl border border-border/40 bg-card/60 p-5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+  <div className="rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
     <div className="flex items-center justify-between mb-3">
-      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-      <Icon className={`h-4 w-4 ${color} opacity-50`} />
+      <p className="text-xs font-semibold uppercase tracking-wider text-foreground/50">{label}</p>
+      <Icon className={`h-4 w-4 ${color} opacity-70`} />
     </div>
-    <span className={`text-2xl font-bold tracking-tight font-mono ${color}`}>{value}</span>
+    <span className={`text-3xl font-bold tracking-tight font-mono ${color}`}>{value}</span>
   </div>
 );
 
 /* ─── Comparison Row ─── */
 const CompareRow = ({ feature, fg, others }: { feature: string; fg: boolean; others: boolean }) => (
-  <div className="grid grid-cols-3 gap-4 px-5 py-3.5 border-b border-border/30 last:border-0 items-center">
-    <div className="text-sm font-medium">{feature}</div>
+  <div className="grid grid-cols-3 gap-4 px-5 py-4 border-b border-border/40 last:border-0 items-center">
+    <div className="text-[15px] font-semibold text-foreground">{feature}</div>
     <div className="text-center">{fg ? <CheckCircle className="inline h-4 w-4 text-productive" /> : <X className="inline h-4 w-4 text-destructive/40" />}</div>
     <div className="text-center">{others ? <Check className="inline h-4 w-4 text-muted-foreground/60" /> : <X className="inline h-4 w-4 text-destructive/30" />}</div>
   </div>
@@ -150,7 +150,7 @@ const Landing = () => {
           <motion.h1
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="mt-6 text-4xl sm:text-5xl md:text-6xl lg:text-[68px] font-bold tracking-tight leading-[1.05]"
+            className="mt-6 text-4xl sm:text-5xl md:text-6xl lg:text-[72px] font-extrabold tracking-tight leading-[1.05]"
           >
             Your focus,{" "}
             <span className="text-gradient bg-gradient-to-r from-primary to-info">
@@ -161,7 +161,7 @@ const Landing = () => {
           <motion.p
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto"
+            className="mt-5 text-lg sm:text-xl text-foreground/60 leading-relaxed max-w-xl mx-auto"
           >
             FocusGuard detects distraction patterns, enforces structured focus sessions, 
             and delivers actionable productivity intelligence — all locally in your browser.
@@ -208,7 +208,7 @@ const Landing = () => {
           transition={{ delay: 0.4, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="mx-auto mt-14 max-w-4xl px-6"
         >
-          <div className="rounded-2xl border border-border/40 bg-card/70 backdrop-blur-xl p-1 shadow-2xl shadow-primary/5">
+          <div className="rounded-2xl border border-border bg-card backdrop-blur-xl p-1 shadow-2xl shadow-primary/8">
             {/* Window chrome */}
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/30">
               <div className="flex gap-1.5">
@@ -216,7 +216,7 @@ const Landing = () => {
                 <div className="h-2.5 w-2.5 rounded-full bg-warning/40" />
                 <div className="h-2.5 w-2.5 rounded-full bg-productive/40" />
               </div>
-              <div className="flex-1 text-center text-[10px] text-muted-foreground font-mono tracking-wide">
+              <div className="flex-1 text-center text-[11px] text-foreground/40 font-mono tracking-wide">
                 focusguard — command center
               </div>
             </div>
@@ -252,23 +252,23 @@ const Landing = () => {
                   { icon: TrendingUp, text: "28% productivity loss from multitasking", color: "text-info" },
                 ].map((stat) => (
                   <div key={stat.text} className="flex items-start gap-3">
-                    <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-card border border-border/40 ${stat.color}`}>
+                    <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-card border border-border ${stat.color}`}>
                       <stat.icon className="h-4 w-4" />
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{stat.text}</p>
+                    <p className="text-[15px] text-foreground/70 leading-relaxed">{stat.text}</p>
                   </div>
                 ))}
               </div>
             </div>
             <div className="relative">
-              <div className="rounded-2xl bg-gradient-to-br from-destructive/5 to-warning/5 border border-border/30 p-8 text-center">
-                <div className="text-7xl font-bold font-mono text-destructive/20 mb-2">2.5h</div>
-                <p className="text-sm font-medium text-muted-foreground">Lost every single day</p>
+              <div className="rounded-2xl bg-gradient-to-br from-destructive/8 to-warning/8 border border-border p-8 text-center">
+                <div className="text-7xl font-extrabold font-mono text-destructive/30 mb-2">2.5h</div>
+                <p className="text-base font-semibold text-foreground/50">Lost every single day</p>
                 <div className="mt-6 grid grid-cols-3 gap-3">
                   {["Social Media", "Video", "News"].map((cat, i) => (
-                    <div key={cat} className="rounded-xl bg-card/80 border border-border/30 p-3">
-                      <div className="text-lg font-bold font-mono text-destructive/60">{[48, 35, 17][i]}m</div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">{cat}</div>
+                    <div key={cat} className="rounded-xl bg-card border border-border p-3">
+                      <div className="text-xl font-bold font-mono text-destructive/70">{[48, 35, 17][i]}m</div>
+                      <div className="text-xs text-foreground/45 mt-0.5 font-medium">{cat}</div>
                     </div>
                   ))}
                 </div>
@@ -319,7 +319,7 @@ const Landing = () => {
 
           <div className="mt-12 grid md:grid-cols-5 gap-5">
             {/* Timer (3 cols) */}
-            <div className="md:col-span-3 rounded-2xl border border-border/40 bg-card/60 p-8 flex flex-col items-center">
+            <div className="md:col-span-3 rounded-2xl border border-border bg-card p-8 flex flex-col items-center">
               <div className="relative w-44 h-44 flex items-center justify-center">
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
                   <circle cx="100" cy="100" r="88" fill="none" stroke="hsl(var(--border)/0.3)" strokeWidth="3" />
@@ -336,7 +336,7 @@ const Landing = () => {
                   />
                 </svg>
                 <div className="text-center">
-                  <div className="text-4xl font-bold font-mono tracking-tighter text-primary">18:42</div>
+                  <div className="text-4xl font-extrabold font-mono tracking-tighter text-primary">18:42</div>
                   <div className="text-[11px] text-muted-foreground mt-1">remaining</div>
                 </div>
               </div>
@@ -359,8 +359,8 @@ const Landing = () => {
 
             {/* Tasks + Blocked (2 cols) */}
             <div className="md:col-span-2 space-y-4">
-              <div className="rounded-2xl border border-border/40 bg-card/60 p-5">
-                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-3">Active Tasks</p>
+              <div className="rounded-2xl border border-border bg-card p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-foreground/50 mb-3">Active Tasks</p>
                 {["Complete project proposal", "Review pull requests", "Update documentation"].map((task, i) => (
                   <div key={task} className="flex items-center gap-2.5 py-2">
                     <div className={`h-4.5 w-4.5 rounded-md border-[1.5px] flex items-center justify-center transition-colors ${
@@ -368,17 +368,17 @@ const Landing = () => {
                     }`}>
                       {i === 0 && <Check className="h-2.5 w-2.5 text-productive" />}
                     </div>
-                    <span className={`text-sm ${i === 0 ? "line-through text-muted-foreground" : "text-foreground"}`}>{task}</span>
+                    <span className={`text-[15px] ${i === 0 ? "line-through text-foreground/40" : "text-foreground"}`}>{task}</span>
                   </div>
                 ))}
                 <p className="mt-2 text-xs text-muted-foreground">1 of 3 completed</p>
               </div>
 
-              <div className="rounded-2xl border border-border/40 bg-card/60 p-5">
-                <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-3">Blocked During Session</p>
+              <div className="rounded-2xl border border-border bg-card p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-foreground/50 mb-3">Blocked During Session</p>
                 <div className="flex flex-wrap gap-1.5">
                   {["youtube.com", "instagram.com", "reddit.com", "tiktok.com"].map((site) => (
-                    <span key={site} className="rounded-full bg-destructive/6 border border-destructive/12 px-2.5 py-1 text-[11px] font-medium text-destructive/80">
+                    <span key={site} className="rounded-full bg-destructive/8 border border-destructive/15 px-3 py-1.5 text-xs font-semibold text-destructive">
                       {site}
                     </span>
                   ))}
@@ -403,9 +403,9 @@ const Landing = () => {
 
           <div className="mt-12 grid md:grid-cols-3 gap-5">
             {/* Weekly Trends (2 cols) */}
-            <div className="md:col-span-2 rounded-2xl border border-border/40 bg-card/60 p-6">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Weekly Performance</p>
-              <h3 className="text-base font-semibold tracking-tight mb-5">Productivity Trends</h3>
+            <div className="md:col-span-2 rounded-2xl border border-border bg-card p-6">
+              <p className="text-xs font-semibold uppercase tracking-wider text-foreground/50 mb-1">Weekly Performance</p>
+              <h3 className="text-lg font-bold tracking-tight mb-5">Productivity Trends</h3>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={weeklyTrends} barCategoryGap="20%">
                   <XAxis dataKey="day" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", fontWeight: 500 }} axisLine={false} tickLine={false} />
@@ -420,9 +420,9 @@ const Landing = () => {
             </div>
 
             {/* Category Donut */}
-            <div className="rounded-2xl border border-border/40 bg-card/60 p-6">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Breakdown</p>
-              <h3 className="text-base font-semibold tracking-tight mb-4">Categories</h3>
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <p className="text-xs font-semibold uppercase tracking-wider text-foreground/50 mb-1">Breakdown</p>
+              <h3 className="text-lg font-bold tracking-tight mb-4">Categories</h3>
               <ResponsiveContainer width="100%" height={160}>
                 <PieChart>
                   <Pie data={categoryBreakdown} cx="50%" cy="50%" innerRadius={40} outerRadius={68} paddingAngle={2} dataKey="value" strokeWidth={0}>
@@ -436,7 +436,7 @@ const Landing = () => {
                 {categoryBreakdown.slice(0, 4).map((c) => (
                   <div key={c.name} className="flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-full shrink-0" style={{ background: CATEGORY_COLORS[c.name] }} />
-                    <span className="text-[11px] text-muted-foreground truncate">{c.name}</span>
+                    <span className="text-xs text-foreground/55 truncate">{c.name}</span>
                   </div>
                 ))}
               </div>
@@ -444,9 +444,9 @@ const Landing = () => {
           </div>
 
           {/* Activity Timeline */}
-          <div className="mt-5 rounded-2xl border border-border/40 bg-card/60 p-6">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">24-Hour View</p>
-            <h3 className="text-base font-semibold tracking-tight mb-5">Daily Activity Flow</h3>
+          <div className="mt-5 rounded-2xl border border-border bg-card p-6">
+            <p className="text-xs font-semibold uppercase tracking-wider text-foreground/50 mb-1">24-Hour View</p>
+            <h3 className="text-lg font-bold tracking-tight mb-5">Daily Activity Flow</h3>
             <ResponsiveContainer width="100%" height={180}>
               <AreaChart data={hourlyActivity}>
                 <XAxis dataKey="hour" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} interval={3} axisLine={false} tickLine={false} />
@@ -477,15 +477,15 @@ const Landing = () => {
               { num: "04", title: "Improve", desc: "Productivity scores, trend analysis, and personalized behavioral recommendations.", icon: TrendingUp },
             ].map((s, i) => (
               <div key={s.num} className="relative group">
-                <div className="rounded-2xl border border-border/40 bg-card/50 p-6 h-full transition-all duration-300 hover:bg-card hover:shadow-md hover:-translate-y-0.5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/8 text-primary">
-                      <s.icon className="h-4 w-4" />
+                <div className="rounded-2xl border border-border bg-card p-6 h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <s.icon className="h-4.5 w-4.5" />
                     </div>
-                    <span className="text-2xl font-bold text-primary/15 font-mono">{s.num}</span>
+                    <span className="text-2xl font-extrabold text-primary/20 font-mono">{s.num}</span>
                   </div>
-                  <h3 className="text-base font-semibold tracking-tight">{s.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
+                  <h3 className="text-lg font-bold tracking-tight text-foreground">{s.title}</h3>
+                  <p className="mt-2.5 text-[15px] text-foreground/65 leading-relaxed">{s.desc}</p>
                 </div>
                 {i < 3 && (
                   <ChevronRight className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 text-border h-5 w-5 z-10" />
@@ -511,11 +511,11 @@ const Landing = () => {
           <div className="mt-12 grid md:grid-cols-2 gap-8">
             {/* Comparison Table */}
             <div>
-              <div className="rounded-2xl border border-border/40 bg-card/60 overflow-hidden">
-                <div className="grid grid-cols-3 gap-4 px-5 py-3.5 bg-secondary/50 border-b border-border/30">
-                  <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Feature</div>
-                  <div className="text-center text-[11px] font-semibold text-primary">FocusGuard</div>
-                  <div className="text-center text-[11px] font-medium text-muted-foreground">Others</div>
+              <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                <div className="grid grid-cols-3 gap-4 px-5 py-4 bg-secondary/60 border-b border-border">
+                  <div className="text-xs font-bold uppercase tracking-wider text-foreground/50">Feature</div>
+                  <div className="text-center text-xs font-bold text-primary">FocusGuard</div>
+                  <div className="text-center text-xs font-semibold text-foreground/40">Others</div>
                 </div>
                 {[
                   { feature: "Smart Activity Tracking", fg: true, others: false },
@@ -541,14 +541,14 @@ const Landing = () => {
                 { icon: Layers, title: "Open & Transparent", desc: "Full source code available. Complete data export. You own everything." },
               ].map((item, i) => (
                 <div key={item.title}
-                  className="rounded-2xl border border-border/40 bg-card/50 p-5 flex gap-4 items-start transition-all duration-300 hover:bg-card hover:shadow-sm"
+                  className="rounded-2xl border border-border bg-card p-6 flex gap-4 items-start transition-all duration-300 hover:shadow-lg"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
-                    <item.icon className="h-4 w-4" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <item.icon className="h-4.5 w-4.5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold tracking-tight">{item.title}</h4>
-                    <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+                    <h4 className="text-base font-bold tracking-tight text-foreground">{item.title}</h4>
+                    <p className="mt-1.5 text-[15px] text-foreground/65 leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -580,7 +580,7 @@ const Landing = () => {
             ].map((t) => (
               <div
                 key={t.name}
-                className="rounded-2xl border border-border/40 bg-card/50 p-6 flex flex-col gap-4 transition-all duration-300 hover:bg-card hover:shadow-md hover:-translate-y-0.5"
+                className="rounded-2xl border border-border bg-card p-7 flex flex-col gap-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
               >
                 <div className="flex gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -589,10 +589,10 @@ const Landing = () => {
                     </svg>
                   ))}
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed flex-1">"{t.quote}"</p>
+                <p className="text-[15px] text-foreground/65 leading-relaxed flex-1">"{t.quote}"</p>
                 <div>
-                  <p className="text-sm font-semibold">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.role}</p>
+                  <p className="text-base font-bold text-foreground">{t.name}</p>
+                  <p className="text-sm text-foreground/50">{t.role}</p>
                 </div>
               </div>
             ))}
@@ -608,10 +608,10 @@ const Landing = () => {
         <AnimatedBlock className="text-center">
           <div className="rounded-3xl bg-gradient-to-b from-primary/5 to-transparent border border-primary/10 p-12 md:p-16">
             <SectionLabel>Get Started</SectionLabel>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-[1.1]">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1]">
               Start protecting your focus today.
             </h2>
-            <p className="mt-4 text-base text-muted-foreground max-w-lg mx-auto leading-relaxed">
+            <p className="mt-5 text-lg text-foreground/60 max-w-lg mx-auto leading-relaxed">
               Free forever. No account required. Install the Chrome extension and take control of your digital life.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
