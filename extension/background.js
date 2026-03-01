@@ -4,9 +4,11 @@
 importScripts("utils/storage.js", "utils/categories.js", "utils/scoring.js", "utils/insights.js", "utils/achievements.js", "utils/popular-sites.js");
 
 // ─── NSFW/Gambling Keyword patterns for runtime detection ───
-const NSFW_KEYWORDS = /porn|xxx|nsfw|hentai|adult|sex|nude|naked|erotic|fetish|cam(girl|boy|show)|livecam|18\+|boob|milf|lesbian|gay|anal|blowjob|dildo|vibrator|orgasm|masturbat|escort|hookup|fap|rule34|doujin|lewd/i;
-const GAMBLING_KEYWORDS = /bet|casino|gambl|poker|slots?|jackpot|wager|bookie|sportsbook|lottery|lotto|roulette|blackjack|baccarat|craps|keno|bingo.*casino|sweepstake|bookmaker/i;
-const SCAM_KEYWORDS = /scam|phish|spam|malware|trojan|virus|hack|crack|keygen|warez|torrent.*xxx|pirat/i;
+// IMPORTANT: These test against the DOMAIN string only — must be precise to avoid false positives
+// e.g. "bet" would match "alphabet.com" — so we only match domains that START with or have these as standalone segments
+const NSFW_KEYWORDS = /^porn|\.porn|pornhub|xvideo|xnxx|xhamster|xxx|nsfw|hentai|erotic|fetish|camgirl|camboy|camshow|livecam|livejasmin|chaturbate|stripchat|onlyfans|fansly|redtube|youporn|spankbang|rule34|nhentai|literotica/i;
+const GAMBLING_KEYWORDS = /^bet365|^betway|^betmgm|^betonline|^betsafe|^betsson|^betfair|casino|gambl|pokerstars|partypoker|draftkings|fanduel|jackpot|sportsbook|roobet|stake\.com|bovada|1xbet|22bet|slotomania/i;
+const SCAM_KEYWORDS = /^phish|malware|trojan|warez|torrent.*xxx/i;
 
 // ─── State (in-memory, rebuilt from storage on wake) ───
 let currentSession = null;
