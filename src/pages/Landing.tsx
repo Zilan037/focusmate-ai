@@ -1034,24 +1034,24 @@ const Landing = () => {
       </Section>
 
       {/* ─── Footer ─── */}
-      <footer className="relative py-16" role="contentinfo">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" />
-        <div className="mx-auto max-w-5xl px-6 flex flex-col items-center gap-8">
+      <footer className="relative py-20" role="contentinfo">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        <div className="mx-auto max-w-5xl px-6 flex flex-col items-center gap-10">
           {/* Logo + brand */}
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground text-background">
-              <Shield className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background">
+              <Shield className="h-4.5 w-4.5" />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-foreground leading-tight">FocusGuard</span>
-              <span className="text-[9px] text-muted-foreground/60 leading-tight tracking-[0.15em] uppercase">
+              <span className="text-base font-bold text-foreground leading-tight">FocusGuard</span>
+              <span className="text-[10px] text-foreground/50 leading-tight tracking-[0.15em] uppercase font-semibold">
                 Your focus, protected.
               </span>
             </div>
           </div>
 
           {/* Nav links */}
-          <nav className="flex items-center gap-6">
+          <nav className="flex items-center gap-7 flex-wrap justify-center">
             {["Features", "Focus", "Analytics", "How It Works", "Testimonials", "Creator"].map((label) => (
               <button
                 key={label}
@@ -1059,7 +1059,7 @@ const Landing = () => {
                   const id = label === "Creator" ? "author" : label.toLowerCase().replace(/\s/g, "");
                   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors duration-200"
+                className="text-sm font-medium text-foreground/60 hover:text-foreground transition-colors duration-200"
               >
                 {label}
               </button>
@@ -1067,19 +1067,19 @@ const Landing = () => {
           </nav>
 
           {/* Divider */}
-          <div className="w-48 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+          <div className="w-64 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
 
-          <div className="flex flex-col sm:flex-row items-center gap-2 text-xs text-muted-foreground/50">
-            <p>
+          <div className="flex flex-col sm:flex-row items-center gap-2 text-sm text-foreground/50">
+            <p className="font-medium">
               © {new Date().getFullYear()} FocusGuard. Built with ❤️ by{" "}
-              <span className="text-muted-foreground/70 font-medium">Husna Ayoub</span>
-              {" "}· Co-Founder — HH Nexus
+              <span className="text-foreground/70 font-semibold">Husna Ayoub</span>
+              {" "}· Co-Founder, HH Nexus
             </p>
           </div>
 
-          <div className="flex items-center gap-4 text-xs text-muted-foreground/50">
-            <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1">
-              <Github className="h-3.5 w-3.5" /> GitHub
+          <div className="flex items-center gap-6 text-sm font-medium text-foreground/50">
+            <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1.5">
+              <Github className="h-4 w-4" /> GitHub
             </a>
             <a href="https://www.linkedin.com/in/husna-a-7971b7272/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
               LinkedIn
