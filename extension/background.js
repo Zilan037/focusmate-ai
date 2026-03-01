@@ -419,7 +419,7 @@ async function commitSession() {
   await Storage.saveTodayUsage(usage);
   
   // Reset the session start time so next tick only counts NEW elapsed time
-  currentSession.startTime = now;
+  if (currentSession) currentSession.startTime = now;
   
   await checkDailyLimit(domain, usage.domains[domain].time, settings);
 }
