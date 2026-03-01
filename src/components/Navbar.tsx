@@ -1,14 +1,33 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Shield, Moon, Sun, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const sectionLinks = [
+  { id: "problem", label: "Problem" },
+  { id: "features", label: "Features" },
+  { id: "focus", label: "Focus" },
+  { id: "analytics", label: "Analytics" },
+  { id: "how", label: "How It Works" },
+  { id: "compare", label: "Compare" },
+  { id: "download", label: "Download" },
+];
+
+const pageLinks = [
+  { path: "/", label: "Overview" },
+  { path: "/dashboard", label: "Dashboard" },
+  { path: "/focus", label: "Focus" },
+];
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [dark, setDark] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const isLanding = location.pathname === "/";
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
@@ -20,15 +39,45 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Track active section on landing page
+  useEffect(() => {
+    if (!isLanding) return;
+    const ids = sectionLinks.map((s) => s.id);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        }
+      },
+      { rootMargin: "-40% 0px -55% 0px" }
+    );
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [isLanding]);
+
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
 
-  const navItems = [
-    { path: "/", label: "Overview" },
-    { path: "/dashboard", label: "Dashboard" },
-    { path: "/focus", label: "Focus" },
-  ];
+  const scrollToSection = useCallback(
+    (id: string) => {
+      if (!isLanding) {
+        navigate("/");
+        setTimeout(() => {
+          document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      } else {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      }
+      setMobileOpen(false);
+    },
+    [isLanding, navigate]
+  );
 
   return (
     <>
@@ -43,7 +92,17 @@ const Navbar = () => {
       >
         <div className="mx-auto flex h-12 max-w-5xl items-center justify-between px-6">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group" aria-label="FocusGuard home">
+          <Link
+            to="/"
+            className="flex items-center gap-2 group"
+            aria-label="FocusGuard home"
+            onClick={(e) => {
+              if (isLanding) {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+            }}
+          >
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground text-background transition-transform duration-300 group-hover:scale-105">
               <Shield className="h-3.5 w-3.5" />
             </div>
@@ -54,17 +113,20 @@ const Navbar = () => {
 
           {/* Desktop Nav */}
           <div className="hidden sm:flex items-center gap-1">
-            {navItems.map((item) => (
-              <Link key={item.path} to={item.path}>
+            {isLanding ? (
+              // Section-based smooth scroll links on landing
+              sectionLinks.map((item) => (
                 <button
+                  key={item.id}
+                  onClick={() => scrollToSection(item.id)}
                   className={`relative px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
-                    location.pathname === item.path
+                    activeSection === item.id
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {item.label}
-                  {location.pathname === item.path && (
+                  {activeSection === item.id && (
                     <motion.div
                       layoutId="nav-indicator"
                       className="absolute inset-0 bg-secondary rounded-lg -z-10"
@@ -72,8 +134,30 @@ const Navbar = () => {
                     />
                   )}
                 </button>
-              </Link>
-            ))}
+              ))
+            ) : (
+              // Page-based links on other pages
+              pageLinks.map((item) => (
+                <Link key={item.path} to={item.path}>
+                  <button
+                    className={`relative px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 ${
+                      location.pathname === item.path
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {item.label}
+                    {location.pathname === item.path && (
+                      <motion.div
+                        layoutId="nav-indicator"
+                        className="absolute inset-0 bg-secondary rounded-lg -z-10"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </button>
+                </Link>
+              ))
+            )}
           </div>
 
           {/* Actions */}
@@ -114,19 +198,33 @@ const Navbar = () => {
             className="fixed inset-x-0 top-12 z-40 bg-background/95 backdrop-blur-2xl border-b border-border/40 sm:hidden"
           >
             <div className="flex flex-col p-4 gap-1">
-              {navItems.map((item) => (
-                <Link key={item.path} to={item.path}>
-                  <button
-                    className={`w-full text-left px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
-                      location.pathname === item.path
-                        ? "bg-secondary text-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                </Link>
-              ))}
+              {isLanding
+                ? sectionLinks.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => scrollToSection(item.id)}
+                      className={`w-full text-left px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
+                        activeSection === item.id
+                          ? "bg-secondary text-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))
+                : pageLinks.map((item) => (
+                    <Link key={item.path} to={item.path}>
+                      <button
+                        className={`w-full text-left px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
+                          location.pathname === item.path
+                            ? "bg-secondary text-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    </Link>
+                  ))}
             </div>
           </motion.div>
         )}
