@@ -883,11 +883,13 @@ const Landing = () => {
           >
             <Button
               size="lg"
-              className="rounded-full px-6 font-semibold text-sm gap-2 shadow-2xl shadow-primary/30 backdrop-blur-xl"
+              className="rounded-full pl-5 pr-4 py-3 h-auto font-semibold text-sm gap-3 shadow-[0_8px_32px_-4px_hsl(var(--primary)/0.45)] hover:shadow-[0_12px_40px_-4px_hsl(var(--primary)/0.55)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-200 border border-primary-foreground/10 bg-gradient-to-r from-primary to-[hsl(222,80%,60%)]"
             >
-              <Shield className="h-4 w-4" />
+              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary-foreground/15 backdrop-blur-sm">
+                <Shield className="h-3.5 w-3.5" />
+              </span>
               Add to Chrome — Free
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
             </Button>
           </motion.div>
         )}
