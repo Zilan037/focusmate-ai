@@ -509,7 +509,7 @@ const Landing = () => {
       {/* ═══════════════════════════════════════
           SECTION 3.5 — PRODUCT SHOWCASE
           ═══════════════════════════════════════ */}
-      <Section id="product" ariaLabel="Product showcase">
+      <Section id="product" ariaLabel="Product showcase" className="!py-16 md:!py-20">
         <div className="text-center">
           <SectionLabel>See It In Action</SectionLabel>
           <SectionTitle>A glance at the real experience.</SectionTitle>
@@ -518,7 +518,7 @@ const Landing = () => {
           </SectionDesc>
         </div>
 
-        <motion.div variants={staggerContainer} className="mt-16 flex flex-col lg:flex-row items-end justify-center gap-6 lg:gap-10">
+        <motion.div variants={staggerContainer} className="mt-12 flex flex-col lg:flex-row items-end justify-center gap-6 lg:gap-10">
           {/* Card 1 — Stats */}
           <motion.div variants={fadeUp} className="flex flex-col items-center gap-6 w-full max-w-[280px]">
             <div className="relative w-full">
