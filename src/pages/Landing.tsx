@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import { useRef } from "react";
 import {
   Shield, BarChart3, Target, Lock, Brain, Zap, ArrowRight,
@@ -45,35 +45,36 @@ const Section = ({
   </section>
 );
 
+/* ─── Animated wrapper ─── */
+const AnimatedBlock = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={className}>
+    {children}
+  </div>
+);
+
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <motion.p variants={reveal} custom={0}
-    className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-3"
-  >
+  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary mb-3">
     {children}
-  </motion.p>
+  </p>
 );
 
-const SectionTitle = ({ children, custom = 1 }: { children: React.ReactNode; custom?: number }) => (
-  <motion.h2 variants={reveal} custom={custom}
-    className="text-3xl sm:text-4xl md:text-[44px] font-bold tracking-tight leading-[1.1]"
-  >
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <h2 className="text-3xl sm:text-4xl md:text-[44px] font-bold tracking-tight leading-[1.1]">
     {children}
-  </motion.h2>
+  </h2>
 );
 
-const SectionDesc = ({ children, custom = 2 }: { children: React.ReactNode; custom?: number }) => (
-  <motion.p variants={reveal} custom={custom}
-    className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl"
-  >
+const SectionDesc = ({ children }: { children: React.ReactNode }) => (
+  <p className="mt-4 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl">
     {children}
-  </motion.p>
+  </p>
 );
 
 /* ─── Feature Card ─── */
-const FeatureCard = ({ icon: Icon, title, desc, i }: {
-  icon: React.ElementType; title: string; desc: string; i: number;
+const FeatureCard = ({ icon: Icon, title, desc }: {
+  icon: React.ElementType; title: string; desc: string;
 }) => (
-  <motion.div variants={reveal} custom={i}
+  <div
     className="group rounded-2xl border border-border/50 bg-card/50 p-6 transition-all duration-300 hover:bg-card hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5"
     role="article"
   >
@@ -82,7 +83,7 @@ const FeatureCard = ({ icon: Icon, title, desc, i }: {
     </div>
     <h3 className="text-base font-semibold tracking-tight">{title}</h3>
     <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{desc}</p>
-  </motion.div>
+  </div>
 );
 
 /* ─── Stat Card ─── */
@@ -235,7 +236,7 @@ const Landing = () => {
           Emotional connection with the problem
           ═══════════════════════════════════════ */}
       <Section id="problem" ariaLabel="The problem we solve">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}>
+        <AnimatedBlock>
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
             <div>
               <SectionLabel>The Problem</SectionLabel>
@@ -244,7 +245,7 @@ const Landing = () => {
                 Context switching costs 23 minutes per interruption. Tab hopping creates anxiety loops. 
                 Traditional blockers don't understand <em>why</em> you're distracted — they just block.
               </SectionDesc>
-              <motion.div variants={reveal} custom={3} className="mt-8 space-y-4">
+              <div className="mt-8 space-y-4">
                 {[
                   { icon: Activity, text: "Average person checks phone 96 times/day", color: "text-destructive" },
                   { icon: Timer, text: "23 min to refocus after each interruption", color: "text-warning" },
@@ -257,9 +258,9 @@ const Landing = () => {
                     <p className="text-sm text-muted-foreground leading-relaxed">{stat.text}</p>
                   </div>
                 ))}
-              </motion.div>
+              </div>
             </div>
-            <motion.div variants={scaleIn} className="relative">
+            <div className="relative">
               <div className="rounded-2xl bg-gradient-to-br from-destructive/5 to-warning/5 border border-border/30 p-8 text-center">
                 <div className="text-7xl font-bold font-mono text-destructive/20 mb-2">2.5h</div>
                 <p className="text-sm font-medium text-muted-foreground">Lost every single day</p>
@@ -272,9 +273,9 @@ const Landing = () => {
                   ))}
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
-        </motion.div>
+        </AnimatedBlock>
       </Section>
 
       {/* ═══════════════════════════════════════
@@ -282,14 +283,14 @@ const Landing = () => {
           6-card feature grid, Apple-style icons
           ═══════════════════════════════════════ */}
       <Section id="features" ariaLabel="Core features" className="bg-secondary/30">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}>
+        <AnimatedBlock>
           <SectionLabel>Capabilities</SectionLabel>
           <SectionTitle>Everything you need to reclaim your focus.</SectionTitle>
           <SectionDesc>
             A complete behavioral productivity system — not just a blocker.
           </SectionDesc>
 
-          <motion.div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
               { icon: Eye, title: "Smart Tracking", desc: "Event-driven monitoring with idle detection. Only meaningful activity counts toward your metrics." },
               { icon: Target, title: "Focus Mode", desc: "Strict site blocking with task-based unlock. Behavioral intervention, not just a countdown timer." },
@@ -298,10 +299,10 @@ const Landing = () => {
               { icon: BarChart3, title: "Analytics Engine", desc: "Heatmaps, trends, category flows, and Sankey diagrams visualize your digital behavior." },
               { icon: Zap, title: "Productivity Score", desc: "Weighted 0–100 score based on focus time, work patterns, and distraction avoidance." },
             ].map((f, i) => (
-              <FeatureCard key={f.title} {...f} i={i} />
+              <FeatureCard key={f.title} {...f} />
             ))}
-          </motion.div>
-        </motion.div>
+          </div>
+        </AnimatedBlock>
       </Section>
 
       {/* ═══════════════════════════════════════
@@ -309,14 +310,14 @@ const Landing = () => {
           Interactive demo with timer + tasks
           ═══════════════════════════════════════ */}
       <Section id="focus" ariaLabel="Focus Mode demonstration">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}>
+        <AnimatedBlock>
           <SectionLabel>Focus Mode</SectionLabel>
           <SectionTitle>Deep work, enforced.</SectionTitle>
           <SectionDesc>
             Choose what to allow or block. Add tasks. Start. FocusGuard handles the rest.
           </SectionDesc>
 
-          <motion.div variants={scaleIn} className="mt-12 grid md:grid-cols-5 gap-5">
+          <div className="mt-12 grid md:grid-cols-5 gap-5">
             {/* Timer (3 cols) */}
             <div className="md:col-span-3 rounded-2xl border border-border/40 bg-card/60 p-8 flex flex-col items-center">
               <div className="relative w-44 h-44 flex items-center justify-center">
@@ -384,8 +385,8 @@ const Landing = () => {
                 </div>
               </div>
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </AnimatedBlock>
       </Section>
 
       {/* ═══════════════════════════════════════
@@ -393,7 +394,7 @@ const Landing = () => {
           Dashboard preview with live charts
           ═══════════════════════════════════════ */}
       <Section id="analytics" ariaLabel="Analytics and data visualization" className="bg-secondary/30">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}>
+        <AnimatedBlock>
           <SectionLabel>Intelligence</SectionLabel>
           <SectionTitle>Understand your digital behavior.</SectionTitle>
           <SectionDesc>
@@ -402,7 +403,7 @@ const Landing = () => {
 
           <div className="mt-12 grid md:grid-cols-3 gap-5">
             {/* Weekly Trends (2 cols) */}
-            <motion.div variants={scaleIn} className="md:col-span-2 rounded-2xl border border-border/40 bg-card/60 p-6">
+            <div className="md:col-span-2 rounded-2xl border border-border/40 bg-card/60 p-6">
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Weekly Performance</p>
               <h3 className="text-base font-semibold tracking-tight mb-5">Productivity Trends</h3>
               <ResponsiveContainer width="100%" height={200}>
@@ -416,10 +417,10 @@ const Landing = () => {
                   <Bar dataKey="distracted" fill="hsl(0, 84%, 60%)" radius={[4, 4, 0, 0]} opacity={0.7} />
                 </BarChart>
               </ResponsiveContainer>
-            </motion.div>
+            </div>
 
             {/* Category Donut */}
-            <motion.div variants={scaleIn} className="rounded-2xl border border-border/40 bg-card/60 p-6">
+            <div className="rounded-2xl border border-border/40 bg-card/60 p-6">
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">Breakdown</p>
               <h3 className="text-base font-semibold tracking-tight mb-4">Categories</h3>
               <ResponsiveContainer width="100%" height={160}>
@@ -439,13 +440,11 @@ const Landing = () => {
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           </div>
 
           {/* Activity Timeline */}
-          <motion.div variants={scaleIn}
-            className="mt-5 rounded-2xl border border-border/40 bg-card/60 p-6"
-          >
+          <div className="mt-5 rounded-2xl border border-border/40 bg-card/60 p-6">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1">24-Hour View</p>
             <h3 className="text-base font-semibold tracking-tight mb-5">Daily Activity Flow</h3>
             <ResponsiveContainer width="100%" height={180}>
@@ -456,8 +455,8 @@ const Landing = () => {
                 <Area type="monotone" dataKey="distracted" stroke="hsl(0, 84%, 60%)" fill="hsl(0, 84%, 60%)" fillOpacity={0.08} strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
-          </motion.div>
-        </motion.div>
+          </div>
+        </AnimatedBlock>
       </Section>
 
       {/* ═══════════════════════════════════════
@@ -465,19 +464,19 @@ const Landing = () => {
           4-step horizontal flow
           ═══════════════════════════════════════ */}
       <Section id="how" ariaLabel="How FocusGuard works">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}>
+        <AnimatedBlock>
           <SectionLabel>Architecture</SectionLabel>
           <SectionTitle>How it works.</SectionTitle>
           <SectionDesc>Four stages from passive tracking to active behavioral change.</SectionDesc>
 
-          <motion.div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { num: "01", title: "Install & Track", desc: "Event-driven monitoring detects active tab usage with intelligent idle detection.", icon: Eye },
               { num: "02", title: "Analyze Patterns", desc: "Categorize domains, detect distraction loops, identify peak productivity windows.", icon: Brain },
               { num: "03", title: "Intervene", desc: "Focus mode enforcement, task-based unlocking, and cognitive friction barriers.", icon: Shield },
               { num: "04", title: "Improve", desc: "Productivity scores, trend analysis, and personalized behavioral recommendations.", icon: TrendingUp },
             ].map((s, i) => (
-              <motion.div key={s.num} variants={reveal} custom={i} className="relative group">
+              <div key={s.num} className="relative group">
                 <div className="rounded-2xl border border-border/40 bg-card/50 p-6 h-full transition-all duration-300 hover:bg-card hover:shadow-md hover:-translate-y-0.5">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/8 text-primary">
@@ -491,10 +490,10 @@ const Landing = () => {
                 {i < 3 && (
                   <ChevronRight className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 text-border h-5 w-5 z-10" />
                 )}
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
-        </motion.div>
+          </div>
+        </AnimatedBlock>
       </Section>
 
       {/* ═══════════════════════════════════════
@@ -502,7 +501,7 @@ const Landing = () => {
           Feature comparison table + privacy cards
           ═══════════════════════════════════════ */}
       <Section id="compare" ariaLabel="Comparison and privacy" className="bg-secondary/30">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}>
+        <AnimatedBlock>
           <SectionLabel>Why FocusGuard</SectionLabel>
           <SectionTitle>Built different.</SectionTitle>
           <SectionDesc>
@@ -511,7 +510,7 @@ const Landing = () => {
 
           <div className="mt-12 grid md:grid-cols-2 gap-8">
             {/* Comparison Table */}
-            <motion.div variants={scaleIn}>
+            <div>
               <div className="rounded-2xl border border-border/40 bg-card/60 overflow-hidden">
                 <div className="grid grid-cols-3 gap-4 px-5 py-3.5 bg-secondary/50 border-b border-border/30">
                   <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Feature</div>
@@ -531,17 +530,17 @@ const Landing = () => {
                   <CompareRow key={row.feature} {...row} />
                 ))}
               </div>
-            </motion.div>
+            </div>
 
             {/* Privacy & Trust Cards */}
-            <motion.div variants={reveal} custom={1} className="space-y-4">
+            <div className="space-y-4">
               {[
                 { icon: Zap, title: "Event-Driven", desc: "No constant polling. Lightweight Manifest V3 service worker that sleeps when inactive." },
                 { icon: EyeOff, title: "Zero Data Collection", desc: "No keystroke logging. No screenshots. Only domain-level time data, stored locally." },
                 { icon: Shield, title: "Local-First Architecture", desc: "All data processed and stored in your browser. Nothing leaves your device. Ever." },
                 { icon: Layers, title: "Open & Transparent", desc: "Full source code available. Complete data export. You own everything." },
               ].map((item, i) => (
-                <motion.div key={item.title} variants={reveal} custom={i + 2}
+                <div key={item.title}
                   className="rounded-2xl border border-border/40 bg-card/50 p-5 flex gap-4 items-start transition-all duration-300 hover:bg-card hover:shadow-sm"
                 >
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
@@ -551,11 +550,11 @@ const Landing = () => {
                     <h4 className="text-sm font-semibold tracking-tight">{item.title}</h4>
                     <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                   </div>
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
           </div>
-        </motion.div>
+        </AnimatedBlock>
       </Section>
 
       {/* ═══════════════════════════════════════
@@ -563,25 +562,16 @@ const Landing = () => {
           Final call-to-action + footer
           ═══════════════════════════════════════ */}
       <Section id="download" ariaLabel="Download and get started">
-        <motion.div
-          initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}
-          className="text-center"
-        >
-          <motion.div variants={scaleIn}
-            className="rounded-3xl bg-gradient-to-b from-primary/5 to-transparent border border-primary/10 p-12 md:p-16"
-          >
+        <AnimatedBlock className="text-center">
+          <div className="rounded-3xl bg-gradient-to-b from-primary/5 to-transparent border border-primary/10 p-12 md:p-16">
             <SectionLabel>Get Started</SectionLabel>
-            <motion.h2 variants={reveal} custom={1}
-              className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-[1.1]"
-            >
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-[1.1]">
               Start protecting your focus today.
-            </motion.h2>
-            <motion.p variants={reveal} custom={2}
-              className="mt-4 text-base text-muted-foreground max-w-lg mx-auto leading-relaxed"
-            >
+            </h2>
+            <p className="mt-4 text-base text-muted-foreground max-w-lg mx-auto leading-relaxed">
               Free forever. No account required. Install the Chrome extension and take control of your digital life.
-            </motion.p>
-            <motion.div variants={reveal} custom={3} className="mt-8 flex flex-wrap justify-center gap-3">
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button size="lg" className="rounded-full px-8 font-medium text-sm gap-2 shadow-lg shadow-primary/20">
                 Add to Chrome — It's Free <ArrowRight className="h-4 w-4" />
               </Button>
@@ -590,9 +580,9 @@ const Landing = () => {
                   <Github className="h-4 w-4" /> View Source
                 </Button>
               </a>
-            </motion.div>
-          </motion.div>
-        </motion.div>
+            </div>
+          </div>
+        </AnimatedBlock>
       </Section>
 
       {/* ─── Footer ─── */}
