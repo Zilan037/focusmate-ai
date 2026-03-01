@@ -523,6 +523,25 @@
             </div>
           </div>
           <div class="sessions-grid" id="sessions-grid"></div>
+
+          <!-- Focus Session Gantt Timeline -->
+          <div class="premium-card fade-up delay-1" style="margin-top:24px;padding:40px;border-radius:36px;">
+            <div class="chart-header">
+              <div>
+                <h3 class="chart-title-lg">Session Timeline</h3>
+                <p class="chart-subtitle-text">Weekly Gantt view — focus sessions mapped across time</p>
+              </div>
+              <div class="gantt-legend">
+                <span class="gantt-legend-item"><span class="gantt-legend-dot" style="background:#10B981"></span>Completed</span>
+                <span class="gantt-legend-item"><span class="gantt-legend-dot" style="background:#F43F5E"></span>Abandoned</span>
+                <span class="gantt-legend-item"><span class="gantt-legend-dot" style="background:#F59E0B"></span>Partial</span>
+              </div>
+            </div>
+            <div class="gantt-timeline-wrap" id="gantt-timeline-wrap">
+              <canvas id="gantt-canvas" height="320"></canvas>
+            </div>
+            <div class="gantt-stats-row" id="gantt-stats-row"></div>
+          </div>
           <!-- Session Analytics Summary -->
           <div class="premium-card fade-up delay-1" style="margin-top:24px;padding:40px;border-radius:36px;">
             <div class="chart-header">
