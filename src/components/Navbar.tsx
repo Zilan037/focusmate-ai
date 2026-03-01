@@ -12,6 +12,7 @@ const sectionLinks = [
   { id: "compare", label: "Compare" },
   { id: "testimonials", label: "Testimonials" },
   { id: "faq", label: "FAQ" },
+  { id: "author", label: "Creator" },
 ];
 
 const pageLinks = [
