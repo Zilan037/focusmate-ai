@@ -331,6 +331,55 @@
             </div>
           </div>
 
+          <!-- Comparison: Today vs Yesterday vs Best -->
+          <div class="fade-up delay-4" style="margin-top:24px;">
+            <div class="comparison-grid">
+              <div class="comparison-card premium-card" id="cmp-card-today">
+                <div class="comparison-card-label">TODAY</div>
+                <div class="comparison-card-score" id="cmp2-today-score">0</div>
+                <div class="comparison-card-grade" id="cmp2-today-grade">—</div>
+                <div class="comparison-card-stats">
+                  <div><span class="comparison-stat-label">Active</span><span class="comparison-stat-value" id="cmp2-today-active">0m</span></div>
+                  <div><span class="comparison-stat-label">Focus</span><span class="comparison-stat-value" id="cmp2-today-focus">0m</span></div>
+                  <div><span class="comparison-stat-label">Sessions</span><span class="comparison-stat-value" id="cmp2-today-sessions">0</span></div>
+                </div>
+              </div>
+              <div class="comparison-card premium-card" id="cmp-card-yesterday">
+                <div class="comparison-card-label">YESTERDAY</div>
+                <div class="comparison-card-score" id="cmp2-yest-score">0</div>
+                <div class="comparison-card-grade" id="cmp2-yest-grade">—</div>
+                <div class="comparison-card-stats">
+                  <div><span class="comparison-stat-label">Active</span><span class="comparison-stat-value" id="cmp2-yest-active">0m</span></div>
+                  <div><span class="comparison-stat-label">Focus</span><span class="comparison-stat-value" id="cmp2-yest-focus">0m</span></div>
+                  <div><span class="comparison-stat-label">Sessions</span><span class="comparison-stat-value" id="cmp2-yest-sessions">0</span></div>
+                </div>
+              </div>
+              <div class="comparison-card premium-card" id="cmp-card-best">
+                <div class="comparison-card-label">BEST DAY</div>
+                <div class="comparison-card-score" id="cmp2-best-score">0</div>
+                <div class="comparison-card-grade" id="cmp2-best-grade">—</div>
+                <div class="comparison-card-stats">
+                  <div><span class="comparison-stat-label">Active</span><span class="comparison-stat-value" id="cmp2-best-active">0m</span></div>
+                  <div><span class="comparison-stat-label">Focus</span><span class="comparison-stat-value" id="cmp2-best-focus">0m</span></div>
+                  <div><span class="comparison-stat-label">Date</span><span class="comparison-stat-value" id="cmp2-best-date">—</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category Flow Timeline -->
+          <div class="fade-up delay-4" style="margin-top:24px;">
+            <div class="premium-card" style="padding:40px;border-radius:36px;">
+              <div class="chart-header">
+                <div>
+                  <h3 class="chart-title-lg">Category Flow</h3>
+                  <p class="chart-subtitle-text">How your time flows between categories throughout the day</p>
+                </div>
+              </div>
+              <canvas id="chart-category-flow" height="200"></canvas>
+            </div>
+          </div>
+
           <!-- Achievements Showcase -->
           <div class="fade-up delay-4" style="margin-top:24px;">
             <div class="premium-card" style="padding:40px;border-radius:36px;">
@@ -474,6 +523,41 @@
             </div>
           </div>
           <div class="sessions-grid" id="sessions-grid"></div>
+          <!-- Session Analytics Summary -->
+          <div class="premium-card fade-up delay-1" style="margin-top:24px;padding:40px;border-radius:36px;">
+            <div class="chart-header">
+              <div>
+                <h3 class="chart-title-lg">Session Analytics</h3>
+                <p class="chart-subtitle-text">Performance breakdown across all focus sessions</p>
+              </div>
+            </div>
+            <div class="session-analytics-grid" id="session-analytics-grid">
+              <div class="session-analytics-stat">
+                <div class="session-analytics-value" id="sa-completion-rate">0%</div>
+                <div class="session-analytics-label">Completion Rate</div>
+              </div>
+              <div class="session-analytics-stat">
+                <div class="session-analytics-value" id="sa-avg-duration">0m</div>
+                <div class="session-analytics-label">Avg Duration</div>
+              </div>
+              <div class="session-analytics-stat">
+                <div class="session-analytics-value" id="sa-total-focus">0h</div>
+                <div class="session-analytics-label">Total Focus Time</div>
+              </div>
+              <div class="session-analytics-stat">
+                <div class="session-analytics-value" id="sa-avg-interruptions">0</div>
+                <div class="session-analytics-label">Avg Interruptions</div>
+              </div>
+              <div class="session-analytics-stat">
+                <div class="session-analytics-value" id="sa-tasks-completed">0</div>
+                <div class="session-analytics-label">Tasks Completed</div>
+              </div>
+              <div class="session-analytics-stat">
+                <div class="session-analytics-value" id="sa-best-streak">0</div>
+                <div class="session-analytics-label">Best Session Streak</div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Blocklist Management -->
@@ -825,6 +909,21 @@
             <h3 class="chart-title-lg" style="margin-bottom:16px;">Distraction Loops</h3>
             <div id="loops-list" class="loops-list"></div>
           </div>
+
+          <!-- Report Generator -->
+          <div class="premium-card fade-up delay-5" style="padding:40px;border-radius:28px;margin-top:20px;">
+            <div class="chart-header">
+              <div>
+                <h3 class="chart-title-lg">📊 Export Report</h3>
+                <p class="chart-subtitle-text">Generate a detailed productivity report with letter grades</p>
+              </div>
+              <button id="btn-generate-report" class="btn-deploy" style="font-size:11px;">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v8M3 6l4-4 4 4M2 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Generate Report
+              </button>
+            </div>
+            <div class="report-preview" id="report-preview"></div>
+          </div>
         </div>
 
         <!-- Settings -->
@@ -961,6 +1060,17 @@
       <div style="margin-top:20px;">
         <h4 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:12px;">Hourly Pattern</h4>
         <canvas id="site-dive-hourly" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Achievement Unlock Toast -->
+  <div id="achievement-toast" class="achievement-toast" style="display:none;">
+    <div class="achievement-toast-inner">
+      <span class="achievement-toast-icon" id="achievement-toast-icon">🏆</span>
+      <div class="achievement-toast-content">
+        <span class="achievement-toast-title">Achievement Unlocked!</span>
+        <span class="achievement-toast-name" id="achievement-toast-name"></span>
       </div>
     </div>
   </div>
