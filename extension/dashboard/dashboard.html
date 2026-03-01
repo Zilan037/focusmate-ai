@@ -284,6 +284,66 @@
               <canvas id="chart-weekly" height="220"></canvas>
             </div>
           </div>
+
+          <!-- 365-Day Activity Heatmap -->
+          <div class="fade-up delay-4" style="margin-top:24px;">
+            <div class="premium-card" style="padding:40px;border-radius:36px;">
+              <div class="chart-header">
+                <div>
+                  <h3 class="chart-title-lg">Activity Heatmap</h3>
+                  <p class="chart-subtitle-text">365-day contribution history</p>
+                </div>
+                <div class="heatmap-365-legend">
+                  <span class="heatmap-legend-label">Less</span>
+                  <span class="heatmap-365-cell" style="opacity:0.1"></span>
+                  <span class="heatmap-365-cell" style="opacity:0.3"></span>
+                  <span class="heatmap-365-cell" style="opacity:0.5"></span>
+                  <span class="heatmap-365-cell" style="opacity:0.7"></span>
+                  <span class="heatmap-365-cell" style="opacity:1"></span>
+                  <span class="heatmap-legend-label">More</span>
+                </div>
+              </div>
+              <div class="heatmap-365-month-labels" id="heatmap-365-months"></div>
+              <div class="heatmap-365-wrap">
+                <div class="heatmap-365-day-labels">
+                  <span>Mon</span><span>Wed</span><span>Fri</span>
+                </div>
+                <div class="heatmap-365-grid" id="heatmap-365-grid"></div>
+              </div>
+              <div class="heatmap-365-stats" id="heatmap-365-stats"></div>
+            </div>
+          </div>
+
+          <!-- 7-Day × 24-Hour Productivity Grid -->
+          <div class="fade-up delay-4" style="margin-top:24px;">
+            <div class="premium-card" style="padding:40px;border-radius:36px;">
+              <div class="chart-header">
+                <div>
+                  <h3 class="chart-title-lg">Productivity Heatmap</h3>
+                  <p class="chart-subtitle-text">Your most productive hours across the week</p>
+                </div>
+              </div>
+              <div class="hourly-grid-wrap">
+                <div class="hourly-grid-y-labels" id="hourly-grid-days"></div>
+                <div class="hourly-grid" id="hourly-7x24-grid"></div>
+              </div>
+              <div class="hourly-grid-x-labels" id="hourly-grid-hours"></div>
+            </div>
+          </div>
+
+          <!-- Achievements Showcase -->
+          <div class="fade-up delay-4" style="margin-top:24px;">
+            <div class="premium-card" style="padding:40px;border-radius:36px;">
+              <div class="chart-header">
+                <div>
+                  <h3 class="chart-title-lg">Achievements</h3>
+                  <p class="chart-subtitle-text" id="achievements-subtitle">Unlock badges by building great habits</p>
+                </div>
+                <div class="achievements-progress-badge" id="achievements-count-badge">0 / 0</div>
+              </div>
+              <div class="achievements-grid" id="achievements-grid"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Deep Stats -->
@@ -882,6 +942,29 @@
     </div>
   </div>
 
+  <!-- Site Deep Dive Modal -->
+  <div id="site-dive-modal" class="unlock-modal-overlay" style="display:none;">
+    <div class="site-dive-content premium-card" style="border-radius:28px;padding:40px;max-width:600px;width:90%;">
+      <div class="site-dive-header">
+        <img id="site-dive-favicon" class="site-dive-favicon" src="" />
+        <div>
+          <h3 class="settings-group-title" id="site-dive-domain" style="margin-bottom:2px;"></h3>
+          <span class="site-dive-category" id="site-dive-category"></span>
+        </div>
+        <button id="site-dive-close" class="fg-close" style="margin-left:auto;width:28px;height:28px;">✕</button>
+      </div>
+      <div class="site-dive-stats" id="site-dive-stats"></div>
+      <div style="margin-top:20px;">
+        <h4 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:12px;">7-Day Usage Trend</h4>
+        <canvas id="site-dive-chart" height="140"></canvas>
+      </div>
+      <div style="margin-top:20px;">
+        <h4 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:12px;">Hourly Pattern</h4>
+        <canvas id="site-dive-hourly" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+
   <!-- Fixed Footer -->
   <footer class="dashboard-footer">
     <div class="footer-divider"></div>
@@ -899,6 +982,7 @@
   <script src="../utils/categories.js"></script>
   <script src="../utils/scoring.js"></script>
   <script src="../utils/insights.js"></script>
+  <script src="../utils/achievements.js"></script>
   <script src="../utils/popular-sites.js"></script>
   <script src="dashboard.js"></script>
 </body>

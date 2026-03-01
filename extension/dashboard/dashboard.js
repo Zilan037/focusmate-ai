@@ -20,6 +20,9 @@ async function init() {
   await loadSidebarStats();
   await loadDailyLimitsUI();
   await loadReports("today");
+  await load365Heatmap();
+  await load7x24Grid();
+  await loadAchievements();
   setupDataManagement();
   setupQuickActions();
   setupBlocklistActions();
@@ -27,6 +30,7 @@ async function init() {
   setupReportsTab();
   setupDailyLimitsActions();
   setupUnlockModal();
+  setupSiteDeepDive();
   startAutoRefresh();
 }
 
@@ -2004,4 +2008,420 @@ function downloadFile(content, filename, mimeType) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── 365-Day GitHub-Style Activity Heatmap ───
+// ═══════════════════════════════════════════════════════════════
+
+async function load365Heatmap() {
+  try {
+    const allData = await chrome.runtime.sendMessage({ action: "getAllUsage" });
+    const grid = document.getElementById("heatmap-365-grid");
+    const monthsEl = document.getElementById("heatmap-365-months");
+    const statsEl = document.getElementById("heatmap-365-stats");
+    if (!grid) return;
+
+    // Build date map for last 365 days
+    const dateMap = {};
+    if (Array.isArray(allData)) {
+      allData.forEach(d => { dateMap[d.date] = d.data; });
+    }
+
+    const today = new Date();
+    const cells = [];
+    let totalActive = 0;
+    let activeDays = 0;
+    let longestStreak = 0;
+    let currentStreak = 0;
+    let maxMinutes = 0;
+
+    // Go back 365 days
+    for (let i = 364; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split("T")[0];
+      const dayData = dateMap[key];
+      const minutes = dayData ? (dayData.totalActive || 0) : 0;
+      if (minutes > maxMinutes) maxMinutes = minutes;
+      totalActive += minutes;
+      if (minutes > 5) {
+        activeDays++;
+        currentStreak++;
+        if (currentStreak > longestStreak) longestStreak = currentStreak;
+      } else {
+        currentStreak = 0;
+      }
+      cells.push({ date: key, minutes, day: d.getDay() });
+    }
+
+    // Pad start to align with weekday grid (start on Sunday)
+    const firstDayOfWeek = cells[0].day;
+    const padCells = firstDayOfWeek;
+
+    grid.innerHTML = "";
+    // Add padding cells
+    for (let i = 0; i < padCells; i++) {
+      const cell = document.createElement("div");
+      cell.style.width = "12px";
+      cell.style.height = "12px";
+      cell.style.visibility = "hidden";
+      grid.appendChild(cell);
+    }
+
+    // Add real cells
+    const maxVal = maxMinutes || 1;
+    cells.forEach(c => {
+      const cell = document.createElement("div");
+      cell.className = "heatmap-365-cell";
+      const intensity = Math.min(1, c.minutes / maxVal);
+      cell.style.opacity = c.minutes > 0 ? (0.15 + intensity * 0.85) : 0.06;
+      cell.title = `${c.date}: ${formatTime(c.minutes)}`;
+      grid.appendChild(cell);
+    });
+
+    // Month labels
+    if (monthsEl) {
+      const months = [];
+      let lastMonth = -1;
+      cells.forEach((c, i) => {
+        const m = new Date(c.date).getMonth();
+        if (m !== lastMonth) {
+          months.push({ name: new Date(c.date).toLocaleDateString("en", { month: "short" }), index: i });
+          lastMonth = m;
+        }
+      });
+      monthsEl.innerHTML = months.map(m => `<span>${m.name}</span>`).join("");
+    }
+
+    // Stats
+    if (statsEl) {
+      statsEl.innerHTML = `
+        <div class="heatmap-365-stat">
+          <span class="heatmap-365-stat-value">${formatTime(totalActive)}</span>
+          <span class="heatmap-365-stat-label">Total Tracked</span>
+        </div>
+        <div class="heatmap-365-stat">
+          <span class="heatmap-365-stat-value">${activeDays}</span>
+          <span class="heatmap-365-stat-label">Active Days</span>
+        </div>
+        <div class="heatmap-365-stat">
+          <span class="heatmap-365-stat-value">${longestStreak}</span>
+          <span class="heatmap-365-stat-label">Longest Streak</span>
+        </div>
+        <div class="heatmap-365-stat">
+          <span class="heatmap-365-stat-value">${activeDays > 0 ? formatTime(totalActive / activeDays) : "0m"}</span>
+          <span class="heatmap-365-stat-label">Daily Average</span>
+        </div>
+      `;
+    }
+  } catch (e) {
+    console.error("365 heatmap error:", e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── 7-Day × 24-Hour Productivity Heatmap ───
+// ═══════════════════════════════════════════════════════════════
+
+async function load7x24Grid() {
+  try {
+    const weekData = await chrome.runtime.sendMessage({ action: "getWeekUsage" });
+    const grid = document.getElementById("hourly-7x24-grid");
+    const daysEl = document.getElementById("hourly-grid-days");
+    const hoursEl = document.getElementById("hourly-grid-hours");
+    if (!grid) return;
+
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const today = new Date().getDay();
+
+    // Build 7×24 matrix (rows = days, cols = hours)
+    const matrix = Array.from({ length: 7 }, () => Array(24).fill(0));
+    let maxVal = 0;
+
+    if (weekData && weekData.length > 0) {
+      weekData.slice(0, 7).forEach(day => {
+        const d = new Date(day.date);
+        const dayOfWeek = d.getDay();
+        const hourly = day.data.hourlyActivity || [];
+        hourly.forEach((h, i) => {
+          const productive = h.productive || 0;
+          matrix[dayOfWeek][i] = productive;
+          if (productive > maxVal) maxVal = productive;
+        });
+      });
+    }
+
+    // Day labels
+    if (daysEl) {
+      daysEl.innerHTML = "";
+      for (let d = 0; d < 7; d++) {
+        const span = document.createElement("span");
+        span.textContent = dayNames[d];
+        daysEl.appendChild(span);
+      }
+    }
+
+    // Hour labels
+    if (hoursEl) {
+      hoursEl.innerHTML = "";
+      for (let h = 0; h < 24; h++) {
+        if (h % 3 === 0) {
+          const span = document.createElement("span");
+          span.textContent = `${h}:00`;
+          hoursEl.appendChild(span);
+        } else {
+          const span = document.createElement("span");
+          hoursEl.appendChild(span);
+        }
+      }
+    }
+
+    // Cells (row-major: day 0 hour 0, day 0 hour 1, ...)
+    grid.innerHTML = "";
+    const mv = maxVal || 1;
+    for (let d = 0; d < 7; d++) {
+      for (let h = 0; h < 24; h++) {
+        const cell = document.createElement("div");
+        cell.className = "hourly-grid-cell";
+        const val = matrix[d][h];
+        const intensity = Math.min(1, val / mv);
+        cell.style.opacity = val > 0 ? (0.15 + intensity * 0.85) : 0.06;
+        cell.title = `${dayNames[d]} ${h}:00 — ${Math.round(val)}m productive`;
+        grid.appendChild(cell);
+      }
+    }
+  } catch (e) {
+    console.error("7x24 grid error:", e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── Achievements Showcase ───
+// ═══════════════════════════════════════════════════════════════
+
+async function loadAchievements() {
+  try {
+    const all = await Achievements.getAllWithStatus();
+    const grid = document.getElementById("achievements-grid");
+    const badge = document.getElementById("achievements-count-badge");
+    const subtitle = document.getElementById("achievements-subtitle");
+    if (!grid) return;
+
+    const earned = all.filter(a => a.unlocked).length;
+    if (badge) badge.textContent = `${earned} / ${all.length}`;
+    if (subtitle) subtitle.textContent = earned > 0 
+      ? `${earned} unlocked — ${all.length - earned} remaining`
+      : "Unlock badges by building great habits";
+
+    // Sort: unlocked first, then by tier
+    const tierOrder = { legendary: 0, platinum: 1, gold: 2, silver: 3, bronze: 4 };
+    const sorted = [...all].sort((a, b) => {
+      if (a.unlocked && !b.unlocked) return -1;
+      if (!a.unlocked && b.unlocked) return 1;
+      return (tierOrder[a.tier] || 5) - (tierOrder[b.tier] || 5);
+    });
+
+    grid.innerHTML = sorted.map(a => {
+      const tier = Achievements.tierColors[a.tier] || {};
+      const lockClass = a.unlocked ? "unlocked" : "locked";
+      const dateStr = a.earnedAt ? new Date(a.earnedAt).toLocaleDateString("en", { month: "short", day: "numeric" }) : "";
+      return `<div class="achievement-card ${lockClass}" 
+        style="--achievement-bg:${tier.bg || 'transparent'};--achievement-border:${tier.border || 'var(--bg-glass-border)'};">
+        <span class="achievement-icon">${a.icon}</span>
+        <span class="achievement-name">${a.name}</span>
+        <span class="achievement-desc">${a.desc}</span>
+        <span class="achievement-tier" style="background:${tier.bg};color:${tier.text};border:1px solid ${tier.border};">${a.tier}</span>
+        ${a.unlocked ? `<span class="achievement-date">${dateStr}</span>` : ""}
+      </div>`;
+    }).join("");
+
+    // Also check for new achievements
+    const stats = await Achievements.buildStats();
+    const newlyUnlocked = await Achievements.checkAll(stats);
+    if (newlyUnlocked.length > 0) {
+      // Refresh display
+      loadAchievements();
+    }
+  } catch (e) {
+    console.error("Achievements error:", e);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ─── Site Deep Dive Modal ───
+// ═══════════════════════════════════════════════════════════════
+
+function setupSiteDeepDive() {
+  // Close modal
+  document.getElementById("site-dive-close")?.addEventListener("click", () => {
+    document.getElementById("site-dive-modal").style.display = "none";
+  });
+  document.getElementById("site-dive-modal")?.addEventListener("click", (e) => {
+    if (e.target.id === "site-dive-modal") {
+      document.getElementById("site-dive-modal").style.display = "none";
+    }
+  });
+
+  // Make domain rows clickable
+  document.addEventListener("click", async (e) => {
+    const row = e.target.closest("tr[data-domain]");
+    if (!row || !row.dataset.domain) return;
+    await openSiteDeepDive(row.dataset.domain);
+  });
+}
+
+async function openSiteDeepDive(domain) {
+  const modal = document.getElementById("site-dive-modal");
+  if (!modal) return;
+
+  const usage = await chrome.runtime.sendMessage({ action: "getTodayUsage" });
+  const history = await chrome.runtime.sendMessage({ action: "getDomainHistory", domain });
+  const settings = await chrome.runtime.sendMessage({ action: "getSettings" });
+
+  const domainData = usage.domains?.[domain] || {};
+  const category = domainData.category || Categories.categorize(domain, settings.categoryOverrides);
+  const color = Categories.getCategoryColor(category);
+
+  document.getElementById("site-dive-favicon").src = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+  document.getElementById("site-dive-domain").textContent = domain;
+  const catEl = document.getElementById("site-dive-category");
+  catEl.textContent = category;
+  catEl.style.color = color;
+
+  // Stats
+  const totalWeek = history.reduce((s, v) => s + v, 0);
+  const avgDaily = history.length > 0 ? totalWeek / history.length : 0;
+  const peakDay = Math.max(...history, 0);
+  const visits = domainData.visits || 0;
+
+  document.getElementById("site-dive-stats").innerHTML = `
+    <div class="site-dive-stat">
+      <div class="site-dive-stat-value">${formatTime(domainData.time || 0)}</div>
+      <div class="site-dive-stat-label">Today</div>
+    </div>
+    <div class="site-dive-stat">
+      <div class="site-dive-stat-value">${formatTime(totalWeek)}</div>
+      <div class="site-dive-stat-label">This Week</div>
+    </div>
+    <div class="site-dive-stat">
+      <div class="site-dive-stat-value">${formatTime(avgDaily)}</div>
+      <div class="site-dive-stat-label">Daily Avg</div>
+    </div>
+    <div class="site-dive-stat">
+      <div class="site-dive-stat-value">${visits}</div>
+      <div class="site-dive-stat-label">Visits Today</div>
+    </div>
+  `;
+
+  // Draw 7-day trend chart
+  drawSiteDiveChart("site-dive-chart", history.slice().reverse(), color);
+
+  // Draw hourly pattern
+  const hourlyData = Array(24).fill(0);
+  const hourly = usage.hourlyActivity || [];
+  hourly.forEach((h, i) => {
+    // Approximate: if this domain is productive, show its contribution
+    if (Categories.isProductive(category)) {
+      hourlyData[i] = h.productive || 0;
+    } else {
+      hourlyData[i] = h.distracted || 0;
+    }
+  });
+  drawSiteDiveChart("site-dive-hourly", hourlyData, color, true);
+
+  modal.style.display = "flex";
+}
+
+function drawSiteDiveChart(canvasId, data, color, isHourly = false) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || data.length < 2) return;
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const w = rect.width;
+  const h = parseInt(canvas.getAttribute("height")) || 140;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + "px";
+  canvas.style.height = h + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const colors = getChartColors();
+  const padding = { top: 10, right: 10, bottom: 24, left: 36 };
+  const chartW = w - padding.left - padding.right;
+  const chartH = h - padding.top - padding.bottom;
+  const maxVal = Math.max(1, ...data);
+
+  if (isHourly) {
+    // Bar chart
+    const barW = chartW / data.length - 2;
+    data.forEach((v, i) => {
+      const x = padding.left + (i / data.length) * chartW + 1;
+      const barH = (v / maxVal) * chartH;
+      const grad = ctx.createLinearGradient(0, padding.top + chartH - barH, 0, padding.top + chartH);
+      grad.addColorStop(0, color);
+      grad.addColorStop(1, color + "33");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(x, padding.top + chartH - barH, barW, barH, [3, 3, 0, 0]);
+      ctx.fill();
+
+      if (i % 3 === 0) {
+        ctx.fillStyle = colors.textMuted;
+        ctx.font = "600 9px 'Inter', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(i + ":00", x + barW / 2, h - 4);
+      }
+    });
+  } else {
+    // Area + Line chart
+    const stepX = chartW / (data.length - 1);
+
+    // Area
+    ctx.beginPath();
+    ctx.moveTo(padding.left, padding.top + chartH);
+    data.forEach((v, i) => {
+      const x = padding.left + i * stepX;
+      const y = padding.top + chartH - (v / maxVal) * chartH;
+      ctx.lineTo(x, y);
+    });
+    ctx.lineTo(padding.left + (data.length - 1) * stepX, padding.top + chartH);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartH);
+    grad.addColorStop(0, color + "30");
+    grad.addColorStop(1, color + "05");
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    data.forEach((v, i) => {
+      const x = padding.left + i * stepX;
+      const y = padding.top + chartH - (v / maxVal) * chartH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = "round";
+    ctx.stroke();
+
+    // Dots
+    data.forEach((v, i) => {
+      const x = padding.left + i * stepX;
+      const y = padding.top + chartH - (v / maxVal) * chartH;
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      // Label
+      ctx.fillStyle = colors.textMuted;
+      ctx.font = "600 9px 'Inter', sans-serif";
+      ctx.textAlign = "center";
+      const dayLabel = new Date(Date.now() - (data.length - 1 - i) * 86400000).toLocaleDateString("en", { weekday: "short" });
+      ctx.fillText(dayLabel, x, h - 4);
+    });
+  }
 }
