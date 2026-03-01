@@ -3,31 +3,10 @@
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
+  // Setup synchronous UI first — these must always run
   setupTabs();
   setupSidebar();
   setupTheme();
-  await loadOverview();
-  await loadComparisons();
-  await loadComparisonRow();
-  await loadComparisonCards();
-  await loadTopSites();
-  await loadDaily();
-  await loadInsights();
-  await loadSessions();
-  await loadSessionTimeline();
-  await loadSessionAnalytics();
-  await loadDomains();
-  await loadDeepStats();
-  await loadBlocklist();
-  await loadSettings();
-  await loadSidebarStats();
-  await loadDailyLimitsUI();
-  await loadReports("today");
-  await load365Heatmap();
-  await load7x24Grid();
-  await loadAchievements();
-  await drawCategoryFlow();
-  await drawCategorySankey();
   setupDataManagement();
   setupQuickActions();
   setupBlocklistActions();
@@ -38,6 +17,31 @@ async function init() {
   setupSiteDeepDive();
   setupReportGenerator();
   startAutoRefresh();
+
+  // Load async data — wrap each in try/catch so failures don't cascade
+  const safeLoad = async (fn) => { try { await fn(); } catch (e) { console.warn("Init load error:", e); } };
+  await safeLoad(loadOverview);
+  await safeLoad(loadComparisons);
+  await safeLoad(loadComparisonRow);
+  await safeLoad(loadComparisonCards);
+  await safeLoad(loadTopSites);
+  await safeLoad(loadDaily);
+  await safeLoad(loadInsights);
+  await safeLoad(loadSessions);
+  await safeLoad(loadSessionTimeline);
+  await safeLoad(loadSessionAnalytics);
+  await safeLoad(loadDomains);
+  await safeLoad(loadDeepStats);
+  await safeLoad(loadBlocklist);
+  await safeLoad(loadSettings);
+  await safeLoad(loadSidebarStats);
+  await safeLoad(() => loadDailyLimitsUI());
+  await safeLoad(() => loadReports("today"));
+  await safeLoad(load365Heatmap);
+  await safeLoad(load7x24Grid);
+  await safeLoad(loadAchievements);
+  await safeLoad(drawCategoryFlow);
+  await safeLoad(drawCategorySankey);
   startLiveRefresh();
 }
 
