@@ -67,9 +67,9 @@ const Section = ({
       animate={isInView ? "visible" : "hidden"}
       variants={staggerContainer}
       style={parallaxOffset ? { y } : undefined}
-      className={`py-24 md:py-36 ${className}`}
+      className={`py-16 sm:py-24 md:py-36 ${className}`}
     >
-      <div className="mx-auto max-w-5xl px-6">{children}</div>
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">{children}</div>
     </motion.section>
   );
 };
@@ -84,13 +84,13 @@ const SectionLabel = ({ children }: { children: React.ReactNode }) => (
 );
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-[1.08] text-foreground font-heading">
+  <motion.h2 variants={fadeUp} className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-[1.08] text-foreground font-heading">
     {children}
   </motion.h2>
 );
 
 const SectionDesc = ({ children }: { children: React.ReactNode }) => (
-  <motion.p variants={fadeUp} className="mt-5 text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto text-center">
+  <motion.p variants={fadeUp} className="mt-4 sm:mt-5 text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto text-center">
     {children}
   </motion.p>
 );
@@ -174,9 +174,9 @@ const StatCard = ({ label, value, icon: Icon, gradient }: {
 
 /* ─── Comparison Row ─── */
 const CompareRow = ({ feature, fg, others }: { feature: string; fg: boolean; others: boolean }) => (
-  <motion.div variants={fadeUp} className="grid grid-cols-3 gap-4 px-6 py-4 border-b border-border/40 last:border-0 items-center">
-    <div className="text-[15px] font-bold text-foreground">{feature}</div>
-    <div className="text-center">{fg ? <CheckCircle className="inline h-4.5 w-4.5 text-productive" /> : <X className="inline h-4.5 w-4.5 text-destructive/40" />}</div>
+  <motion.div variants={fadeUp} className="grid grid-cols-[1fr_60px_60px] sm:grid-cols-3 gap-2 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 border-b border-border/40 last:border-0 items-center">
+    <div className="text-[13px] sm:text-[15px] font-bold text-foreground">{feature}</div>
+    <div className="text-center">{fg ? <CheckCircle className="inline h-4 w-4 sm:h-4.5 sm:w-4.5 text-productive" /> : <X className="inline h-4 w-4 text-destructive/40" />}</div>
     <div className="text-center">{others ? <Check className="inline h-4 w-4 text-muted-foreground/60" /> : <X className="inline h-4 w-4 text-destructive/30" />}</div>
   </motion.div>
 );
@@ -432,7 +432,7 @@ const Landing = () => {
       <section
         ref={heroRef}
         aria-label="Introduction"
-        className="relative overflow-hidden pt-32 pb-20 md:pt-40 md:pb-28"
+        className="relative overflow-hidden pt-28 pb-16 sm:pt-32 sm:pb-20 md:pt-40 md:pb-28"
         onMouseMove={handleHeroMouse}
       >
         {/* Cursor glow */}
@@ -447,7 +447,7 @@ const Landing = () => {
 
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
-          className="mx-auto max-w-3xl px-6 text-center relative"
+          className="mx-auto max-w-3xl px-4 sm:px-6 text-center relative"
         >
           {/* Badge */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
@@ -466,7 +466,7 @@ const Landing = () => {
           <motion.h1
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="mt-10 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] font-heading"
+            className="mt-10 text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] font-heading"
           >
             Your focus,{" "}
             <Typewriter text="protected." className="clay-text-gradient" />
@@ -502,18 +502,18 @@ const Landing = () => {
             ref={heroCounterRef}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.6 }}
-            className="mt-12 inline-flex items-center gap-6 sm:gap-8 rounded-[28px] bg-card/60 backdrop-blur-xl shadow-clayCard px-8 py-5"
+            className="mt-12 inline-flex flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-8 rounded-[28px] bg-card/60 backdrop-blur-xl shadow-clayCard px-5 sm:px-8 py-4 sm:py-5"
           >
             <LiveDownloads />
-            <span className="w-px h-10 bg-border/60" />
+            <span className="hidden sm:block w-px h-10 bg-border/60" />
             <div className="flex flex-col items-center">
-              <span className="text-2xl sm:text-3xl font-black font-heading text-foreground tabular-nums">{(hoursSaved / 1000000).toFixed(1)}M+</span>
-              <span className="text-xs text-muted-foreground font-bold mt-0.5">Hours Saved</span>
+              <span className="text-xl sm:text-2xl md:text-3xl font-black font-heading text-foreground tabular-nums">{(hoursSaved / 1000000).toFixed(1)}M+</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground font-bold mt-0.5">Hours Saved</span>
             </div>
-            <span className="w-px h-10 bg-border/60" />
+            <span className="hidden sm:block w-px h-10 bg-border/60" />
             <div className="flex flex-col items-center">
-              <span className="text-2xl sm:text-3xl font-black font-heading text-foreground">4.9</span>
-              <span className="text-xs text-muted-foreground font-bold mt-0.5 flex items-center gap-1">
+              <span className="text-xl sm:text-2xl md:text-3xl font-black font-heading text-foreground">4.9</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground font-bold mt-0.5 flex items-center gap-1">
                 <Star className="h-3 w-3 text-warning fill-warning" /> Rating
               </span>
             </div>
@@ -524,22 +524,24 @@ const Landing = () => {
         <motion.div
           initial={{ opacity: 0, y: 60, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 0.5, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="mx-auto mt-16 max-w-4xl px-6"
+          className="mx-auto mt-12 sm:mt-16 max-w-4xl px-4 sm:px-6"
         >
           <TiltCard className="rounded-[32px] bg-card/60 backdrop-blur-xl p-1.5 shadow-clayCard">
             {/* Window chrome */}
-            <div className="flex items-center gap-2 px-5 py-3 border-b border-border/30 rounded-t-[28px]">
+            <div className="flex items-center gap-2 px-4 sm:px-5 py-3 border-b border-border/30 rounded-t-[28px]">
               <div className="flex gap-2">
                 <div className="h-3 w-3 rounded-full bg-[#FF6B6B]" />
                 <div className="h-3 w-3 rounded-full bg-[#FFD93D]" />
                 <div className="h-3 w-3 rounded-full bg-[#6BCB77]" />
               </div>
-              <div className="flex-1 text-center text-[11px] text-muted-foreground font-mono tracking-wide font-bold">
+              <div className="flex-1 text-center text-[10px] sm:text-[11px] text-muted-foreground font-mono tracking-wide font-bold truncate">
                 focusguard — command center
               </div>
-              <LiveScore />
+              <div className="hidden sm:block">
+                <LiveScore />
+              </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 p-3 sm:p-4">
               <StatCard label="Score" value="87" icon={TrendingUp} gradient="from-[#A78BFA] to-[#7C3AED]" />
               <StatCard label="Active" value="6.5h" icon={Clock} gradient="from-[#38BDF8] to-[#0EA5E9]" />
               <StatCard label="Streak" value="12" icon={Flame} gradient="from-[#FCD34D] to-[#F59E0B]" />
@@ -551,8 +553,8 @@ const Landing = () => {
 
       {/* ─── Trusted By Marquee (Clay) ─── */}
       <div className="py-14">
-        <div className="mx-auto max-w-5xl px-6">
-          <p className="text-center text-xs font-black uppercase tracking-[0.2em] text-muted-foreground mb-8 font-heading">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <p className="text-center text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-muted-foreground mb-6 sm:mb-8 font-heading">
             Trusted by teams at
           </p>
           <Marquee speed={40}>
@@ -891,10 +893,10 @@ const Landing = () => {
         <motion.div variants={staggerContainer} className="mt-14 grid md:grid-cols-2 gap-8">
           <motion.div variants={slideInLeft}>
             <div className="rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard overflow-hidden">
-              <div className="grid grid-cols-3 gap-4 px-6 py-5 border-b border-border/30">
-                <div className="text-xs font-black uppercase tracking-wider text-muted-foreground font-heading">Feature</div>
-                <div className="text-center text-xs font-black text-primary font-heading">FocusGuard</div>
-                <div className="text-center text-xs font-bold text-muted-foreground font-heading">Others</div>
+              <div className="grid grid-cols-[1fr_60px_60px] sm:grid-cols-3 gap-2 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b border-border/30">
+                <div className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-muted-foreground font-heading">Feature</div>
+                <div className="text-center text-[10px] sm:text-xs font-black text-primary font-heading">FocusGuard</div>
+                <div className="text-center text-[10px] sm:text-xs font-bold text-muted-foreground font-heading">Others</div>
               </div>
               {[
                 { feature: "Smart Activity Tracking", fg: true, others: false },
@@ -1029,14 +1031,14 @@ const Landing = () => {
       <Section id="author" ariaLabel="About the creator">
         <motion.div variants={fadeUp} className="text-center mb-12">
           <SectionLabel>The Creator</SectionLabel>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-[1.1] font-heading">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-[1.1] font-heading">
             Meet <span className="clay-text-gradient">Husna Ayoub</span>
           </h2>
         </motion.div>
 
         <motion.div
           variants={scaleIn}
-          className="rounded-[40px] bg-card/60 backdrop-blur-xl shadow-clayCard p-10 sm:p-14 relative overflow-hidden max-w-3xl mx-auto"
+          className="rounded-[28px] sm:rounded-[40px] bg-card/60 backdrop-blur-xl shadow-clayCard p-6 sm:p-10 md:p-14 relative overflow-hidden max-w-3xl mx-auto"
         >
           <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#7C3AED]/10 blur-[100px] pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-[#0EA5E9]/10 blur-[80px] pointer-events-none" />
@@ -1114,9 +1116,9 @@ const Landing = () => {
           ═══════════════════════════════════════ */}
       <Section id="download" ariaLabel="Download and get started">
         <motion.div variants={scaleIn} className="text-center">
-          <div className="rounded-[48px] bg-card/60 backdrop-blur-xl shadow-claySurface p-14 md:p-20">
+          <div className="rounded-[32px] sm:rounded-[48px] bg-card/60 backdrop-blur-xl shadow-claySurface p-8 sm:p-14 md:p-20">
             <SectionLabel>Get Started</SectionLabel>
-            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-[1.1] font-heading">
+            <motion.h2 variants={fadeUp} className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-[1.1] font-heading">
               Start protecting your focus today.
             </motion.h2>
             <motion.p variants={fadeUp} className="mt-5 text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed">
@@ -1139,12 +1141,12 @@ const Landing = () => {
       {/* ─── Footer ─── */}
       <footer className="relative mt-10" role="contentinfo">
         {/* Top divider */}
-        <div className="mx-auto max-w-5xl px-6">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
           <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         </div>
 
-        <div className="bg-card/40 backdrop-blur-xl border-t border-border/30 pt-16 pb-12">
-          <div className="mx-auto max-w-5xl px-6 flex flex-col items-center gap-12">
+        <div className="bg-card/40 backdrop-blur-xl border-t border-border/30 pt-12 sm:pt-16 pb-10 sm:pb-12">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 flex flex-col items-center gap-8 sm:gap-12">
             {/* Logo + brand */}
             <div className="flex flex-col items-center gap-4">
               <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton">
@@ -1159,7 +1161,7 @@ const Landing = () => {
             </div>
 
             {/* Nav links */}
-            <nav className="flex items-center gap-8 md:gap-10 flex-wrap justify-center">
+            <nav className="flex items-center gap-4 sm:gap-8 md:gap-10 flex-wrap justify-center">
               {["Features", "Focus", "Analytics", "How It Works", "Testimonials", "Creator"].map((label) => (
                 <button
                   key={label}
@@ -1167,7 +1169,7 @@ const Landing = () => {
                     const id = label === "Creator" ? "author" : label === "How It Works" ? "how" : label.toLowerCase().replace(/\s/g, "");
                     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
                   }}
-                  className="text-[15px] font-black text-muted-foreground hover:text-foreground transition-colors duration-200 font-heading"
+                  className="text-[13px] sm:text-[15px] font-black text-muted-foreground hover:text-foreground transition-colors duration-200 font-heading"
                 >
                   {label}
                 </button>
@@ -1178,14 +1180,14 @@ const Landing = () => {
             <div className="w-full max-w-md h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
 
             {/* Copyright */}
-            <p className="text-base text-muted-foreground font-bold text-center">
+            <p className="text-sm sm:text-base text-muted-foreground font-bold text-center">
               © {new Date().getFullYear()} FocusGuard. Built with ❤️ by{" "}
               <span className="text-foreground font-black">Husna Ayoub</span>
               {" "}· Co-Founder, HH Nexus
             </p>
 
             {/* Social links */}
-            <div className="flex items-center gap-8 text-[15px] font-black text-muted-foreground">
+            <div className="flex items-center gap-5 sm:gap-8 text-[13px] sm:text-[15px] font-black text-muted-foreground">
               <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-2">
                 <Github className="h-5 w-5" /> GitHub
               </a>
