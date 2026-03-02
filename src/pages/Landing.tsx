@@ -389,19 +389,6 @@ const Landing = () => {
   const heroCounterRef = useRef<HTMLDivElement>(null);
   const heroCounterInView = useInView(heroCounterRef, { once: true });
 
-  // Floating CTA visibility
-  const [showFloatingCTA, setShowFloatingCTA] = useState(false);
-  useEffect(() => {
-    const onScroll = () => {
-      const scrollY = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight;
-      const winHeight = window.innerHeight;
-      const nearBottom = scrollY + winHeight > docHeight - 300;
-      setShowFloatingCTA(scrollY > 600 && !nearBottom);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   // Mouse glow for hero
   const mouseX = useMotionValue(0);
@@ -1202,28 +1189,6 @@ const Landing = () => {
         </div>
       </footer>
 
-      {/* ─── Floating CTA Pill (Clay) ─── */}
-      <AnimatePresence>
-        {showFloatingCTA && (
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-[calc(100%-2rem)]"
-          >
-            <Button
-              size="sm"
-              className="gap-2 text-xs sm:text-base sm:gap-3 sm:h-11 sm:px-6 shadow-clayButton hover:shadow-clayButtonHover"
-            >
-              <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Add to Chrome — Free</span>
-              <span className="sm:hidden">Add to Chrome</span>
-              <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
