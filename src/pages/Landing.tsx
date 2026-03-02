@@ -67,7 +67,7 @@ const Section = ({
       animate={isInView ? "visible" : "hidden"}
       variants={staggerContainer}
       style={parallaxOffset ? { y } : undefined}
-      className={`py-16 sm:py-24 md:py-36 ${className}`}
+      className={`py-10 sm:py-14 md:py-20 ${className}`}
     >
       <div className="mx-auto max-w-5xl px-4 sm:px-6">{children}</div>
     </motion.section>
