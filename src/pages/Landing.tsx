@@ -1134,58 +1134,65 @@ const Landing = () => {
       </Section>
 
       {/* ─── Footer ─── */}
-      <footer className="relative py-20" role="contentinfo">
-        <div className="mx-auto max-w-5xl px-6 flex flex-col items-center gap-10">
-          {/* Logo + brand */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton">
-              <Shield className="h-5 w-5" />
+      <footer className="relative mt-10" role="contentinfo">
+        {/* Top divider */}
+        <div className="mx-auto max-w-5xl px-6">
+          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        </div>
+
+        <div className="bg-card/40 backdrop-blur-xl border-t border-border/30 pt-16 pb-12">
+          <div className="mx-auto max-w-5xl px-6 flex flex-col items-center gap-12">
+            {/* Logo + brand */}
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton">
+                <Shield className="h-7 w-7" />
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-xl font-black text-foreground leading-tight font-heading tracking-tight">FocusGuard</span>
+                <span className="text-[11px] text-muted-foreground leading-tight tracking-[0.2em] uppercase font-black mt-1 font-heading">
+                  Your Focus, Protected.
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-base font-black text-foreground leading-tight font-heading">FocusGuard</span>
-              <span className="text-[10px] text-muted-foreground leading-tight tracking-[0.15em] uppercase font-bold">
-                Your focus, protected.
-              </span>
-            </div>
-          </div>
 
-          {/* Nav links */}
-          <nav className="flex items-center gap-7 flex-wrap justify-center">
-            {["Features", "Focus", "Analytics", "How It Works", "Testimonials", "Creator"].map((label) => (
-              <button
-                key={label}
-                onClick={() => {
-                  const id = label === "Creator" ? "author" : label === "How It Works" ? "how" : label.toLowerCase().replace(/\s/g, "");
-                  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors duration-200"
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
+            {/* Nav links */}
+            <nav className="flex items-center gap-8 md:gap-10 flex-wrap justify-center">
+              {["Features", "Focus", "Analytics", "How It Works", "Testimonials", "Creator"].map((label) => (
+                <button
+                  key={label}
+                  onClick={() => {
+                    const id = label === "Creator" ? "author" : label === "How It Works" ? "how" : label.toLowerCase().replace(/\s/g, "");
+                    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="text-[15px] font-black text-muted-foreground hover:text-foreground transition-colors duration-200 font-heading"
+                >
+                  {label}
+                </button>
+              ))}
+            </nav>
 
-          {/* Divider */}
-          <div className="w-64 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
+            {/* Divider */}
+            <div className="w-full max-w-md h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
 
-          <div className="flex flex-col sm:flex-row items-center gap-2 text-sm text-muted-foreground">
-            <p className="font-medium">
+            {/* Copyright */}
+            <p className="text-base text-muted-foreground font-bold text-center">
               © {new Date().getFullYear()} FocusGuard. Built with ❤️ by{" "}
-              <span className="text-foreground font-bold">Husna Ayoub</span>
+              <span className="text-foreground font-black">Husna Ayoub</span>
               {" "}· Co-Founder, HH Nexus
             </p>
-          </div>
 
-          <div className="flex items-center gap-6 text-sm font-bold text-muted-foreground">
-            <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1.5">
-              <Github className="h-4 w-4" /> GitHub
-            </a>
-            <a href="https://www.linkedin.com/in/husna-a-7971b7272/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
-              LinkedIn
-            </a>
-            <a href="mailto:ayoubhusna9462@gmail.com" className="hover:text-foreground transition-colors">
-              Email
-            </a>
+            {/* Social links */}
+            <div className="flex items-center gap-8 text-[15px] font-black text-muted-foreground">
+              <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-2">
+                <Github className="h-5 w-5" /> GitHub
+              </a>
+              <a href="https://www.linkedin.com/in/husna-a-7971b7272/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                LinkedIn
+              </a>
+              <a href="mailto:ayoubhusna9462@gmail.com" className="hover:text-foreground transition-colors">
+                Email
+              </a>
+            </div>
           </div>
         </div>
       </footer>
