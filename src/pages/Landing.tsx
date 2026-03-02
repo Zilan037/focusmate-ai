@@ -69,7 +69,7 @@ const Section = ({
       style={parallaxOffset ? { y } : undefined}
       className={`py-10 sm:py-14 md:py-20 ${className}`}
     >
-      <div className="mx-auto max-w-5xl px-4 sm:px-6">{children}</div>
+      <div className="mx-auto max-w-6xl px-4 sm:px-8">{children}</div>
     </motion.section>
   );
 };
@@ -434,7 +434,7 @@ const Landing = () => {
 
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
-          className="mx-auto max-w-3xl px-4 sm:px-6 text-center relative"
+          className="mx-auto max-w-4xl px-4 sm:px-6 text-center relative"
         >
           {/* Badge */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
@@ -511,7 +511,7 @@ const Landing = () => {
         <motion.div
           initial={{ opacity: 0, y: 60, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 0.5, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="mx-auto mt-12 sm:mt-16 max-w-4xl px-4 sm:px-6"
+          className="mx-auto mt-12 sm:mt-16 max-w-5xl px-4 sm:px-6"
         >
           <TiltCard className="rounded-[32px] bg-card/60 backdrop-blur-xl p-1.5 shadow-clayCard">
             {/* Window chrome */}
