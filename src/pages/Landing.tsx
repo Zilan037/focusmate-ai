@@ -4,7 +4,7 @@ import {
   Shield, BarChart3, Target, Lock, Brain, Zap, ArrowRight,
   EyeOff, Github, Check, X, ChevronRight, Clock, Flame, TrendingUp,
   Globe, CheckCircle, Timer, Sparkles, Eye, Activity, Layers,
-  ChevronDown, Plus, Minus, Monitor,
+  ChevronDown, Plus, Minus, Monitor, Download, Users, Star,
 } from "lucide-react";
 import extStats from "@/assets/ext-stats.png";
 import extFocus from "@/assets/ext-focus.png";
@@ -33,18 +33,31 @@ const scaleIn = {
   visible: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] as const } },
 };
 
+const slideInLeft = {
+  hidden: { opacity: 0, x: -40 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] as const } },
+};
+
+const slideInRight = {
+  hidden: { opacity: 0, x: 40 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] as const } },
+};
+
 const CATEGORY_COLORS: Record<string, string> = {
   Work: "#0EA5E9", Education: "#10B981",
   Entertainment: "#F59E0B", Social: "#7C3AED",
   News: "#6D28D9", Shopping: "#DB2777",
 };
 
-/* ─── Scroll-Triggered Section ─── */
+/* ─── Scroll-Triggered Section with Parallax ─── */
 const Section = ({
-  children, className = "", id, ariaLabel,
-}: { children: React.ReactNode; className?: string; id?: string; ariaLabel?: string }) => {
+  children, className = "", id, ariaLabel, parallaxOffset = 0,
+}: { children: React.ReactNode; className?: string; id?: string; ariaLabel?: string; parallaxOffset?: number }) => {
   const ref = useRef<HTMLElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], [parallaxOffset, -parallaxOffset]);
+
   return (
     <motion.section
       ref={ref}
@@ -53,6 +66,7 @@ const Section = ({
       initial="hidden"
       animate={isInView ? "visible" : "hidden"}
       variants={staggerContainer}
+      style={parallaxOffset ? { y } : undefined}
       className={`py-24 md:py-36 ${className}`}
     >
       <div className="mx-auto max-w-5xl px-6">{children}</div>
@@ -235,9 +249,133 @@ const Typewriter = ({ text, className = "" }: { text: string; className?: string
   );
 };
 
+/* ─── Live Ticking Timer (Living UI) ─── */
+const LiveTimer = () => {
+  const [seconds, setSeconds] = useState(1122); // 18:42
+  useEffect(() => {
+    const id = setInterval(() => setSeconds(s => s > 0 ? s - 1 : 1500), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  const pct = ((1500 - seconds) / 1500) * 100;
+  const circ = 2 * Math.PI * 88;
+  const offset = circ * (1 - pct / 100);
+
+  return (
+    <div className="relative w-48 h-48 flex items-center justify-center">
+      <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="88" fill="none" stroke="hsl(var(--border))" strokeWidth="3" />
+        <circle
+          cx="100" cy="100" r="88" fill="none"
+          stroke="url(#liveTimerGrad)" strokeWidth="3.5"
+          strokeDasharray={circ} strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transform: "rotate(-90deg)", transformOrigin: "center", transition: "stroke-dashoffset 1s linear" }}
+        />
+        <defs>
+          <linearGradient id="liveTimerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#A78BFA" />
+            <stop offset="100%" stopColor="#7C3AED" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="text-center">
+        <div className="text-4xl font-black font-heading tracking-tighter text-primary tabular-nums">
+          {m.toString().padStart(2, "0")}:{s.toString().padStart(2, "0")}
+        </div>
+        <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1 justify-center font-bold">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-productive opacity-75" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-productive" />
+          </span>
+          live session
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Live Score Widget (Living UI) ─── */
+const LiveScore = () => {
+  const [score, setScore] = useState(82);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setScore(s => {
+        const delta = Math.random() > 0.5 ? 1 : -1;
+        return Math.max(60, Math.min(99, s + delta));
+      });
+    }, 3000);
+    return () => clearInterval(id);
+  }, []);
+  const circ = 2 * Math.PI * 24;
+  const offset = circ * (1 - score / 100);
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative w-[60px] h-[60px]">
+        <svg viewBox="0 0 60 60" className="w-full h-full">
+          <circle cx="30" cy="30" r="24" stroke="hsl(var(--border))" strokeWidth="4" fill="none" opacity="0.2" />
+          <circle cx="30" cy="30" r="24" stroke="url(#scoreGrad)" strokeWidth="4" fill="none"
+            strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+            style={{ transform: "rotate(-90deg)", transformOrigin: "center", transition: "stroke-dashoffset 0.5s ease" }}
+          />
+          <defs>
+            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#2563EB" /><stop offset="100%" stopColor="#6366F1" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-base font-black font-heading text-foreground tabular-nums">{score}</span>
+      </div>
+      <div>
+        <p className="text-xs font-black uppercase tracking-wider text-muted-foreground font-heading">Neural Score</p>
+        <p className="text-[10px] text-productive font-bold mt-0.5">
+          {score >= 85 ? "Excellent" : score >= 70 ? "Good" : "Building"}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Infinite Marquee ─── */
+const Marquee = ({ children, speed = 30 }: { children: React.ReactNode; speed?: number }) => (
+  <div className="overflow-hidden relative">
+    <motion.div
+      className="flex gap-16 whitespace-nowrap"
+      animate={{ x: [0, "-50%"] }}
+      transition={{ duration: speed, repeat: Infinity, ease: "linear" }}
+    >
+      {children}
+      {children}
+    </motion.div>
+  </div>
+);
+
+/* ─── Live Download Counter ─── */
+const LiveDownloads = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true });
+  const baseCount = useCounter(10847, 2500, isInView);
+  const [extra, setExtra] = useState(0);
+  useEffect(() => {
+    if (!isInView) return;
+    const id = setInterval(() => setExtra(e => e + 1), 8000 + Math.random() * 4000);
+    return () => clearInterval(id);
+  }, [isInView]);
+  return (
+    <div ref={ref} className="flex flex-col items-center">
+      <span className="text-2xl sm:text-3xl font-black font-heading text-foreground tabular-nums">{(baseCount + extra).toLocaleString()}+</span>
+      <span className="text-xs text-muted-foreground font-bold mt-0.5 flex items-center gap-1">
+        <Download className="h-3 w-3" /> Active Users
+      </span>
+    </div>
+  );
+};
+
 /* ═════════════════════════════════════════════
    LANDING PAGE — CLAY DESIGN SYSTEM
-   High-Fidelity Claymorphism
+   High-Fidelity Claymorphism + Living UI
    ═════════════════════════════════════════════ */
 
 const Landing = () => {
@@ -272,7 +410,6 @@ const Landing = () => {
     mouseY.set(e.clientY - rect.top);
   }, [mouseX, mouseY]);
 
-  const usersCount = useCounter(10847, 2500, heroCounterInView);
   const hoursSaved = useCounter(2100000, 2500, heroCounterInView);
 
   return (
@@ -364,27 +501,23 @@ const Landing = () => {
             transition={{ delay: 0.6, duration: 0.6 }}
             className="mt-12 inline-flex items-center gap-6 sm:gap-8 rounded-[28px] bg-card/60 backdrop-blur-xl shadow-clayCard px-8 py-5"
           >
-            <div className="flex flex-col items-center">
-              <span className="text-2xl sm:text-3xl font-black font-heading text-foreground">{usersCount.toLocaleString()}+</span>
-              <span className="text-xs text-muted-foreground font-bold mt-0.5">Active Users</span>
-            </div>
+            <LiveDownloads />
             <span className="w-px h-10 bg-border/60" />
             <div className="flex flex-col items-center">
-              <span className="text-2xl sm:text-3xl font-black font-heading text-foreground">{(hoursSaved / 1000000).toFixed(1)}M+</span>
+              <span className="text-2xl sm:text-3xl font-black font-heading text-foreground tabular-nums">{(hoursSaved / 1000000).toFixed(1)}M+</span>
               <span className="text-xs text-muted-foreground font-bold mt-0.5">Hours Saved</span>
             </div>
             <span className="w-px h-10 bg-border/60" />
             <div className="flex flex-col items-center">
               <span className="text-2xl sm:text-3xl font-black font-heading text-foreground">4.9</span>
               <span className="text-xs text-muted-foreground font-bold mt-0.5 flex items-center gap-1">
-                <svg className="h-3 w-3 text-warning" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                Rating
+                <Star className="h-3 w-3 text-warning fill-warning" /> Rating
               </span>
             </div>
           </motion.div>
         </motion.div>
 
-        {/* Product Preview Card (Clay) */}
+        {/* Product Preview Card — Living UI Dashboard */}
         <motion.div
           initial={{ opacity: 0, y: 60, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 0.5, duration: 1, ease: [0.16, 1, 0.3, 1] }}
@@ -401,6 +534,7 @@ const Landing = () => {
               <div className="flex-1 text-center text-[11px] text-muted-foreground font-mono tracking-wide font-bold">
                 focusguard — command center
               </div>
+              <LiveScore />
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4">
               <StatCard label="Score" value="87" icon={TrendingUp} gradient="from-[#A78BFA] to-[#7C3AED]" />
@@ -412,26 +546,26 @@ const Landing = () => {
         </motion.div>
       </section>
 
-      {/* ─── Trusted By Bar (Clay) ─── */}
+      {/* ─── Trusted By Marquee (Clay) ─── */}
       <div className="py-14">
         <div className="mx-auto max-w-5xl px-6">
           <p className="text-center text-xs font-black uppercase tracking-[0.2em] text-muted-foreground mb-8 font-heading">
             Trusted by teams at
           </p>
-          <div className="flex items-center justify-center gap-10 md:gap-16 flex-wrap opacity-30">
-            {["Stanford", "Google", "Notion", "Figma", "Stripe", "Vercel"].map((name) => (
-              <span key={name} className="text-lg md:text-xl font-black text-foreground tracking-tight font-heading">{name}</span>
+          <Marquee speed={40}>
+            {["Stanford", "Google", "Notion", "Figma", "Stripe", "Vercel", "Linear", "Arc", "Raycast", "Obsidian"].map((name) => (
+              <span key={name} className="text-lg md:text-xl font-black text-foreground/25 tracking-tight font-heading select-none">{name}</span>
             ))}
-          </div>
+          </Marquee>
         </div>
       </div>
 
       {/* ═══════════════════════════════════════
           SECTION 2 — PROBLEM
           ═══════════════════════════════════════ */}
-      <Section id="problem" ariaLabel="The problem we solve">
+      <Section id="problem" ariaLabel="The problem we solve" parallaxOffset={15}>
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
-          <div>
+          <motion.div variants={slideInLeft}>
             <SectionLabel>The Problem</SectionLabel>
             <SectionTitle>We lose 2.5 hours daily to digital distractions.</SectionTitle>
             <motion.p variants={fadeUp} className="mt-5 text-lg text-muted-foreground leading-relaxed">
@@ -452,8 +586,8 @@ const Landing = () => {
                 </motion.div>
               ))}
             </motion.div>
-          </div>
-          <motion.div variants={scaleIn} className="relative">
+          </motion.div>
+          <motion.div variants={slideInRight} className="relative">
             <div className="rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard p-8 text-center">
               <AnimatedCounter target={2.5} suffix="h" className="text-7xl font-black font-heading text-destructive/30 mb-2" />
               <p className="text-base font-bold text-muted-foreground font-heading">Lost every single day</p>
@@ -473,7 +607,7 @@ const Landing = () => {
       {/* ═══════════════════════════════════════
           SECTION 3 — FEATURES (Bento)
           ═══════════════════════════════════════ */}
-      <Section id="features" ariaLabel="Core features">
+      <Section id="features" ariaLabel="Core features" parallaxOffset={10}>
         <SectionLabel>Capabilities</SectionLabel>
         <SectionTitle>Everything you need to reclaim your focus.</SectionTitle>
         <SectionDesc>
@@ -487,7 +621,7 @@ const Landing = () => {
             { icon: Lock, title: "Domain Control", desc: "Temporary blocks, daily limits, or scheduled restrictions with cognitive override protection.", gradient: "from-pink-400 to-pink-600" },
             { icon: Brain, title: "Behavioral Insights", desc: "Pattern detection identifies distraction loops and predicts when you're most likely to lose focus.", gradient: "from-emerald-400 to-emerald-600" },
             { icon: BarChart3, title: "Analytics Engine", desc: "Heatmaps, trends, category flows, and Sankey diagrams visualize your digital behavior.", gradient: "from-cyan-400 to-cyan-600" },
-            { icon: Zap, title: "Productivity Score", desc: "Weighted 0–100 score based on focus time, work patterns, and distraction avoidance.", gradient: "from-amber-400 to-amber-600" },
+            { icon: Zap, title: "Productivity Score", desc: "Weighted 0 to 100 score based on focus time, work patterns, and distraction avoidance.", gradient: "from-amber-400 to-amber-600" },
           ].map((f, i) => (
             <FeatureCard key={f.title} {...f} index={i} />
           ))}
@@ -520,7 +654,7 @@ const Landing = () => {
             </div>
             <div className="text-center">
               <h3 className="text-[15px] font-bold text-foreground font-heading">Productivity Dashboard</h3>
-              <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Real-time score, focus vs. distraction, daily goals & streaks.</p>
+              <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Real-time score, focus vs. distraction, daily goals and streaks.</p>
             </div>
           </motion.div>
 
@@ -542,7 +676,7 @@ const Landing = () => {
                 <Target className="h-3 w-3" /> Most Popular
               </div>
               <h3 className="text-[15px] font-bold text-foreground font-heading">Deep Focus Sessions</h3>
-              <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Allow-only or block mode, task tracking & timed sessions.</p>
+              <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Allow-only or block mode, task tracking and timed sessions.</p>
             </div>
           </motion.div>
 
@@ -559,7 +693,7 @@ const Landing = () => {
             </div>
             <div className="text-center">
               <h3 className="text-[15px] font-bold text-foreground font-heading">Activity Tracking</h3>
-              <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Smart category detection, session counting & site insights.</p>
+              <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Smart category detection, session counting and site insights.</p>
             </div>
           </motion.div>
         </motion.div>
@@ -573,9 +707,9 @@ const Landing = () => {
       </Section>
 
       {/* ═══════════════════════════════════════
-          SECTION 4 — FOCUS MODE
+          SECTION 4 — FOCUS MODE (Living UI Timer)
           ═══════════════════════════════════════ */}
-      <Section id="focus" ariaLabel="Focus Mode demonstration">
+      <Section id="focus" ariaLabel="Focus Mode demonstration" parallaxOffset={12}>
         <SectionLabel>Focus Mode</SectionLabel>
         <SectionTitle>Deep work, enforced.</SectionTitle>
         <SectionDesc>
@@ -584,32 +718,7 @@ const Landing = () => {
 
         <motion.div variants={staggerContainer} className="mt-14 grid md:grid-cols-5 gap-5">
           <motion.div variants={scaleIn} className="md:col-span-3 rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard p-8 flex flex-col items-center">
-            <div className="relative w-48 h-48 flex items-center justify-center">
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
-                <circle cx="100" cy="100" r="88" fill="none" stroke="hsl(var(--border))" strokeWidth="3" />
-                <motion.circle
-                  cx="100" cy="100" r="88" fill="none"
-                  stroke="hsl(var(--primary))" strokeWidth="3.5"
-                  strokeDasharray="553" strokeDashoffset="138"
-                  strokeLinecap="round"
-                  style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
-                  initial={{ strokeDashoffset: 553 }}
-                  whileInView={{ strokeDashoffset: 138 }}
-                  transition={{ delay: 0.3, duration: 2, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  viewport={{ once: true }}
-                />
-              </svg>
-              <div className="text-center">
-                <div className="text-4xl font-black font-heading tracking-tighter text-primary">18:42</div>
-                <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1 justify-center font-bold">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-productive opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-productive" />
-                  </span>
-                  remaining
-                </div>
-              </div>
-            </div>
+            <LiveTimer />
 
             <div className="mt-6 flex gap-3">
               <div className="rounded-[16px] bg-card/80 shadow-clayCard px-6 py-3 text-xs font-bold text-muted-foreground cursor-pointer hover:-translate-y-1 transition-all duration-300 hover:shadow-clayCardHover">
@@ -660,7 +769,7 @@ const Landing = () => {
       {/* ═══════════════════════════════════════
           SECTION 5 — ANALYTICS
           ═══════════════════════════════════════ */}
-      <Section id="analytics" ariaLabel="Analytics and data visualization">
+      <Section id="analytics" ariaLabel="Analytics and data visualization" parallaxOffset={10}>
         <SectionLabel>Intelligence</SectionLabel>
         <SectionTitle>Understand your digital behavior.</SectionTitle>
         <SectionDesc>
@@ -724,7 +833,7 @@ const Landing = () => {
       {/* ═══════════════════════════════════════
           SECTION 6 — HOW IT WORKS
           ═══════════════════════════════════════ */}
-      <Section id="how" ariaLabel="How FocusGuard works">
+      <Section id="how" ariaLabel="How FocusGuard works" parallaxOffset={8}>
         <SectionLabel>Architecture</SectionLabel>
         <SectionTitle>How it works.</SectionTitle>
         <SectionDesc>Four stages from passive tracking to active behavioral change.</SectionDesc>
@@ -769,7 +878,7 @@ const Landing = () => {
       {/* ═══════════════════════════════════════
           SECTION 7 — COMPARISON
           ═══════════════════════════════════════ */}
-      <Section id="compare" ariaLabel="Comparison and privacy">
+      <Section id="compare" ariaLabel="Comparison and privacy" parallaxOffset={10}>
         <SectionLabel>Why FocusGuard</SectionLabel>
         <SectionTitle>Built different.</SectionTitle>
         <SectionDesc>
@@ -777,7 +886,7 @@ const Landing = () => {
         </SectionDesc>
 
         <motion.div variants={staggerContainer} className="mt-14 grid md:grid-cols-2 gap-8">
-          <motion.div variants={scaleIn}>
+          <motion.div variants={slideInLeft}>
             <div className="rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard overflow-hidden">
               <div className="grid grid-cols-3 gap-4 px-6 py-5 border-b border-border/30">
                 <div className="text-xs font-black uppercase tracking-wider text-muted-foreground font-heading">Feature</div>
@@ -823,9 +932,9 @@ const Landing = () => {
       </Section>
 
       {/* ═══════════════════════════════════════
-          SECTION 8 — TESTIMONIALS
+          SECTION 8 — TESTIMONIALS (Enhanced)
           ═══════════════════════════════════════ */}
-      <Section id="testimonials" ariaLabel="What users say">
+      <Section id="testimonials" ariaLabel="What users say" parallaxOffset={8}>
         <SectionLabel>Testimonials</SectionLabel>
         <SectionTitle>Loved by focused people.</SectionTitle>
         <SectionDesc>
@@ -834,12 +943,12 @@ const Landing = () => {
 
         <motion.div variants={staggerContainer} className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { name: "Sarah Chen", role: "Software Engineer", quote: "FocusGuard helped me realize I was losing 3 hours daily to tab-hopping. My deep work sessions went from 45 min to 2.5 hours.", stars: 5 },
-            { name: "Marcus Rivera", role: "Product Designer", quote: "The behavioral insights are incredible. It predicted my distraction patterns before I even noticed them. Game changer.", stars: 5 },
-            { name: "Aisha Patel", role: "PhD Researcher", quote: "I've tried every blocker out there. FocusGuard is the first one that actually understands why I get distracted, not just what I visit.", stars: 5 },
-            { name: "Jake Thompson", role: "Freelance Writer", quote: "The focus mode with task-based unlock is brilliant. I can't cheat my way out of it, and my writing output has doubled.", stars: 4 },
-            { name: "Emily Nakamura", role: "Startup Founder", quote: "100% local processing sold me. No data leaves my machine, and the Sankey diagrams make my workflow visible for the first time.", stars: 5 },
-            { name: "Daniel Okonkwo", role: "Medical Student", quote: "During exam season, FocusGuard is non-negotiable. The productivity score keeps me accountable without being annoying.", stars: 5 },
+            { name: "Sarah Chen", role: "Software Engineer", quote: "FocusGuard helped me realize I was losing 3 hours daily to tab-hopping. My deep work sessions went from 45 min to 2.5 hours.", stars: 5, initials: "SC", gradient: "from-[#38BDF8] to-[#0EA5E9]" },
+            { name: "Marcus Rivera", role: "Product Designer", quote: "The behavioral insights are incredible. It predicted my distraction patterns before I even noticed them. Game changer.", stars: 5, initials: "MR", gradient: "from-[#A78BFA] to-[#7C3AED]" },
+            { name: "Aisha Patel", role: "PhD Researcher", quote: "I've tried every blocker out there. FocusGuard is the first one that actually understands why I get distracted, not just what I visit.", stars: 5, initials: "AP", gradient: "from-[#F472B6] to-[#DB2777]" },
+            { name: "Jake Thompson", role: "Freelance Writer", quote: "The focus mode with task-based unlock is brilliant. I can't cheat my way out of it, and my writing output has doubled.", stars: 4, initials: "JT", gradient: "from-[#FCD34D] to-[#F59E0B]" },
+            { name: "Emily Nakamura", role: "Startup Founder", quote: "100% local processing sold me. No data leaves my machine, and the Sankey diagrams make my workflow visible for the first time.", stars: 5, initials: "EN", gradient: "from-[#34D399] to-[#10B981]" },
+            { name: "Daniel Okonkwo", role: "Medical Student", quote: "During exam season, FocusGuard is non-negotiable. The productivity score keeps me accountable without being annoying.", stars: 5, initials: "DO", gradient: "from-[#60A5FA] to-[#3B82F6]" },
           ].map((t) => {
             const ref = useRef<HTMLDivElement>(null);
             const isInView = useInView(ref, { once: true });
@@ -851,14 +960,39 @@ const Landing = () => {
                     <span className="text-3xl font-black text-primary/20 leading-none font-heading">"</span>
                     {t.quote}"
                   </p>
-                  <div>
-                    <p className="text-base font-bold text-foreground font-heading">{t.name}</p>
-                    <p className="text-sm text-muted-foreground font-medium">{t.role}</p>
+                  <div className="flex items-center gap-3 pt-2 border-t border-border/20">
+                    <div className={`h-10 w-10 rounded-full bg-gradient-to-br ${t.gradient} flex items-center justify-center text-white text-xs font-black shadow-clayButton`}>
+                      {t.initials}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground font-heading">{t.name}</p>
+                      <p className="text-xs text-muted-foreground font-medium">{t.role}</p>
+                    </div>
                   </div>
                 </TiltCard>
               </motion.div>
             );
           })}
+        </motion.div>
+
+        {/* Social proof bar */}
+        <motion.div variants={fadeUp} className="mt-10 flex items-center justify-center gap-6 flex-wrap">
+          <div className="flex items-center gap-2 rounded-full bg-card/60 shadow-clayCard px-5 py-2.5">
+            <div className="flex -space-x-2">
+              {["from-[#A78BFA] to-[#7C3AED]", "from-[#38BDF8] to-[#0EA5E9]", "from-[#F472B6] to-[#DB2777]", "from-[#34D399] to-[#10B981]"].map((g, i) => (
+                <div key={i} className={`h-7 w-7 rounded-full bg-gradient-to-br ${g} border-2 border-card flex items-center justify-center text-white text-[8px] font-black`}>
+                  {["SC", "MR", "AP", "EN"][i]}
+                </div>
+              ))}
+            </div>
+            <span className="text-xs font-bold text-muted-foreground">+10,800 users</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+            <div className="flex gap-0.5">
+              {[1,2,3,4,5].map(i => <Star key={i} className="h-3 w-3 text-warning fill-warning" />)}
+            </div>
+            4.9/5 from 2,400+ reviews
+          </div>
         </motion.div>
       </Section>
 
@@ -1021,7 +1155,7 @@ const Landing = () => {
               <button
                 key={label}
                 onClick={() => {
-                  const id = label === "Creator" ? "author" : label.toLowerCase().replace(/\s/g, "");
+                  const id = label === "Creator" ? "author" : label === "How It Works" ? "how" : label.toLowerCase().replace(/\s/g, "");
                   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
                 }}
                 className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors duration-200"
