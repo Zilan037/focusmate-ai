@@ -474,11 +474,11 @@ const Landing = () => {
             transition={{ delay: 0.4, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="mt-10 flex flex-col sm:flex-row flex-wrap justify-center gap-4"
           >
-            <a href="https://github.com/20-Husna/FocusGuard-Extension" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" className="w-full sm:w-auto gap-2 text-base">
+            <Button size="lg" className="w-full sm:w-auto gap-2 text-base" asChild>
+              <a href="https://github.com/20-Husna/FocusGuard-Extension" target="_blank" rel="noopener noreferrer">
                 Add to Chrome <ArrowRight className="h-4 w-4" />
-              </Button>
-            </a>
+              </a>
+            </Button>
             <Link to="/dashboard">
               <Button size="lg" variant="secondary" className="w-full sm:w-auto gap-2 text-base">
                 View Demo
@@ -1114,16 +1114,16 @@ const Landing = () => {
               Free forever. No account required. Install the Chrome extension and take control of your digital life.
             </motion.p>
             <motion.div variants={fadeUp} className="mt-10 flex flex-col sm:flex-row flex-wrap justify-center gap-4">
-              <a href="https://github.com/20-Husna/FocusGuard-Extension" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" className="w-full sm:w-auto gap-2 text-base">
+              <Button size="lg" className="w-full sm:w-auto gap-2 text-base" asChild>
+                <a href="https://github.com/20-Husna/FocusGuard-Extension" target="_blank" rel="noopener noreferrer">
                   Add to Chrome — It's Free <ArrowRight className="h-4 w-4" />
-                </Button>
-              </a>
-              <a href="https://github.com/20-Husna/FocusGuard-Extension" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="secondary" className="w-full sm:w-auto gap-2 text-base">
+                </a>
+              </Button>
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto gap-2 text-base" asChild>
+                <a href="https://github.com/20-Husna/FocusGuard-Extension" target="_blank" rel="noopener noreferrer">
                   <Github className="h-4 w-4" /> View Source
-                </Button>
-              </a>
+                </a>
+              </Button>
             </motion.div>
           </div>
         </motion.div>
