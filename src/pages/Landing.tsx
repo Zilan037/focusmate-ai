@@ -1134,7 +1134,7 @@ const Landing = () => {
               <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton">
                 <Shield className="h-3.5 w-3.5" />
               </div>
-              <span className="text-sm font-black text-foreground font-heading tracking-tight">FocusGuard</span>
+              <span className="text-[15px] font-black text-foreground font-heading tracking-tight">FocusGuard</span>
             </div>
             <nav className="flex items-center gap-4 sm:gap-5 flex-wrap justify-center">
               {["Features", "Focus", "Analytics", "How It Works", "Testimonials", "Creator"].map((label) => (
@@ -1144,7 +1144,7 @@ const Landing = () => {
                     const id = label === "Creator" ? "author" : label === "How It Works" ? "how" : label.toLowerCase().replace(/\s/g, "");
                     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
                   }}
-                  className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  className="text-[13px] font-bold text-muted-foreground hover:text-foreground transition-colors duration-200"
                 >
                   {label}
                 </button>
@@ -1156,13 +1156,13 @@ const Landing = () => {
 
           {/* Bottom row */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p className="text-[11px] text-muted-foreground font-medium">
+            <p className="text-[13px] text-muted-foreground font-medium">
               © {new Date().getFullYear()} FocusGuard · Built with ❤️ by{" "}
               <span className="text-foreground font-bold">Husna Ayoub</span> · HH Nexus
             </p>
-            <div className="flex items-center gap-4 text-[11px] font-bold text-muted-foreground">
-              <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1">
-                <Github className="h-3 w-3" /> GitHub
+            <div className="flex items-center gap-5 text-[13px] font-bold text-muted-foreground">
+              <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1.5">
+                <Github className="h-3.5 w-3.5" /> GitHub
               </a>
               <a href="https://www.linkedin.com/in/husna-a-7971b7272/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">LinkedIn</a>
               <a href="mailto:ayoubhusna9462@gmail.com" className="hover:text-foreground transition-colors">Email</a>
