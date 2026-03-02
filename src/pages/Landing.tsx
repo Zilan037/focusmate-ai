@@ -34,9 +34,9 @@ const scaleIn = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Work: "hsl(199, 89%, 48%)", Education: "hsl(142, 71%, 45%)",
-  Entertainment: "hsl(38, 92%, 50%)", Social: "hsl(280, 67%, 55%)",
-  News: "hsl(262, 52%, 47%)", Shopping: "hsl(328, 73%, 56%)",
+  Work: "#0EA5E9", Education: "#10B981",
+  Entertainment: "#F59E0B", Social: "#7C3AED",
+  News: "#6D28D9", Shopping: "#DB2777",
 };
 
 /* ─── Scroll-Triggered Section ─── */
@@ -61,13 +61,13 @@ const Section = ({
 };
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <motion.p variants={fadeUp} className="text-sm font-bold uppercase tracking-[0.15em] text-primary mb-4">
+  <motion.p variants={fadeUp} className="text-sm font-black uppercase tracking-[0.15em] text-primary mb-4 font-heading">
     {children}
   </motion.p>
 );
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.08] text-foreground">
+  <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-[1.08] text-foreground font-heading">
     {children}
   </motion.h2>
 );
@@ -125,44 +125,46 @@ const TiltCard = ({ children, className = "" }: { children: React.ReactNode; cla
   );
 };
 
-/* ─── Feature Card ─── */
-const FeatureCard = ({ icon: Icon, title, desc, index }: {
-  icon: React.ElementType; title: string; desc: string; index: number;
+/* ─── Feature Card (Clay) ─── */
+const FeatureCard = ({ icon: Icon, title, desc, index, gradient }: {
+  icon: React.ElementType; title: string; desc: string; index: number; gradient: string;
 }) => (
   <motion.div variants={fadeUp} custom={index}>
-    <TiltCard className="group h-full rounded-2xl border border-border bg-card p-7 transition-all duration-300 hover:shadow-xl hover:shadow-primary/8">
-      <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary transition-transform duration-300 group-hover:scale-110">
-        <Icon className="h-5 w-5" />
+    <TiltCard className="group h-full rounded-[32px] bg-card/60 backdrop-blur-xl p-8 shadow-clayCard transition-all duration-500 hover:-translate-y-2 hover:shadow-clayCardHover">
+      <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-[20px] bg-gradient-to-br ${gradient} text-white shadow-clayButton transition-all duration-300 group-hover:scale-110`}>
+        <Icon className="h-6 w-6" />
       </div>
-      <h3 className="text-lg font-bold tracking-tight text-foreground">{title}</h3>
-      <p className="mt-2.5 text-[15px] text-foreground/60 leading-relaxed">{desc}</p>
+      <h3 className="text-xl font-bold tracking-tight text-foreground font-heading">{title}</h3>
+      <p className="mt-3 text-[15px] text-muted-foreground leading-relaxed">{desc}</p>
     </TiltCard>
   </motion.div>
 );
 
-/* ─── Stat Card ─── */
-const StatCard = ({ label, value, icon: Icon, color }: {
-  label: string; value: string; icon: React.ElementType; color: string;
+/* ─── Stat Card (Clay) ─── */
+const StatCard = ({ label, value, icon: Icon, gradient }: {
+  label: string; value: string; icon: React.ElementType; gradient: string;
 }) => (
-  <div className="rounded-2xl border border-border bg-card p-5 transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5">
+  <div className="rounded-[24px] bg-card/60 backdrop-blur-xl p-5 shadow-clayCard transition-all duration-500 hover:-translate-y-1 hover:shadow-clayCardHover">
     <div className="flex items-center justify-between mb-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-foreground/50">{label}</p>
-      <Icon className={`h-4 w-4 ${color} opacity-70`} />
+      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-heading">{label}</p>
+      <div className={`flex h-8 w-8 items-center justify-center rounded-[12px] bg-gradient-to-br ${gradient} text-white`}>
+        <Icon className="h-3.5 w-3.5" />
+      </div>
     </div>
-    <span className={`text-3xl font-bold tracking-tight font-mono ${color}`}>{value}</span>
+    <span className="text-3xl font-black tracking-tight font-heading text-foreground">{value}</span>
   </div>
 );
 
 /* ─── Comparison Row ─── */
 const CompareRow = ({ feature, fg, others }: { feature: string; fg: boolean; others: boolean }) => (
-  <motion.div variants={fadeUp} className="grid grid-cols-3 gap-4 px-5 py-4 border-b border-border/40 last:border-0 items-center">
-    <div className="text-[15px] font-semibold text-foreground">{feature}</div>
+  <motion.div variants={fadeUp} className="grid grid-cols-3 gap-4 px-6 py-4 border-b border-border/40 last:border-0 items-center">
+    <div className="text-[15px] font-bold text-foreground">{feature}</div>
     <div className="text-center">{fg ? <CheckCircle className="inline h-4.5 w-4.5 text-productive" /> : <X className="inline h-4.5 w-4.5 text-destructive/40" />}</div>
     <div className="text-center">{others ? <Check className="inline h-4 w-4 text-muted-foreground/60" /> : <X className="inline h-4 w-4 text-destructive/30" />}</div>
   </motion.div>
 );
 
-/* ─── FAQ Item ─── */
+/* ─── FAQ Item (Clay) ─── */
 const FaqItem = ({ q, a }: { q: string; a: string }) => {
   const [open, setOpen] = useState(false);
   return (
@@ -171,7 +173,7 @@ const FaqItem = ({ q, a }: { q: string; a: string }) => {
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between py-6 text-left group"
       >
-        <span className="text-[15px] sm:text-base font-semibold text-foreground/90 group-hover:text-primary transition-colors">{q}</span>
+        <span className="text-[15px] sm:text-base font-bold text-foreground/90 group-hover:text-primary transition-colors">{q}</span>
         <motion.div animate={{ rotate: open ? 45 : 0 }} transition={{ duration: 0.2 }}>
           <Plus className="h-4 w-4 text-muted-foreground shrink-0 ml-4" />
         </motion.div>
@@ -185,7 +187,7 @@ const FaqItem = ({ q, a }: { q: string; a: string }) => {
             transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="overflow-hidden"
           >
-            <p className="pb-5 text-[15px] text-foreground/60 leading-relaxed">{a}</p>
+            <p className="pb-5 text-[15px] text-muted-foreground leading-relaxed">{a}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -234,8 +236,8 @@ const Typewriter = ({ text, className = "" }: { text: string; className?: string
 };
 
 /* ═════════════════════════════════════════════
-   LANDING PAGE — UI 2.0
-   Premium SaaS aesthetic with micro-interactions
+   LANDING PAGE — CLAY DESIGN SYSTEM
+   High-Fidelity Claymorphism
    ═════════════════════════════════════════════ */
 
 const Landing = () => {
@@ -275,44 +277,30 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen relative">
+
+      {/* ═══ FLOATING BACKGROUND BLOBS ═══ */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute -top-[10%] -left-[10%] h-[60vh] w-[60vh] rounded-full bg-[#8B5CF6]/10 blur-3xl animate-clay-float" />
+        <div className="absolute -right-[10%] top-[20%] h-[50vh] w-[50vh] rounded-full bg-[#EC4899]/10 blur-3xl animate-clay-float-delayed animation-delay-2000" />
+        <div className="absolute bottom-[10%] left-[20%] h-[45vh] w-[45vh] rounded-full bg-[#0EA5E9]/10 blur-3xl animate-clay-float animation-delay-4000" />
+        <div className="absolute top-[60%] right-[30%] h-[35vh] w-[35vh] rounded-full bg-[#10B981]/8 blur-3xl animate-clay-float-delayed" />
+      </div>
+
       {/* ═══════════════════════════════════════
           SECTION 1 — HERO
-          Animated gradient mesh + typewriter + counters
           ═══════════════════════════════════════ */}
       <section
         ref={heroRef}
         aria-label="Introduction"
-        className="relative overflow-hidden pt-28 pb-20 md:pt-36 md:pb-28"
+        className="relative overflow-hidden pt-32 pb-20 md:pt-40 md:pb-28"
         onMouseMove={handleHeroMouse}
       >
-        {/* Animated gradient mesh background */}
-        <div className="absolute inset-0 overflow-hidden">
-          <motion.div
-            className="absolute -top-1/2 -left-1/4 w-[80%] h-[80%] rounded-full opacity-[0.07]"
-            style={{ background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)" }}
-            animate={{ x: [0, 60, 0], y: [0, 40, 0] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            className="absolute -bottom-1/3 -right-1/4 w-[70%] h-[70%] rounded-full opacity-[0.05]"
-            style={{ background: "radial-gradient(circle, hsl(var(--info)), transparent 70%)" }}
-            animate={{ x: [0, -40, 0], y: [0, -60, 0] }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            className="absolute top-1/4 right-1/3 w-[40%] h-[40%] rounded-full opacity-[0.04]"
-            style={{ background: "radial-gradient(circle, hsl(var(--productive)), transparent 70%)" }}
-            animate={{ x: [0, 30, -20, 0], y: [0, -30, 20, 0] }}
-            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          />
-        </div>
-
         {/* Cursor glow */}
         <motion.div
-          className="pointer-events-none absolute w-[500px] h-[500px] rounded-full opacity-[0.04]"
+          className="pointer-events-none absolute w-[500px] h-[500px] rounded-full opacity-[0.06]"
           style={{
             x: mouseX, y: mouseY,
-            background: "radial-gradient(circle, hsl(var(--primary)), transparent 70%)",
+            background: "radial-gradient(circle, #7C3AED, transparent 70%)",
             translateX: "-50%", translateY: "-50%",
           }}
         />
@@ -321,10 +309,11 @@ const Landing = () => {
           style={{ y: heroY, opacity: heroOpacity }}
           className="mx-auto max-w-3xl px-6 text-center relative"
         >
+          {/* Badge */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <span className="inline-flex items-center gap-2 rounded-full bg-primary/8 border border-primary/15 px-4 py-1.5 text-xs font-semibold text-primary">
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary/8 border border-primary/15 px-5 py-2 text-xs font-bold text-primary shadow-clayCard font-heading">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
@@ -333,34 +322,36 @@ const Landing = () => {
             </span>
           </motion.div>
 
+          {/* Hero Heading */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15, duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="mt-8 text-4xl sm:text-5xl md:text-6xl lg:text-[72px] font-extrabold tracking-tight leading-[1.05]"
+            className="mt-10 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] font-heading"
           >
             Your focus,{" "}
-            <Typewriter text="protected." className="text-gradient bg-gradient-to-r from-primary to-info" />
+            <Typewriter text="protected." className="clay-text-gradient" />
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="mt-6 text-lg sm:text-xl text-foreground/60 leading-relaxed max-w-xl mx-auto"
+            className="mt-7 text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-xl mx-auto"
           >
             FocusGuard detects distraction patterns, enforces structured focus sessions,
             and delivers actionable productivity intelligence — all locally in your browser.
           </motion.p>
 
+          {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="mt-10 flex flex-wrap justify-center gap-3"
+            className="mt-10 flex flex-col sm:flex-row flex-wrap justify-center gap-4"
           >
-            <Button size="lg" className="rounded-full px-8 font-semibold text-sm gap-2 shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02]">
+            <Button size="lg" className="w-full sm:w-auto gap-2 text-base">
               Add to Chrome <ArrowRight className="h-4 w-4" />
             </Button>
             <Link to="/dashboard">
-              <Button size="lg" variant="outline" className="rounded-full px-8 font-semibold text-sm gap-2 hover:scale-[1.02] transition-transform">
+              <Button size="lg" variant="secondary" className="w-full sm:w-auto gap-2 text-base">
                 View Demo
               </Button>
             </Link>
@@ -371,21 +362,21 @@ const Landing = () => {
             ref={heroCounterRef}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.6 }}
-            className="mt-10 flex items-center justify-center gap-8 text-sm text-foreground/50"
+            className="mt-12 inline-flex items-center gap-6 sm:gap-8 rounded-[28px] bg-card/60 backdrop-blur-xl shadow-clayCard px-8 py-5"
           >
             <div className="flex flex-col items-center">
-              <span className="text-2xl font-bold font-mono text-foreground">{usersCount.toLocaleString()}+</span>
-              <span className="text-xs mt-0.5">Active Users</span>
+              <span className="text-2xl sm:text-3xl font-black font-heading text-foreground">{usersCount.toLocaleString()}+</span>
+              <span className="text-xs text-muted-foreground font-bold mt-0.5">Active Users</span>
             </div>
-            <span className="w-px h-8 bg-border" />
+            <span className="w-px h-10 bg-border/60" />
             <div className="flex flex-col items-center">
-              <span className="text-2xl font-bold font-mono text-foreground">{(hoursSaved / 1000000).toFixed(1)}M+</span>
-              <span className="text-xs mt-0.5">Hours Saved</span>
+              <span className="text-2xl sm:text-3xl font-black font-heading text-foreground">{(hoursSaved / 1000000).toFixed(1)}M+</span>
+              <span className="text-xs text-muted-foreground font-bold mt-0.5">Hours Saved</span>
             </div>
-            <span className="w-px h-8 bg-border" />
+            <span className="w-px h-10 bg-border/60" />
             <div className="flex flex-col items-center">
-              <span className="text-2xl font-bold font-mono text-foreground">4.9</span>
-              <span className="text-xs mt-0.5 flex items-center gap-1">
+              <span className="text-2xl sm:text-3xl font-black font-heading text-foreground">4.9</span>
+              <span className="text-xs text-muted-foreground font-bold mt-0.5 flex items-center gap-1">
                 <svg className="h-3 w-3 text-warning" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                 Rating
               </span>
@@ -393,43 +384,43 @@ const Landing = () => {
           </motion.div>
         </motion.div>
 
-        {/* Product Preview Card */}
+        {/* Product Preview Card (Clay) */}
         <motion.div
           initial={{ opacity: 0, y: 60, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ delay: 0.5, duration: 1, ease: [0.16, 1, 0.3, 1] }}
           className="mx-auto mt-16 max-w-4xl px-6"
         >
-          <TiltCard className="rounded-2xl border border-border bg-card p-1 shadow-2xl shadow-primary/8">
+          <TiltCard className="rounded-[32px] bg-card/60 backdrop-blur-xl p-1.5 shadow-clayCard">
             {/* Window chrome */}
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50">
-              <div className="flex gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-full bg-destructive/50" />
-                <div className="h-2.5 w-2.5 rounded-full bg-warning/50" />
-                <div className="h-2.5 w-2.5 rounded-full bg-productive/50" />
+            <div className="flex items-center gap-2 px-5 py-3 border-b border-border/30 rounded-t-[28px]">
+              <div className="flex gap-2">
+                <div className="h-3 w-3 rounded-full bg-[#FF6B6B]" />
+                <div className="h-3 w-3 rounded-full bg-[#FFD93D]" />
+                <div className="h-3 w-3 rounded-full bg-[#6BCB77]" />
               </div>
-              <div className="flex-1 text-center text-[11px] text-foreground/35 font-mono tracking-wide">
+              <div className="flex-1 text-center text-[11px] text-muted-foreground font-mono tracking-wide font-bold">
                 focusguard — command center
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4">
-              <StatCard label="Score" value="87" icon={TrendingUp} color="text-primary" />
-              <StatCard label="Active" value="6.5h" icon={Clock} color="text-info" />
-              <StatCard label="Streak" value="12" icon={Flame} color="text-warning" />
-              <StatCard label="Sessions" value="4" icon={Target} color="text-productive" />
+              <StatCard label="Score" value="87" icon={TrendingUp} gradient="from-[#A78BFA] to-[#7C3AED]" />
+              <StatCard label="Active" value="6.5h" icon={Clock} gradient="from-[#38BDF8] to-[#0EA5E9]" />
+              <StatCard label="Streak" value="12" icon={Flame} gradient="from-[#FCD34D] to-[#F59E0B]" />
+              <StatCard label="Sessions" value="4" icon={Target} gradient="from-[#34D399] to-[#10B981]" />
             </div>
           </TiltCard>
         </motion.div>
       </section>
 
-      {/* ─── Trusted By Bar ─── */}
-      <div className="py-12 border-y border-border/30">
+      {/* ─── Trusted By Bar (Clay) ─── */}
+      <div className="py-14">
         <div className="mx-auto max-w-5xl px-6">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-foreground/30 mb-8">
+          <p className="text-center text-xs font-black uppercase tracking-[0.2em] text-muted-foreground mb-8 font-heading">
             Trusted by teams at
           </p>
-          <div className="flex items-center justify-center gap-10 md:gap-16 flex-wrap opacity-30 grayscale">
+          <div className="flex items-center justify-center gap-10 md:gap-16 flex-wrap opacity-30">
             {["Stanford", "Google", "Notion", "Figma", "Stripe", "Vercel"].map((name) => (
-              <span key={name} className="text-lg md:text-xl font-bold text-foreground tracking-tight">{name}</span>
+              <span key={name} className="text-lg md:text-xl font-black text-foreground tracking-tight font-heading">{name}</span>
             ))}
           </div>
         </div>
@@ -443,34 +434,34 @@ const Landing = () => {
           <div>
             <SectionLabel>The Problem</SectionLabel>
             <SectionTitle>We lose 2.5 hours daily to digital distractions.</SectionTitle>
-            <SectionDesc>
+            <motion.p variants={fadeUp} className="mt-5 text-lg text-muted-foreground leading-relaxed">
               Context switching costs 23 minutes per interruption. Tab hopping creates anxiety loops.
               Traditional blockers don't understand <em>why</em> you're distracted — they just block.
-            </SectionDesc>
+            </motion.p>
             <motion.div variants={staggerContainer} className="mt-8 space-y-4">
               {[
-                { icon: Activity, text: "Average person checks phone 96 times/day", color: "text-destructive" },
-                { icon: Timer, text: "23 min to refocus after each interruption", color: "text-warning" },
-                { icon: TrendingUp, text: "28% productivity loss from multitasking", color: "text-info" },
+                { icon: Activity, text: "Average person checks phone 96 times/day", gradient: "from-[#FCA5A5] to-[#EF4444]" },
+                { icon: Timer, text: "23 min to refocus after each interruption", gradient: "from-[#FCD34D] to-[#F59E0B]" },
+                { icon: TrendingUp, text: "28% productivity loss from multitasking", gradient: "from-[#38BDF8] to-[#0EA5E9]" },
               ].map((stat) => (
-                <motion.div key={stat.text} variants={fadeUp} className="flex items-start gap-3">
-                  <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-card border border-border ${stat.color}`}>
+                <motion.div key={stat.text} variants={fadeUp} className="flex items-start gap-4">
+                  <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br ${stat.gradient} text-white shadow-clayButton`}>
                     <stat.icon className="h-4 w-4" />
                   </div>
-                  <p className="text-[15px] text-foreground/70 leading-relaxed">{stat.text}</p>
+                  <p className="text-[15px] text-muted-foreground leading-relaxed pt-2">{stat.text}</p>
                 </motion.div>
               ))}
             </motion.div>
           </div>
           <motion.div variants={scaleIn} className="relative">
-            <div className="rounded-2xl bg-gradient-to-br from-destructive/8 to-warning/8 border border-border p-8 text-center">
-              <AnimatedCounter target={2.5} suffix="h" className="text-7xl font-extrabold font-mono text-destructive/30 mb-2" />
-              <p className="text-base font-semibold text-foreground/50">Lost every single day</p>
+            <div className="rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard p-8 text-center">
+              <AnimatedCounter target={2.5} suffix="h" className="text-7xl font-black font-heading text-destructive/30 mb-2" />
+              <p className="text-base font-bold text-muted-foreground font-heading">Lost every single day</p>
               <div className="mt-6 grid grid-cols-3 gap-3">
                 {["Social Media", "Video", "News"].map((cat, i) => (
-                  <div key={cat} className="rounded-xl bg-card border border-border p-3">
-                    <div className="text-xl font-bold font-mono text-destructive/70">{[48, 35, 17][i]}m</div>
-                    <div className="text-xs text-foreground/45 mt-0.5 font-medium">{cat}</div>
+                  <div key={cat} className="rounded-[20px] bg-card/80 shadow-clayPressed p-4">
+                    <div className="text-xl font-black font-heading text-destructive/70">{[48, 35, 17][i]}m</div>
+                    <div className="text-xs text-muted-foreground mt-1 font-bold">{cat}</div>
                   </div>
                 ))}
               </div>
@@ -479,13 +470,10 @@ const Landing = () => {
         </div>
       </Section>
 
-      {/* Gradient divider */}
-      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
       {/* ═══════════════════════════════════════
-          SECTION 3 — FEATURES
+          SECTION 3 — FEATURES (Bento)
           ═══════════════════════════════════════ */}
-      <Section id="features" ariaLabel="Core features" className="bg-secondary/30">
+      <Section id="features" ariaLabel="Core features">
         <SectionLabel>Capabilities</SectionLabel>
         <SectionTitle>Everything you need to reclaim your focus.</SectionTitle>
         <SectionDesc>
@@ -494,12 +482,12 @@ const Landing = () => {
 
         <motion.div variants={staggerContainer} className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { icon: Eye, title: "Smart Tracking", desc: "Event-driven monitoring with idle detection. Only meaningful activity counts toward your metrics." },
-            { icon: Target, title: "Focus Mode", desc: "Strict site blocking with task-based unlock. Behavioral intervention, not just a countdown timer." },
-            { icon: Lock, title: "Domain Control", desc: "Temporary blocks, daily limits, or scheduled restrictions with cognitive override protection." },
-            { icon: Brain, title: "Behavioral Insights", desc: "Pattern detection identifies distraction loops and predicts when you're most likely to lose focus." },
-            { icon: BarChart3, title: "Analytics Engine", desc: "Heatmaps, trends, category flows, and Sankey diagrams visualize your digital behavior." },
-            { icon: Zap, title: "Productivity Score", desc: "Weighted 0–100 score based on focus time, work patterns, and distraction avoidance." },
+            { icon: Eye, title: "Smart Tracking", desc: "Event-driven monitoring with idle detection. Only meaningful activity counts toward your metrics.", gradient: "from-blue-400 to-blue-600" },
+            { icon: Target, title: "Focus Mode", desc: "Strict site blocking with task-based unlock. Behavioral intervention, not just a countdown timer.", gradient: "from-purple-400 to-purple-600" },
+            { icon: Lock, title: "Domain Control", desc: "Temporary blocks, daily limits, or scheduled restrictions with cognitive override protection.", gradient: "from-pink-400 to-pink-600" },
+            { icon: Brain, title: "Behavioral Insights", desc: "Pattern detection identifies distraction loops and predicts when you're most likely to lose focus.", gradient: "from-emerald-400 to-emerald-600" },
+            { icon: BarChart3, title: "Analytics Engine", desc: "Heatmaps, trends, category flows, and Sankey diagrams visualize your digital behavior.", gradient: "from-cyan-400 to-cyan-600" },
+            { icon: Zap, title: "Productivity Score", desc: "Weighted 0–100 score based on focus time, work patterns, and distraction avoidance.", gradient: "from-amber-400 to-amber-600" },
           ].map((f, i) => (
             <FeatureCard key={f.title} {...f} index={i} />
           ))}
@@ -522,75 +510,68 @@ const Landing = () => {
           {/* Card 1 — Stats */}
           <motion.div variants={fadeUp} className="flex flex-col items-center gap-6 w-full max-w-[280px]">
             <div className="relative w-full">
-              <div className="rounded-2xl bg-gradient-to-b from-primary/[0.06] to-transparent p-[1px]">
-                <div className="rounded-2xl bg-card overflow-hidden shadow-xl shadow-primary/[0.06]">
-                  <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/40 bg-secondary/40">
-                    <div className="flex gap-1"><div className="h-2 w-2 rounded-full bg-destructive/40" /><div className="h-2 w-2 rounded-full bg-warning/40" /><div className="h-2 w-2 rounded-full bg-productive/40" /></div>
-                    <span className="flex-1 text-center text-[9px] font-mono text-foreground/30">Stats</span>
-                  </div>
-                  <img src={extDashboard} alt="FocusGuard Stats Dashboard showing productivity score" className="w-full h-auto block" loading="lazy" />
+              <div className="rounded-[24px] bg-card/60 backdrop-blur-xl overflow-hidden shadow-clayCard transition-all duration-500 hover:-translate-y-2 hover:shadow-clayCardHover">
+                <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border/30">
+                  <div className="flex gap-1.5"><div className="h-2.5 w-2.5 rounded-full bg-[#FF6B6B]" /><div className="h-2.5 w-2.5 rounded-full bg-[#FFD93D]" /><div className="h-2.5 w-2.5 rounded-full bg-[#6BCB77]" /></div>
+                  <span className="flex-1 text-center text-[9px] font-mono text-muted-foreground font-bold">Stats</span>
                 </div>
+                <img src={extDashboard} alt="FocusGuard Stats Dashboard showing productivity score" className="w-full h-auto block" loading="lazy" />
               </div>
             </div>
             <div className="text-center">
-              <h3 className="text-[15px] font-bold text-foreground">Productivity Dashboard</h3>
-              <p className="text-[13px] text-foreground/50 mt-1.5 leading-relaxed">Real-time score, focus vs. distraction, daily goals & streaks.</p>
+              <h3 className="text-[15px] font-bold text-foreground font-heading">Productivity Dashboard</h3>
+              <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Real-time score, focus vs. distraction, daily goals & streaks.</p>
             </div>
           </motion.div>
 
           {/* Card 2 — Focus Mode (hero, elevated) */}
           <motion.div variants={fadeUp} className="flex flex-col items-center gap-6 w-full max-w-[300px] lg:-mb-4">
             <div className="relative w-full">
-              <div className="absolute -inset-[1px] rounded-[18px] bg-gradient-to-b from-primary/30 via-primary/10 to-transparent blur-[1px]" />
-              <div className="relative rounded-[18px] bg-card overflow-hidden shadow-2xl shadow-primary/10 ring-1 ring-primary/15">
-                <div className="flex items-center gap-1.5 px-3 py-2.5 border-b border-border/40 bg-gradient-to-r from-primary/[0.06] to-transparent">
-                  <div className="flex gap-1"><div className="h-2 w-2 rounded-full bg-destructive/40" /><div className="h-2 w-2 rounded-full bg-warning/40" /><div className="h-2 w-2 rounded-full bg-productive/40" /></div>
-                  <span className="flex-1 text-center text-[9px] font-mono text-primary/60 font-semibold">Focus Mode</span>
-                  <span className="h-1.5 w-1.5 rounded-full bg-productive animate-pulse" />
+              <div className="rounded-[28px] bg-card/70 backdrop-blur-xl overflow-hidden shadow-clayCard ring-2 ring-primary/20 transition-all duration-500 hover:-translate-y-2 hover:shadow-clayCardHover">
+                <div className="flex items-center gap-1.5 px-4 py-3 border-b border-border/30 bg-primary/5">
+                  <div className="flex gap-1.5"><div className="h-2.5 w-2.5 rounded-full bg-[#FF6B6B]" /><div className="h-2.5 w-2.5 rounded-full bg-[#FFD93D]" /><div className="h-2.5 w-2.5 rounded-full bg-[#6BCB77]" /></div>
+                  <span className="flex-1 text-center text-[9px] font-mono text-primary font-bold">Focus Mode</span>
+                  <span className="h-2 w-2 rounded-full bg-productive animate-pulse" />
                 </div>
                 <img src={extFocus} alt="FocusGuard Focus Mode with task management and timed sessions" className="w-full h-auto block" loading="lazy" />
               </div>
-              {/* Subtle glow behind hero card */}
-              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-16 bg-primary/8 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-16 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
             </div>
             <div className="text-center">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/8 border border-primary/15 px-3 py-1 text-[10px] font-bold text-primary mb-2">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-4 py-1.5 text-[10px] font-black text-primary mb-2 shadow-clayCard font-heading">
                 <Target className="h-3 w-3" /> Most Popular
               </div>
-              <h3 className="text-[15px] font-bold text-foreground">Deep Focus Sessions</h3>
-              <p className="text-[13px] text-foreground/50 mt-1.5 leading-relaxed">Allow-only or block mode, task tracking & timed sessions.</p>
+              <h3 className="text-[15px] font-bold text-foreground font-heading">Deep Focus Sessions</h3>
+              <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Allow-only or block mode, task tracking & timed sessions.</p>
             </div>
           </motion.div>
 
           {/* Card 3 — Activity */}
           <motion.div variants={fadeUp} className="flex flex-col items-center gap-6 w-full max-w-[280px]">
             <div className="relative w-full">
-              <div className="rounded-2xl bg-gradient-to-b from-info/[0.06] to-transparent p-[1px]">
-                <div className="rounded-2xl bg-card overflow-hidden shadow-xl shadow-info/[0.06]">
-                  <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/40 bg-secondary/40">
-                    <div className="flex gap-1"><div className="h-2 w-2 rounded-full bg-destructive/40" /><div className="h-2 w-2 rounded-full bg-warning/40" /><div className="h-2 w-2 rounded-full bg-productive/40" /></div>
-                    <span className="flex-1 text-center text-[9px] font-mono text-foreground/30">Activity</span>
-                  </div>
-                  <img src={extStats} alt="FocusGuard Activity view with category tracking" className="w-full h-auto block" loading="lazy" />
+              <div className="rounded-[24px] bg-card/60 backdrop-blur-xl overflow-hidden shadow-clayCard transition-all duration-500 hover:-translate-y-2 hover:shadow-clayCardHover">
+                <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border/30">
+                  <div className="flex gap-1.5"><div className="h-2.5 w-2.5 rounded-full bg-[#FF6B6B]" /><div className="h-2.5 w-2.5 rounded-full bg-[#FFD93D]" /><div className="h-2.5 w-2.5 rounded-full bg-[#6BCB77]" /></div>
+                  <span className="flex-1 text-center text-[9px] font-mono text-muted-foreground font-bold">Activity</span>
                 </div>
+                <img src={extStats} alt="FocusGuard Activity view with category tracking" className="w-full h-auto block" loading="lazy" />
               </div>
             </div>
             <div className="text-center">
-              <h3 className="text-[15px] font-bold text-foreground">Activity Tracking</h3>
-              <p className="text-[13px] text-foreground/50 mt-1.5 leading-relaxed">Smart category detection, session counting & site insights.</p>
+              <h3 className="text-[15px] font-bold text-foreground font-heading">Activity Tracking</h3>
+              <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Smart category detection, session counting & site insights.</p>
             </div>
           </motion.div>
         </motion.div>
 
         <motion.div variants={fadeUp} className="mt-12 text-center">
-          <p className="text-[11px] text-foreground/35 flex items-center justify-center gap-2">
+          <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-2 font-bold">
             <EyeOff className="h-3 w-3" />
             100% local · No data leaves your browser · Open source
           </p>
         </motion.div>
       </Section>
 
-      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       {/* ═══════════════════════════════════════
           SECTION 4 — FOCUS MODE
           ═══════════════════════════════════════ */}
@@ -602,7 +583,7 @@ const Landing = () => {
         </SectionDesc>
 
         <motion.div variants={staggerContainer} className="mt-14 grid md:grid-cols-5 gap-5">
-          <motion.div variants={scaleIn} className="md:col-span-3 rounded-2xl border border-border bg-card p-8 flex flex-col items-center">
+          <motion.div variants={scaleIn} className="md:col-span-3 rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard p-8 flex flex-col items-center">
             <div className="relative w-48 h-48 flex items-center justify-center">
               <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 200">
                 <circle cx="100" cy="100" r="88" fill="none" stroke="hsl(var(--border))" strokeWidth="3" />
@@ -619,8 +600,8 @@ const Landing = () => {
                 />
               </svg>
               <div className="text-center">
-                <div className="text-4xl font-extrabold font-mono tracking-tighter text-primary">18:42</div>
-                <div className="text-xs text-foreground/40 mt-1 flex items-center gap-1 justify-center">
+                <div className="text-4xl font-black font-heading tracking-tighter text-primary">18:42</div>
+                <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1 justify-center font-bold">
                   <span className="relative flex h-1.5 w-1.5">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-productive opacity-75" />
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-productive" />
@@ -630,43 +611,43 @@ const Landing = () => {
               </div>
             </div>
 
-            <div className="mt-6 flex gap-2.5">
-              <div className="rounded-xl bg-secondary border border-border px-5 py-2.5 text-xs font-semibold text-foreground/60 cursor-pointer hover:bg-secondary/80 transition-colors">
+            <div className="mt-6 flex gap-3">
+              <div className="rounded-[16px] bg-card/80 shadow-clayCard px-6 py-3 text-xs font-bold text-muted-foreground cursor-pointer hover:-translate-y-1 transition-all duration-300 hover:shadow-clayCardHover">
                 Pause
               </div>
-              <div className="rounded-xl bg-destructive/8 border border-destructive/15 px-5 py-2.5 text-xs font-semibold text-destructive cursor-pointer hover:bg-destructive/12 transition-colors">
+              <div className="rounded-[16px] bg-destructive/10 shadow-clayCard px-6 py-3 text-xs font-bold text-destructive cursor-pointer hover:-translate-y-1 transition-all duration-300 hover:shadow-clayCardHover">
                 End Session
               </div>
             </div>
 
-            <div className="mt-5 flex items-center gap-4 text-xs text-foreground/40">
-              <span className="font-mono">🍅 3 pomodoros</span>
+            <div className="mt-5 flex items-center gap-4 text-xs text-muted-foreground font-bold">
+              <span>🍅 3 pomodoros</span>
               <span className="w-px h-3 bg-border" />
               <span>0 interruptions</span>
             </div>
           </motion.div>
 
-          <motion.div variants={staggerContainer} className="md:col-span-2 space-y-4">
-            <motion.div variants={fadeUp} className="rounded-2xl border border-border bg-card p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-foreground/50 mb-3">Active Tasks</p>
+          <motion.div variants={staggerContainer} className="md:col-span-2 space-y-5">
+            <motion.div variants={fadeUp} className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-clayCard p-6">
+              <p className="text-xs font-black uppercase tracking-wider text-muted-foreground mb-3 font-heading">Active Tasks</p>
               {["Complete project proposal", "Review pull requests", "Update documentation"].map((task, i) => (
-                <div key={task} className="flex items-center gap-2.5 py-2">
-                  <div className={`h-4.5 w-4.5 rounded-md border-[1.5px] flex items-center justify-center transition-colors ${
+                <div key={task} className="flex items-center gap-3 py-2.5">
+                  <div className={`h-5 w-5 rounded-[8px] border-2 flex items-center justify-center transition-colors ${
                     i === 0 ? "border-productive bg-productive/15" : "border-border"
                   }`}>
-                    {i === 0 && <Check className="h-2.5 w-2.5 text-productive" />}
+                    {i === 0 && <Check className="h-3 w-3 text-productive" />}
                   </div>
-                  <span className={`text-[15px] ${i === 0 ? "line-through text-foreground/40" : "text-foreground"}`}>{task}</span>
+                  <span className={`text-[15px] font-medium ${i === 0 ? "line-through text-muted-foreground" : "text-foreground"}`}>{task}</span>
                 </div>
               ))}
-              <p className="mt-2 text-xs text-foreground/40">1 of 3 completed</p>
+              <p className="mt-2 text-xs text-muted-foreground font-bold">1 of 3 completed</p>
             </motion.div>
 
-            <motion.div variants={fadeUp} className="rounded-2xl border border-border bg-card p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-foreground/50 mb-3">Blocked During Session</p>
-              <div className="flex flex-wrap gap-1.5">
+            <motion.div variants={fadeUp} className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-clayCard p-6">
+              <p className="text-xs font-black uppercase tracking-wider text-muted-foreground mb-3 font-heading">Blocked During Session</p>
+              <div className="flex flex-wrap gap-2">
                 {["youtube.com", "instagram.com", "reddit.com", "tiktok.com"].map((site) => (
-                  <span key={site} className="rounded-full bg-destructive/8 border border-destructive/15 px-3 py-1.5 text-xs font-semibold text-destructive">
+                  <span key={site} className="rounded-full bg-destructive/10 border border-destructive/20 px-4 py-2 text-xs font-bold text-destructive shadow-clayCard">
                     {site}
                   </span>
                 ))}
@@ -676,12 +657,10 @@ const Landing = () => {
         </motion.div>
       </Section>
 
-      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
       {/* ═══════════════════════════════════════
           SECTION 5 — ANALYTICS
           ═══════════════════════════════════════ */}
-      <Section id="analytics" ariaLabel="Analytics and data visualization" className="bg-secondary/30">
+      <Section id="analytics" ariaLabel="Analytics and data visualization">
         <SectionLabel>Intelligence</SectionLabel>
         <SectionTitle>Understand your digital behavior.</SectionTitle>
         <SectionDesc>
@@ -689,64 +668,61 @@ const Landing = () => {
         </SectionDesc>
 
         <motion.div variants={staggerContainer} className="mt-14 grid md:grid-cols-3 gap-5">
-          <motion.div variants={scaleIn} className="md:col-span-2 rounded-2xl border border-border bg-card p-6">
-            <p className="text-xs font-semibold uppercase tracking-wider text-foreground/50 mb-1">Weekly Performance</p>
-            <h3 className="text-lg font-bold tracking-tight mb-5">Productivity Trends</h3>
+          <motion.div variants={scaleIn} className="md:col-span-2 rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard p-7">
+            <p className="text-xs font-black uppercase tracking-wider text-muted-foreground mb-1 font-heading">Weekly Performance</p>
+            <h3 className="text-lg font-bold tracking-tight mb-5 font-heading">Productivity Trends</h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={weeklyTrends} barCategoryGap="20%">
-                <XAxis dataKey="day" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", fontWeight: 500 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="day" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))", fontWeight: 700 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={28} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12, boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }}
+                  contentStyle={{ backgroundColor: "hsl(var(--card))", border: "none", borderRadius: 20, fontSize: 12, boxShadow: "16px 16px 32px rgba(160,150,180,0.2), -10px -10px 24px rgba(255,255,255,0.9)" }}
                 />
-                <Bar dataKey="productive" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="distracted" fill="hsl(0, 84%, 60%)" radius={[4, 4, 0, 0]} opacity={0.7} />
+                <Bar dataKey="productive" fill="#10B981" radius={[8, 8, 0, 0]} />
+                <Bar dataKey="distracted" fill="#EF4444" radius={[8, 8, 0, 0]} opacity={0.7} />
               </BarChart>
             </ResponsiveContainer>
           </motion.div>
 
-          <motion.div variants={scaleIn} className="rounded-2xl border border-border bg-card p-6">
-            <p className="text-xs font-semibold uppercase tracking-wider text-foreground/50 mb-1">Breakdown</p>
-            <h3 className="text-lg font-bold tracking-tight mb-4">Categories</h3>
+          <motion.div variants={scaleIn} className="rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard p-7">
+            <p className="text-xs font-black uppercase tracking-wider text-muted-foreground mb-1 font-heading">Breakdown</p>
+            <h3 className="text-lg font-bold tracking-tight mb-4 font-heading">Categories</h3>
             <ResponsiveContainer width="100%" height={160}>
               <PieChart>
-                <Pie data={categoryBreakdown} cx="50%" cy="50%" innerRadius={40} outerRadius={68} paddingAngle={2} dataKey="value" strokeWidth={0}>
+                <Pie data={categoryBreakdown} cx="50%" cy="50%" innerRadius={40} outerRadius={68} paddingAngle={3} dataKey="value" strokeWidth={0}>
                   {categoryBreakdown.map((entry) => (
                     <Cell key={entry.name} fill={CATEGORY_COLORS[entry.name]} />
                   ))}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <div className="grid grid-cols-2 gap-1.5 mt-3">
+            <div className="grid grid-cols-2 gap-2 mt-3">
               {categoryBreakdown.slice(0, 4).map((c) => (
-                <div key={c.name} className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full shrink-0" style={{ background: CATEGORY_COLORS[c.name] }} />
-                  <span className="text-xs text-foreground/55 truncate">{c.name}</span>
+                <div key={c.name} className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: CATEGORY_COLORS[c.name] }} />
+                  <span className="text-xs text-muted-foreground font-bold truncate">{c.name}</span>
                 </div>
               ))}
             </div>
           </motion.div>
         </motion.div>
 
-        <motion.div variants={fadeUp} className="mt-5 rounded-2xl border border-border bg-card p-6">
-          <p className="text-xs font-semibold uppercase tracking-wider text-foreground/50 mb-1">24-Hour View</p>
-          <h3 className="text-lg font-bold tracking-tight mb-5">Daily Activity Flow</h3>
+        <motion.div variants={fadeUp} className="mt-5 rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard p-7">
+          <p className="text-xs font-black uppercase tracking-wider text-muted-foreground mb-1 font-heading">24-Hour View</p>
+          <h3 className="text-lg font-bold tracking-tight mb-5 font-heading">Daily Activity Flow</h3>
           <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={hourlyActivity}>
               <XAxis dataKey="hour" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} interval={3} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={24} />
-              <Area type="monotone" dataKey="productive" stroke="hsl(142, 71%, 45%)" fill="hsl(142, 71%, 45%)" fillOpacity={0.12} strokeWidth={2} />
-              <Area type="monotone" dataKey="distracted" stroke="hsl(0, 84%, 60%)" fill="hsl(0, 84%, 60%)" fillOpacity={0.08} strokeWidth={2} />
+              <Area type="monotone" dataKey="productive" stroke="#10B981" fill="#10B981" fillOpacity={0.12} strokeWidth={2} />
+              <Area type="monotone" dataKey="distracted" stroke="#EF4444" fill="#EF4444" fillOpacity={0.08} strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
       </Section>
 
-      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
       {/* ═══════════════════════════════════════
           SECTION 6 — HOW IT WORKS
-          Connected steps with animated path
           ═══════════════════════════════════════ */}
       <Section id="how" ariaLabel="How FocusGuard works">
         <SectionLabel>Architecture</SectionLabel>
@@ -768,21 +744,21 @@ const Landing = () => {
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 relative z-10">
             {[
-              { num: "01", title: "Install & Track", desc: "Event-driven monitoring detects active tab usage with intelligent idle detection.", icon: Eye },
-              { num: "02", title: "Analyze Patterns", desc: "Categorize domains, detect distraction loops, identify peak productivity windows.", icon: Brain },
-              { num: "03", title: "Intervene", desc: "Focus mode enforcement, task-based unlocking, and cognitive friction barriers.", icon: Shield },
-              { num: "04", title: "Improve", desc: "Productivity scores, trend analysis, and personalized behavioral recommendations.", icon: TrendingUp },
-            ].map((s, i) => (
+              { num: "01", title: "Install & Track", desc: "Event-driven monitoring detects active tab usage with intelligent idle detection.", icon: Eye, gradient: "from-blue-400 to-blue-600" },
+              { num: "02", title: "Analyze Patterns", desc: "Categorize domains, detect distraction loops, identify peak productivity windows.", icon: Brain, gradient: "from-purple-400 to-purple-600" },
+              { num: "03", title: "Intervene", desc: "Focus mode enforcement, task-based unlocking, and cognitive friction barriers.", icon: Shield, gradient: "from-pink-400 to-pink-600" },
+              { num: "04", title: "Improve", desc: "Productivity scores, trend analysis, and personalized behavioral recommendations.", icon: TrendingUp, gradient: "from-emerald-400 to-emerald-600" },
+            ].map((s) => (
               <motion.div key={s.num} variants={fadeUp}>
-                <TiltCard className="rounded-2xl border border-border bg-card p-7 h-full transition-all duration-300 hover:shadow-xl">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary">
+                <TiltCard className="rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard p-8 h-full transition-all duration-500 hover:-translate-y-2 hover:shadow-clayCardHover">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-[16px] bg-gradient-to-br ${s.gradient} text-white shadow-clayButton`}>
                       <s.icon className="h-5 w-5" />
                     </div>
-                    <span className="text-3xl font-extrabold text-primary/15 font-mono">{s.num}</span>
+                    <span className="text-3xl font-black text-primary/15 font-heading">{s.num}</span>
                   </div>
-                  <h3 className="text-lg font-bold tracking-tight text-foreground">{s.title}</h3>
-                  <p className="mt-2.5 text-[15px] text-foreground/60 leading-relaxed">{s.desc}</p>
+                  <h3 className="text-lg font-bold tracking-tight text-foreground font-heading">{s.title}</h3>
+                  <p className="mt-3 text-[15px] text-muted-foreground leading-relaxed">{s.desc}</p>
                 </TiltCard>
               </motion.div>
             ))}
@@ -790,12 +766,10 @@ const Landing = () => {
         </motion.div>
       </Section>
 
-      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
       {/* ═══════════════════════════════════════
           SECTION 7 — COMPARISON
           ═══════════════════════════════════════ */}
-      <Section id="compare" ariaLabel="Comparison and privacy" className="bg-secondary/30">
+      <Section id="compare" ariaLabel="Comparison and privacy">
         <SectionLabel>Why FocusGuard</SectionLabel>
         <SectionTitle>Built different.</SectionTitle>
         <SectionDesc>
@@ -804,11 +778,11 @@ const Landing = () => {
 
         <motion.div variants={staggerContainer} className="mt-14 grid md:grid-cols-2 gap-8">
           <motion.div variants={scaleIn}>
-            <div className="rounded-2xl border border-border bg-card overflow-hidden">
-              <div className="grid grid-cols-3 gap-4 px-5 py-4 bg-secondary/60 border-b border-border">
-                <div className="text-xs font-bold uppercase tracking-wider text-foreground/50">Feature</div>
-                <div className="text-center text-xs font-bold text-primary">FocusGuard</div>
-                <div className="text-center text-xs font-semibold text-foreground/40">Others</div>
+            <div className="rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard overflow-hidden">
+              <div className="grid grid-cols-3 gap-4 px-6 py-5 border-b border-border/30">
+                <div className="text-xs font-black uppercase tracking-wider text-muted-foreground font-heading">Feature</div>
+                <div className="text-center text-xs font-black text-primary font-heading">FocusGuard</div>
+                <div className="text-center text-xs font-bold text-muted-foreground font-heading">Others</div>
               </div>
               {[
                 { feature: "Smart Activity Tracking", fg: true, others: false },
@@ -825,21 +799,21 @@ const Landing = () => {
             </div>
           </motion.div>
 
-          <motion.div variants={staggerContainer} className="space-y-4">
+          <motion.div variants={staggerContainer} className="space-y-5">
             {[
-              { icon: Zap, title: "Event-Driven", desc: "No constant polling. Lightweight Manifest V3 service worker that sleeps when inactive." },
-              { icon: EyeOff, title: "Zero Data Collection", desc: "No keystroke logging. No screenshots. Only domain-level time data, stored locally." },
-              { icon: Shield, title: "Local-First Architecture", desc: "All data processed and stored in your browser. Nothing leaves your device. Ever." },
-              { icon: Layers, title: "Open & Transparent", desc: "Full source code available. Complete data export. You own everything." },
+              { icon: Zap, title: "Event-Driven", desc: "No constant polling. Lightweight Manifest V3 service worker that sleeps when inactive.", gradient: "from-amber-400 to-amber-600" },
+              { icon: EyeOff, title: "Zero Data Collection", desc: "No keystroke logging. No screenshots. Only domain-level time data, stored locally.", gradient: "from-purple-400 to-purple-600" },
+              { icon: Shield, title: "Local-First Architecture", desc: "All data processed and stored in your browser. Nothing leaves your device. Ever.", gradient: "from-blue-400 to-blue-600" },
+              { icon: Layers, title: "Open & Transparent", desc: "Full source code available. Complete data export. You own everything.", gradient: "from-emerald-400 to-emerald-600" },
             ].map((item) => (
               <motion.div key={item.title} variants={fadeUp}>
-                <TiltCard className="rounded-2xl border border-border bg-card p-6 flex gap-4 items-start transition-all duration-300 hover:shadow-lg">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary">
+                <TiltCard className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-clayCard p-6 flex gap-4 items-start transition-all duration-500 hover:-translate-y-1 hover:shadow-clayCardHover">
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-gradient-to-br ${item.gradient} text-white shadow-clayButton`}>
                     <item.icon className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="text-base font-bold tracking-tight text-foreground">{item.title}</h4>
-                    <p className="mt-1.5 text-[15px] text-foreground/60 leading-relaxed">{item.desc}</p>
+                    <h4 className="text-base font-bold tracking-tight text-foreground font-heading">{item.title}</h4>
+                    <p className="mt-1.5 text-[15px] text-muted-foreground leading-relaxed">{item.desc}</p>
                   </div>
                 </TiltCard>
               </motion.div>
@@ -847,8 +821,6 @@ const Landing = () => {
           </motion.div>
         </motion.div>
       </Section>
-
-      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
       {/* ═══════════════════════════════════════
           SECTION 8 — TESTIMONIALS
@@ -873,15 +845,15 @@ const Landing = () => {
             const isInView = useInView(ref, { once: true });
             return (
               <motion.div key={t.name} variants={fadeUp} ref={ref}>
-                <TiltCard className="rounded-2xl border border-border bg-card p-7 flex flex-col gap-4 h-full transition-all duration-300 hover:shadow-xl">
+                <TiltCard className="rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard p-8 flex flex-col gap-4 h-full transition-all duration-500 hover:-translate-y-2 hover:shadow-clayCardHover">
                   <AnimatedStars count={t.stars} inView={isInView} />
-                  <p className="text-[15px] text-foreground/60 leading-relaxed flex-1">
-                    <span className="text-3xl font-serif text-primary/20 leading-none">"</span>
+                  <p className="text-[15px] text-muted-foreground leading-relaxed flex-1">
+                    <span className="text-3xl font-black text-primary/20 leading-none font-heading">"</span>
                     {t.quote}"
                   </p>
                   <div>
-                    <p className="text-base font-bold text-foreground">{t.name}</p>
-                    <p className="text-sm text-foreground/50">{t.role}</p>
+                    <p className="text-base font-bold text-foreground font-heading">{t.name}</p>
+                    <p className="text-sm text-muted-foreground font-medium">{t.role}</p>
                   </div>
                 </TiltCard>
               </motion.div>
@@ -889,8 +861,6 @@ const Landing = () => {
           })}
         </motion.div>
       </Section>
-
-      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
       {/* ═══════════════════════════════════════
           SECTION 9 — FAQ
@@ -902,7 +872,7 @@ const Landing = () => {
           <SectionDesc>Everything you need to know about FocusGuard.</SectionDesc>
         </div>
 
-        <motion.div variants={staggerContainer} className="mt-14 max-w-3xl mx-auto w-full">
+        <motion.div variants={staggerContainer} className="mt-14 max-w-3xl mx-auto w-full rounded-[32px] bg-card/60 backdrop-blur-xl shadow-clayCard p-8">
           {[
             { q: "Is FocusGuard really free?", a: "Yes, completely free and open-source. No premium tiers, no hidden fees, no subscriptions. All features are available to everyone." },
             { q: "Does it collect my browsing data?", a: "Absolutely not. All data is processed and stored locally in your browser using Chrome's storage API. Nothing is ever sent to any server." },
@@ -916,48 +886,46 @@ const Landing = () => {
         </motion.div>
       </Section>
 
-      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
       {/* ═══════════════════════════════════════
           SECTION 10 — AUTHOR
           ═══════════════════════════════════════ */}
       <Section id="author" ariaLabel="About the creator">
         <motion.div variants={fadeUp} className="text-center mb-12">
           <SectionLabel>The Creator</SectionLabel>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1]">
-            Meet <span className="text-gradient">Husna Ayoub</span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-[1.1] font-heading">
+            Meet <span className="clay-text-gradient">Husna Ayoub</span>
           </h2>
         </motion.div>
 
         <motion.div
           variants={scaleIn}
-          className="rounded-3xl bg-card border border-border p-10 sm:p-14 relative overflow-hidden max-w-3xl mx-auto"
+          className="rounded-[40px] bg-card/60 backdrop-blur-xl shadow-clayCard p-10 sm:p-14 relative overflow-hidden max-w-3xl mx-auto"
         >
-          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-primary/5 blur-[100px] pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-info/5 blur-[80px] pointer-events-none" />
+          <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#7C3AED]/10 blur-[100px] pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-[#0EA5E9]/10 blur-[80px] pointer-events-none" />
 
           <div className="relative z-10 flex flex-col items-center text-center">
             {/* Avatar */}
             <motion.div
               variants={scaleIn}
-              className="w-28 h-28 rounded-full bg-gradient-to-br from-primary via-info to-primary p-[3px] mb-7 shadow-2xl shadow-primary/20"
+              className="w-28 h-28 rounded-full bg-gradient-to-br from-[#A78BFA] via-[#0EA5E9] to-[#7C3AED] p-[3px] mb-7 shadow-clayButton animate-clay-breathe"
             >
               <div className="w-full h-full rounded-full bg-card flex items-center justify-center">
-                <span className="text-3xl font-extrabold text-gradient">HA</span>
+                <span className="text-3xl font-black clay-text-gradient font-heading">HA</span>
               </div>
             </motion.div>
 
-            <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-1.5">
+            <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-1.5 font-heading">
               Husna Ayoub
             </h3>
-            <p className="text-sm text-muted-foreground mb-8 flex items-center gap-1.5">
+            <p className="text-sm text-muted-foreground mb-8 flex items-center gap-1.5 font-medium">
               <span>🇦🇫</span> Kabul, Afghanistan · Co-Founder — HH Nexus
             </p>
 
             {/* Story */}
             <div className="max-w-2xl mx-auto space-y-5 mb-10">
               <div className="relative">
-                <span className="absolute -top-5 -left-3 text-6xl font-extrabold text-gradient opacity-20 select-none leading-none">&ldquo;</span>
+                <span className="absolute -top-5 -left-3 text-6xl font-black clay-text-gradient opacity-20 select-none leading-none font-heading">&ldquo;</span>
                 <p className="text-muted-foreground leading-relaxed text-base pl-6">
                   I built FocusGuard because I saw how digital distractions were stealing hours from people
                   who genuinely wanted to be productive. Students cramming for exams, developers in deep work,
@@ -965,15 +933,15 @@ const Landing = () => {
                 </p>
               </div>
               <p className="text-muted-foreground leading-relaxed text-base">
-                Most blockers treat the symptom. I wanted to build something that understands the <span className="text-foreground font-semibold">behavior</span>,
+                Most blockers treat the symptom. I wanted to build something that understands the <span className="text-foreground font-bold">behavior</span>,
                 why you get distracted, when it happens, and how to intervene without breaking your flow.
-                That&apos;s <span className="text-foreground font-semibold">FocusGuard</span>.
+                That&apos;s <span className="text-foreground font-bold">FocusGuard</span>.
               </p>
               <p className="text-muted-foreground leading-relaxed text-base italic border-l-2 border-primary/30 pl-5">
                 &ldquo;Every feature in FocusGuard exists because I needed it myself. No fluff, no tracking,
                 no cloud dependency, just honest tools for honest work.&rdquo;
               </p>
-              <p className="text-foreground font-semibold text-lg">
+              <p className="text-foreground font-bold text-lg">
                 Made with ❤️ for curious minds.
               </p>
             </div>
@@ -981,10 +949,10 @@ const Landing = () => {
             {/* Social links */}
             <div className="flex items-center gap-4">
               {[
-                { name: "LinkedIn", url: "https://www.linkedin.com/in/husna-a-7971b7272/", gradient: "from-[hsl(210,80%,55%)] to-[hsl(210,90%,40%)]", shadow: "shadow-[0_8px_30px_hsl(210,80%,55%,0.35)]", icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg> },
-                { name: "GitHub", url: "https://github.com/20-Husna", gradient: "from-[hsl(270,60%,55%)] to-[hsl(280,70%,40%)]", shadow: "shadow-[0_8px_30px_hsl(270,60%,55%,0.35)]", icon: <Github className="w-5 h-5" /> },
-                { name: "Email", url: "mailto:ayoubhusna9462@gmail.com", gradient: "from-[hsl(340,70%,55%)] to-[hsl(350,80%,45%)]", shadow: "shadow-[0_8px_30px_hsl(340,70%,55%,0.35)]", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg> },
-              ].map((social, i) => (
+                { name: "LinkedIn", url: "https://www.linkedin.com/in/husna-a-7971b7272/", gradient: "from-[#60A5FA] to-[#3B82F6]", icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg> },
+                { name: "GitHub", url: "https://github.com/20-Husna", gradient: "from-[#A78BFA] to-[#7C3AED]", icon: <Github className="w-5 h-5" /> },
+                { name: "Email", url: "mailto:ayoubhusna9462@gmail.com", gradient: "from-[#F472B6] to-[#DB2777]", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg> },
+              ].map((social) => (
                 <motion.a
                   key={social.name}
                   href={social.url}
@@ -993,7 +961,7 @@ const Landing = () => {
                   variants={fadeUp}
                   whileHover={{ scale: 1.15, y: -5 }}
                   whileTap={{ scale: 0.9 }}
-                  className={`w-12 h-12 rounded-xl bg-gradient-to-br ${social.gradient} ${social.shadow} flex items-center justify-center text-primary-foreground transition-all duration-300`}
+                  className={`w-12 h-12 rounded-[16px] bg-gradient-to-br ${social.gradient} shadow-clayButton flex items-center justify-center text-white transition-all duration-300`}
                   title={social.name}
                 >
                   {social.icon}
@@ -1004,27 +972,25 @@ const Landing = () => {
         </motion.div>
       </Section>
 
-      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
       {/* ═══════════════════════════════════════
           SECTION 11 — CTA
           ═══════════════════════════════════════ */}
       <Section id="download" ariaLabel="Download and get started">
         <motion.div variants={scaleIn} className="text-center">
-          <div className="rounded-3xl bg-gradient-to-b from-primary/8 to-transparent border border-primary/15 p-14 md:p-20">
+          <div className="rounded-[48px] bg-card/60 backdrop-blur-xl shadow-claySurface p-14 md:p-20">
             <SectionLabel>Get Started</SectionLabel>
-            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1]">
+            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight leading-[1.1] font-heading">
               Start protecting your focus today.
             </motion.h2>
-            <motion.p variants={fadeUp} className="mt-5 text-lg text-foreground/60 max-w-lg mx-auto leading-relaxed">
+            <motion.p variants={fadeUp} className="mt-5 text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed">
               Free forever. No account required. Install the Chrome extension and take control of your digital life.
             </motion.p>
-            <motion.div variants={fadeUp} className="mt-10 flex flex-wrap justify-center gap-3">
-              <Button size="lg" className="rounded-full px-8 font-semibold text-sm gap-2 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all">
+            <motion.div variants={fadeUp} className="mt-10 flex flex-col sm:flex-row flex-wrap justify-center gap-4">
+              <Button size="lg" className="w-full sm:w-auto gap-2 text-base">
                 Add to Chrome — It's Free <ArrowRight className="h-4 w-4" />
               </Button>
               <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="outline" className="rounded-full px-8 font-semibold text-sm gap-2 hover:scale-[1.02] transition-transform">
+                <Button size="lg" variant="secondary" className="w-full sm:w-auto gap-2 text-base">
                   <Github className="h-4 w-4" /> View Source
                 </Button>
               </a>
@@ -1035,16 +1001,15 @@ const Landing = () => {
 
       {/* ─── Footer ─── */}
       <footer className="relative py-20" role="contentinfo">
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
         <div className="mx-auto max-w-5xl px-6 flex flex-col items-center gap-10">
           {/* Logo + brand */}
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground text-background">
-              <Shield className="h-4.5 w-4.5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton">
+              <Shield className="h-5 w-5" />
             </div>
             <div className="flex flex-col">
-              <span className="text-base font-bold text-foreground leading-tight">FocusGuard</span>
-              <span className="text-[10px] text-foreground/50 leading-tight tracking-[0.15em] uppercase font-semibold">
+              <span className="text-base font-black text-foreground leading-tight font-heading">FocusGuard</span>
+              <span className="text-[10px] text-muted-foreground leading-tight tracking-[0.15em] uppercase font-bold">
                 Your focus, protected.
               </span>
             </div>
@@ -1059,7 +1024,7 @@ const Landing = () => {
                   const id = label === "Creator" ? "author" : label.toLowerCase().replace(/\s/g, "");
                   document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="text-sm font-medium text-foreground/60 hover:text-foreground transition-colors duration-200"
+                className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors duration-200"
               >
                 {label}
               </button>
@@ -1069,15 +1034,15 @@ const Landing = () => {
           {/* Divider */}
           <div className="w-64 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
 
-          <div className="flex flex-col sm:flex-row items-center gap-2 text-sm text-foreground/50">
+          <div className="flex flex-col sm:flex-row items-center gap-2 text-sm text-muted-foreground">
             <p className="font-medium">
               © {new Date().getFullYear()} FocusGuard. Built with ❤️ by{" "}
-              <span className="text-foreground/70 font-semibold">Husna Ayoub</span>
+              <span className="text-foreground font-bold">Husna Ayoub</span>
               {" "}· Co-Founder, HH Nexus
             </p>
           </div>
 
-          <div className="flex items-center gap-6 text-sm font-medium text-foreground/50">
+          <div className="flex items-center gap-6 text-sm font-bold text-muted-foreground">
             <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1.5">
               <Github className="h-4 w-4" /> GitHub
             </a>
@@ -1091,7 +1056,7 @@ const Landing = () => {
         </div>
       </footer>
 
-      {/* ─── Floating CTA Pill ─── */}
+      {/* ─── Floating CTA Pill (Clay) ─── */}
       <AnimatePresence>
         {showFloatingCTA && (
           <motion.div
@@ -1103,13 +1068,11 @@ const Landing = () => {
           >
             <Button
               size="lg"
-              className="rounded-full pl-5 pr-4 py-3 h-auto font-semibold text-sm gap-3 shadow-[0_8px_32px_-4px_hsl(var(--primary)/0.45)] hover:shadow-[0_12px_40px_-4px_hsl(var(--primary)/0.55)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-200 border border-primary-foreground/10 bg-gradient-to-r from-primary to-[hsl(222,80%,60%)]"
+              className="gap-3 text-base shadow-clayButton hover:shadow-clayButtonHover"
             >
-              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-primary-foreground/15 backdrop-blur-sm">
-                <Shield className="h-3.5 w-3.5" />
-              </span>
+              <Shield className="h-4 w-4" />
               Add to Chrome — Free
-              <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </motion.div>
         )}
