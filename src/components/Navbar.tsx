@@ -40,7 +40,6 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Track active section on landing page
   useEffect(() => {
     if (!isLanding) return;
     const ids = sectionLinks.map((s) => s.id);
@@ -85,17 +84,19 @@ const Navbar = () => {
       <nav
         role="navigation"
         aria-label="Main navigation"
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
-          scrolled
-            ? "bg-background/80 backdrop-blur-2xl backdrop-saturate-150 border-b border-border/40 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
-            : "bg-transparent"
-        }`}
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl"
       >
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
+        <div
+          className={`mx-auto flex h-16 sm:h-[72px] items-center justify-between rounded-[32px] sm:rounded-[40px] px-4 sm:px-8 transition-all duration-500 ${
+            scrolled
+              ? "bg-card/70 shadow-clayCard backdrop-blur-2xl backdrop-saturate-150"
+              : "bg-card/40 shadow-clayCard backdrop-blur-xl"
+          }`}
+        >
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2 group"
+            className="flex items-center gap-2.5 group"
             aria-label="FocusGuard home"
             onClick={(e) => {
               if (isLanding) {
@@ -104,54 +105,52 @@ const Navbar = () => {
               }
             }}
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground text-background transition-transform duration-300 group-hover:scale-105">
-              <Shield className="h-3.5 w-3.5" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-[14px] bg-gradient-to-br from-[#A78BFA] to-[#7C3AED] text-white shadow-clayButton transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-0.5">
+              <Shield className="h-4 w-4" />
             </div>
-            <span className="text-sm font-bold tracking-tight text-foreground hidden sm:inline">
+            <span className="font-heading text-base font-black tracking-tight text-foreground hidden sm:inline">
               FocusGuard
             </span>
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden sm:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-1">
             {isLanding ? (
-              // Section-based smooth scroll links on landing
               sectionLinks.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className={`relative px-3 py-1.5 text-[13px] font-semibold rounded-lg transition-all duration-200 ${
+                  className={`relative px-3.5 py-2 text-[13px] font-bold rounded-[14px] transition-all duration-200 ${
                     activeSection === item.id
                       ? "text-foreground"
-                      : "text-foreground/60 hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {item.label}
                   {activeSection === item.id && (
                     <motion.div
                       layoutId="nav-indicator"
-                      className="absolute inset-0 bg-secondary rounded-lg -z-10"
+                      className="absolute inset-0 bg-primary/10 rounded-[14px] -z-10"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
                 </button>
               ))
             ) : (
-              // Page-based links on other pages
               pageLinks.map((item) => (
                 <Link key={item.path} to={item.path}>
                   <button
-                    className={`relative px-3 py-1.5 text-[13px] font-semibold rounded-lg transition-all duration-200 ${
+                    className={`relative px-3.5 py-2 text-[13px] font-bold rounded-[14px] transition-all duration-200 ${
                       location.pathname === item.path
                         ? "text-foreground"
-                        : "text-foreground/60 hover:text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {item.label}
                     {location.pathname === item.path && (
                       <motion.div
                         layoutId="nav-indicator"
-                        className="absolute inset-0 bg-secondary rounded-lg -z-10"
+                        className="absolute inset-0 bg-primary/10 rounded-[14px] -z-10"
                         transition={{ type: "spring", stiffness: 380, damping: 30 }}
                       />
                     )}
@@ -167,18 +166,17 @@ const Navbar = () => {
               variant="ghost"
               size="icon"
               onClick={() => setDark(!dark)}
-              className="h-8 w-8 rounded-lg"
+              className="h-10 w-10 rounded-[14px]"
               aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
             >
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
 
-            {/* Mobile menu toggle */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="h-8 w-8 rounded-lg sm:hidden"
+              className="h-10 w-10 rounded-[14px] md:hidden"
               aria-label="Toggle menu"
               aria-expanded={mobileOpen}
             >
@@ -192,22 +190,22 @@ const Navbar = () => {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-x-0 top-14 z-40 bg-background/95 backdrop-blur-2xl border-b border-border/40 sm:hidden"
+            initial={{ opacity: 0, y: -12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.98 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="fixed left-1/2 -translate-x-1/2 top-24 z-40 w-[calc(100%-2rem)] max-w-5xl rounded-[28px] bg-card/80 shadow-clayCard backdrop-blur-2xl md:hidden"
           >
-            <div className="flex flex-col p-4 gap-1">
+            <div className="flex flex-col p-5 gap-1">
               {isLanding
                 ? sectionLinks.map((item) => (
                     <button
                       key={item.id}
                       onClick={() => scrollToSection(item.id)}
-                      className={`w-full text-left px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
+                      className={`w-full text-left px-5 py-3.5 text-sm font-bold rounded-[16px] transition-all duration-200 ${
                         activeSection === item.id
-                          ? "bg-secondary text-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                          ? "bg-primary/10 text-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-primary/5"
                       }`}
                     >
                       {item.label}
@@ -216,10 +214,10 @@ const Navbar = () => {
                 : pageLinks.map((item) => (
                     <Link key={item.path} to={item.path}>
                       <button
-                        className={`w-full text-left px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
+                        className={`w-full text-left px-5 py-3.5 text-sm font-bold rounded-[16px] transition-all duration-200 ${
                           location.pathname === item.path
-                            ? "bg-secondary text-foreground"
-                            : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                            ? "bg-primary/10 text-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-primary/5"
                         }`}
                       >
                         {item.label}
