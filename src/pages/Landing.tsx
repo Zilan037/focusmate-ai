@@ -474,9 +474,11 @@ const Landing = () => {
             transition={{ delay: 0.4, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="mt-10 flex flex-col sm:flex-row flex-wrap justify-center gap-4"
           >
-            <Button size="lg" className="w-full sm:w-auto gap-2 text-base">
-              Add to Chrome <ArrowRight className="h-4 w-4" />
-            </Button>
+            <a href="https://github.com/20-Husna/FocusGuard-Extension" target="_blank" rel="noopener noreferrer">
+              <Button size="lg" className="w-full sm:w-auto gap-2 text-base">
+                Add to Chrome <ArrowRight className="h-4 w-4" />
+              </Button>
+            </a>
             <Link to="/dashboard">
               <Button size="lg" variant="secondary" className="w-full sm:w-auto gap-2 text-base">
                 View Demo
@@ -1076,7 +1078,7 @@ const Landing = () => {
             <div className="flex items-center gap-4">
               {[
                 { name: "LinkedIn", url: "https://www.linkedin.com/in/husna-a-7971b7272/", gradient: "from-[#60A5FA] to-[#3B82F6]", icon: <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg> },
-                { name: "GitHub", url: "https://github.com/20-Husna", gradient: "from-[#A78BFA] to-[#7C3AED]", icon: <Github className="w-5 h-5" /> },
+                { name: "GitHub", url: "https://github.com/20-Husna/FocusGuard-Extension", gradient: "from-[#A78BFA] to-[#7C3AED]", icon: <Github className="w-5 h-5" /> },
                 { name: "Email", url: "mailto:ayoubhusna9462@gmail.com", gradient: "from-[#F472B6] to-[#DB2777]", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg> },
               ].map((social) => (
                 <motion.a
@@ -1112,10 +1114,12 @@ const Landing = () => {
               Free forever. No account required. Install the Chrome extension and take control of your digital life.
             </motion.p>
             <motion.div variants={fadeUp} className="mt-10 flex flex-col sm:flex-row flex-wrap justify-center gap-4">
-              <Button size="lg" className="w-full sm:w-auto gap-2 text-base">
-                Add to Chrome — It's Free <ArrowRight className="h-4 w-4" />
-              </Button>
-              <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer">
+              <a href="https://github.com/20-Husna/FocusGuard-Extension" target="_blank" rel="noopener noreferrer">
+                <Button size="lg" className="w-full sm:w-auto gap-2 text-base">
+                  Add to Chrome — It's Free <ArrowRight className="h-4 w-4" />
+                </Button>
+              </a>
+              <a href="https://github.com/20-Husna/FocusGuard-Extension" target="_blank" rel="noopener noreferrer">
                 <Button size="lg" variant="secondary" className="w-full sm:w-auto gap-2 text-base">
                   <Github className="h-4 w-4" /> View Source
                 </Button>
@@ -1161,7 +1165,7 @@ const Landing = () => {
               <span className="text-foreground font-bold">Husna Ayoub</span> · HH Nexus
             </p>
             <div className="flex items-center gap-5 text-[13px] font-bold text-muted-foreground">
-              <a href="https://github.com/20-Husna" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1.5">
+              <a href="https://github.com/20-Husna/FocusGuard-Extension" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1.5">
                 <Github className="h-3.5 w-3.5" /> GitHub
               </a>
               <a href="https://www.linkedin.com/in/husna-a-7971b7272/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">LinkedIn</a>

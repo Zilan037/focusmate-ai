@@ -5,7 +5,7 @@ Thank you for considering contributing to FocusGuard! Every contribution helps m
 ## 🚀 Quick Start
 
 1. **Fork** the repository
-2. **Clone** your fork: `git clone https://github.com/YOUR_USERNAME/focusguard.git`
+2. **Clone** your fork: `git clone https://github.com/YOUR_USERNAME/FocusGuard-Extension.git`
 3. **Load** the `extension/` folder as an unpacked extension in `chrome://extensions/`
 4. Make your changes and test thoroughly
 5. **Submit** a Pull Request
