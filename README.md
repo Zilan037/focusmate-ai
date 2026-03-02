@@ -14,6 +14,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge" alt="MIT License" /></a>
   <img src="https://img.shields.io/badge/Version-1.0.0-6366F1?style=for-the-badge" alt="Version 1.0.0" />
   <img src="https://img.shields.io/badge/Manifest-V3-F59E0B?style=for-the-badge" alt="Manifest V3" />
+  <a href="https://tinyurl.com/focusguardextension"><img src="https://img.shields.io/badge/Website-Live-10B981?style=for-the-badge&logo=vercel&logoColor=white" alt="Website" /></a>
 </p>
 
 <p align="center">
@@ -96,8 +97,8 @@ Unlike cloud-based productivity apps, FocusGuard works **entirely locally** — 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/20-Husna/focusguard.git
-cd focusguard
+git clone https://github.com/20-Husna/FocusGuard-Extension.git
+cd FocusGuard-Extension
 
 # 2. No build step needed for the extension — it's vanilla JS
 #    The extension/ folder is ready to load directly
@@ -253,8 +254,8 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed g
 ### Quick Start
 
 ```bash
-git clone https://github.com/20-Husna/focusguard.git
-cd focusguard
+git clone https://github.com/20-Husna/FocusGuard-Extension.git
+cd FocusGuard-Extension
 npm install
 npm run dev
 ```
@@ -292,7 +293,7 @@ You are free to use, modify, and distribute this software for any purpose.
       <strong>Husna Ayoub</strong><br/>
       Co-Founder — HH Nexus<br/>
       Kabul, Afghanistan 🇦🇫<br/><br/>
-      <a href="https://github.com/20-Husna">GitHub</a> •
+      <a href="https://github.com/20-Husna/FocusGuard-Extension">GitHub</a> •
       <a href="https://www.linkedin.com/in/husna-a-7971b7272/">LinkedIn</a> •
       <a href="mailto:ayoubhusna9462@gmail.com">Email</a>
     </td>
