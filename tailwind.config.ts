@@ -14,7 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["-apple-system", "BlinkMacSystemFont", "Inter", "SF Pro Display", "system-ui", "sans-serif"],
+        sans: ["DM Sans", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
+        heading: ["Nunito", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "SF Mono", "monospace"],
       },
       colors: {
@@ -81,8 +82,29 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        /* Clay accent palette — direct access */
+        clay: {
+          violet: "#7C3AED",
+          pink: "#DB2777",
+          blue: "#0EA5E9",
+          emerald: "#10B981",
+          amber: "#F59E0B",
+          canvas: "#F4F1FA",
+          charcoal: "#332F3A",
+          muted: "#635F69",
+        },
       },
       borderRadius: {
+        /* Clay radii — super rounded */
+        "clay-xs": "0.5rem",     /* 8px — badges minimum */
+        "clay-sm": "1rem",       /* 16px — icon containers */
+        "clay-md": "1.25rem",    /* 20px — buttons & inputs */
+        "clay-lg": "1.5rem",     /* 24px — medium elements */
+        "clay-xl": "2rem",       /* 32px — standard cards */
+        "clay-2xl": "2.5rem",    /* 40px — nav bar */
+        "clay-3xl": "3rem",      /* 48px — large containers */
+        "clay-4xl": "3.75rem",   /* 60px — hero sections */
+        /* Standard shadcn radii */
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
@@ -104,12 +126,34 @@ export default {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-10px)" },
         },
+        /* Clay animations */
+        "clay-float": {
+          "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
+          "50%": { transform: "translateY(-20px) rotate(2deg)" },
+        },
+        "clay-float-delayed": {
+          "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
+          "50%": { transform: "translateY(-15px) rotate(-2deg)" },
+        },
+        "clay-float-slow": {
+          "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
+          "50%": { transform: "translateY(-30px) rotate(5deg)" },
+        },
+        "clay-breathe": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.02)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "float": "float 3s ease-in-out infinite",
+        /* Clay animations */
+        "clay-float": "clay-float 8s ease-in-out infinite",
+        "clay-float-delayed": "clay-float-delayed 10s ease-in-out infinite",
+        "clay-float-slow": "clay-float-slow 12s ease-in-out infinite",
+        "clay-breathe": "clay-breathe 6s ease-in-out infinite",
       },
     },
   },

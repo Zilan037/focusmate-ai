@@ -2,129 +2,145 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    --background: 220 16% 96%;
-    --foreground: 222 47% 8%;
+    /* ═══ CLAY DESIGN SYSTEM — LIGHT (Primary) ═══ */
+    --background: 260 30% 96%;        /* #F4F1FA — cool lavender canvas */
+    --foreground: 270 10% 21%;        /* #332F3A — soft charcoal */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 8%;
+    --card: 0 0% 100%;                /* Pure white base for glass-clay cards */
+    --card-foreground: 270 10% 21%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 8%;
+    --popover-foreground: 270 10% 21%;
 
-    --primary: 222 80% 50%;
+    --primary: 263 84% 58%;           /* #7C3AED — Vivid Violet */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 20% 93%;
-    --secondary-foreground: 222 47% 8%;
+    --secondary: 260 20% 94%;         /* Soft lavender surface */
+    --secondary-foreground: 270 10% 21%;
 
-    --muted: 214 20% 93%;
-    --muted-foreground: 215 20% 35%;
+    --muted: 260 15% 92%;
+    --muted-foreground: 264 6% 40%;   /* #635F69 — minimum accessible gray */
 
-    --accent: 214 20% 93%;
-    --accent-foreground: 222 47% 8%;
+    --accent: 263 84% 58%;            /* Same as primary for consistency */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 25% 84%;
-    --input: 214 25% 84%;
-    --ring: 222 80% 50%;
+    --border: 260 20% 88%;
+    --input: 260 15% 94%;             /* Recessed input bg #EFEBF5 */
+    --ring: 263 84% 58%;
 
-    --radius: 0.75rem;
+    --radius: 1.25rem;                /* 20px base — clay minimum */
 
-    --productive: 142 71% 45%;
+    /* ═══ CLAY ACCENT PALETTE ═══ */
+    --clay-accent: 263 84% 58%;       /* #7C3AED Vivid Violet */
+    --clay-accent-alt: 330 81% 50%;   /* #DB2777 Hot Pink */
+    --clay-tertiary: 199 89% 48%;     /* #0EA5E9 Sky Blue */
+    --clay-success: 160 84% 39%;      /* #10B981 Emerald */
+    --clay-warning: 38 92% 50%;       /* #F59E0B Amber */
+
+    /* ═══ SEMANTIC COLORS (preserved) ═══ */
+    --productive: 160 84% 39%;
     --productive-foreground: 0 0% 100%;
     --distracted: 0 84% 60%;
     --distracted-foreground: 0 0% 100%;
-    --focus: 222 80% 55%;
+    --focus: 263 84% 58%;
     --focus-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
 
-    --chart-productive: 142 71% 45%;
+    /* ═══ CHART COLORS ═══ */
+    --chart-productive: 160 84% 39%;
     --chart-distracted: 0 84% 60%;
-    --chart-focus: 222 80% 55%;
+    --chart-focus: 263 84% 58%;
     --chart-social: 280 67% 55%;
-    --chart-education: 142 71% 45%;
+    --chart-education: 160 84% 39%;
     --chart-work: 199 89% 48%;
     --chart-entertainment: 38 92% 50%;
     --chart-news: 262 52% 47%;
     --chart-shopping: 328 73% 56%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5% 26%;
-    --sidebar-primary: 240 6% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 5% 96%;
-    --sidebar-accent-foreground: 240 6% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217 91% 60%;
+    /* ═══ SIDEBAR ═══ */
+    --sidebar-background: 260 30% 97%;
+    --sidebar-foreground: 264 6% 40%;
+    --sidebar-primary: 263 84% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 260 20% 95%;
+    --sidebar-accent-foreground: 270 10% 21%;
+    --sidebar-border: 260 20% 88%;
+    --sidebar-ring: 263 84% 58%;
   }
 
   .dark {
-    --background: 228 25% 8%;
-    --foreground: 210 40% 98%;
+    /* ═══ CLAY DESIGN SYSTEM — DARK ═══ */
+    --background: 260 25% 8%;         /* Deep violet-black */
+    --foreground: 260 20% 95%;
 
-    --card: 228 22% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 260 20% 12%;
+    --card-foreground: 260 20% 95%;
 
-    --popover: 228 22% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 260 20% 12%;
+    --popover-foreground: 260 20% 95%;
 
-    --primary: 222 80% 58%;
+    --primary: 263 84% 65%;           /* Brighter violet for dark mode */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 228 18% 16%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 260 18% 16%;
+    --secondary-foreground: 260 20% 95%;
 
-    --muted: 228 18% 16%;
-    --muted-foreground: 215 20% 72%;
+    --muted: 260 18% 16%;
+    --muted-foreground: 260 15% 72%;
 
-    --accent: 228 18% 16%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 263 84% 65%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 228 15% 20%;
-    --input: 228 15% 20%;
-    --ring: 222 80% 58%;
+    --border: 260 15% 20%;
+    --input: 260 18% 14%;
+    --ring: 263 84% 65%;
 
-    --productive: 142 71% 45%;
+    --clay-accent: 263 84% 65%;
+    --clay-accent-alt: 330 81% 55%;
+    --clay-tertiary: 199 89% 55%;
+    --clay-success: 160 84% 45%;
+    --clay-warning: 38 92% 55%;
+
+    --productive: 160 84% 45%;
     --productive-foreground: 0 0% 100%;
     --distracted: 0 84% 60%;
     --distracted-foreground: 0 0% 100%;
-    --focus: 222 80% 58%;
+    --focus: 263 84% 65%;
     --focus-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 38 92% 55%;
     --warning-foreground: 0 0% 100%;
-    --info: 199 89% 48%;
+    --info: 199 89% 55%;
     --info-foreground: 0 0% 100%;
 
-    --chart-productive: 142 71% 45%;
+    --chart-productive: 160 84% 45%;
     --chart-distracted: 0 84% 60%;
-    --chart-focus: 222 80% 58%;
-    --chart-social: 280 67% 55%;
-    --chart-education: 142 71% 45%;
-    --chart-work: 199 89% 48%;
-    --chart-entertainment: 38 92% 50%;
-    --chart-news: 262 52% 47%;
-    --chart-shopping: 328 73% 56%;
+    --chart-focus: 263 84% 65%;
+    --chart-social: 280 67% 60%;
+    --chart-education: 160 84% 45%;
+    --chart-work: 199 89% 55%;
+    --chart-entertainment: 38 92% 55%;
+    --chart-news: 262 52% 55%;
+    --chart-shopping: 328 73% 60%;
 
-    --sidebar-background: 228 25% 8%;
-    --sidebar-foreground: 240 5% 96%;
-    --sidebar-primary: 224 76% 52%;
+    --sidebar-background: 260 25% 8%;
+    --sidebar-foreground: 260 15% 72%;
+    --sidebar-primary: 263 84% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 228 18% 14%;
-    --sidebar-accent-foreground: 240 5% 96%;
-    --sidebar-border: 228 15% 20%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 260 18% 14%;
+    --sidebar-accent-foreground: 260 20% 95%;
+    --sidebar-border: 260 15% 20%;
+    --sidebar-ring: 263 84% 65%;
   }
 }
 
@@ -138,11 +154,15 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
 
   code, pre {
@@ -151,15 +171,144 @@
 }
 
 @layer utilities {
+  /* ═══ CLAY SHADOW SYSTEM ═══ */
+
+  /* Deep Surface — large containers */
+  .shadow-claySurface {
+    box-shadow:
+      30px 30px 60px #cdc6d9,
+      -30px -30px 60px #ffffff,
+      inset 10px 10px 20px rgba(139, 92, 246, 0.05),
+      inset -10px -10px 20px rgba(255, 255, 255, 0.8);
+  }
+
+  /* Card — floating content */
+  .shadow-clayCard {
+    box-shadow:
+      16px 16px 32px rgba(160, 150, 180, 0.2),
+      -10px -10px 24px rgba(255, 255, 255, 0.9),
+      inset 6px 6px 12px rgba(139, 92, 246, 0.03),
+      inset -6px -6px 12px rgba(255, 255, 255, 1);
+  }
+
+  /* Card hover — enhanced float */
+  .shadow-clayCardHover {
+    box-shadow:
+      20px 20px 40px rgba(160, 150, 180, 0.25),
+      -12px -12px 30px rgba(255, 255, 255, 0.95),
+      inset 6px 6px 12px rgba(139, 92, 246, 0.05),
+      inset -6px -6px 12px rgba(255, 255, 255, 1);
+  }
+
+  /* Button — high convexity */
+  .shadow-clayButton {
+    box-shadow:
+      12px 12px 24px rgba(139, 92, 246, 0.3),
+      -8px -8px 16px rgba(255, 255, 255, 0.4),
+      inset 4px 4px 8px rgba(255, 255, 255, 0.4),
+      inset -4px -4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Button hover — lifted */
+  .shadow-clayButtonHover {
+    box-shadow:
+      16px 16px 32px rgba(139, 92, 246, 0.35),
+      -10px -10px 20px rgba(255, 255, 255, 0.5),
+      inset 4px 4px 8px rgba(255, 255, 255, 0.5),
+      inset -4px -4px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Pressed/Recessed — inputs & active states */
+  .shadow-clayPressed {
+    box-shadow:
+      inset 10px 10px 20px #d9d4e3,
+      inset -10px -10px 20px #ffffff;
+  }
+
+  /* ═══ DARK MODE CLAY SHADOWS ═══ */
+  .dark .shadow-claySurface {
+    box-shadow:
+      30px 30px 60px rgba(0, 0, 0, 0.4),
+      -30px -30px 60px rgba(60, 50, 80, 0.15),
+      inset 10px 10px 20px rgba(139, 92, 246, 0.08),
+      inset -10px -10px 20px rgba(60, 50, 80, 0.3);
+  }
+
+  .dark .shadow-clayCard {
+    box-shadow:
+      16px 16px 32px rgba(0, 0, 0, 0.35),
+      -10px -10px 24px rgba(60, 50, 80, 0.12),
+      inset 6px 6px 12px rgba(139, 92, 246, 0.06),
+      inset -6px -6px 12px rgba(60, 50, 80, 0.25);
+  }
+
+  .dark .shadow-clayCardHover {
+    box-shadow:
+      20px 20px 40px rgba(0, 0, 0, 0.4),
+      -12px -12px 30px rgba(60, 50, 80, 0.15),
+      inset 6px 6px 12px rgba(139, 92, 246, 0.08),
+      inset -6px -6px 12px rgba(60, 50, 80, 0.3);
+  }
+
+  .dark .shadow-clayButton {
+    box-shadow:
+      12px 12px 24px rgba(0, 0, 0, 0.4),
+      -8px -8px 16px rgba(60, 50, 80, 0.15),
+      inset 4px 4px 8px rgba(139, 92, 246, 0.15),
+      inset -4px -4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .shadow-clayButtonHover {
+    box-shadow:
+      16px 16px 32px rgba(0, 0, 0, 0.45),
+      -10px -10px 20px rgba(60, 50, 80, 0.18),
+      inset 4px 4px 8px rgba(139, 92, 246, 0.18),
+      inset -4px -4px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  .dark .shadow-clayPressed {
+    box-shadow:
+      inset 10px 10px 20px rgba(0, 0, 0, 0.4),
+      inset -10px -10px 20px rgba(60, 50, 80, 0.2);
+  }
+
+  /* ═══ CLAY TYPOGRAPHY ═══ */
+  .font-clay-heading {
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+
+  .font-clay-body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+
+  /* ═══ CLAY TEXT GRADIENT ═══ */
+  .clay-text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--foreground)) 20%, hsl(var(--primary)) 60%, hsl(var(--clay-accent-alt, 330 81% 50%)));
+  }
+
+  /* Legacy gradient — still works */
   .text-gradient {
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--info)));
   }
 
+  /* ═══ GLASS-CLAY CARD ═══ */
+  .glass-clay {
+    @apply backdrop-blur-xl;
+    background: hsla(0, 0%, 100%, 0.6);
+  }
+
+  .dark .glass-clay {
+    background: hsla(260, 20%, 12%, 0.6);
+  }
+
+  /* Legacy glass */
   .glass {
     @apply bg-card/60 backdrop-blur-xl border border-border/50;
   }
 
+  /* ═══ GLOW UTILITIES ═══ */
   .glow-primary {
     box-shadow: 0 0 30px -5px hsl(var(--primary) / 0.3);
   }
@@ -170,5 +319,46 @@
 
   .glow-distracted {
     box-shadow: 0 0 20px -5px hsl(var(--distracted) / 0.4);
+  }
+}
+
+/* ═══ CLAY ANIMATION KEYFRAMES ═══ */
+@keyframes clay-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(2deg); }
+}
+
+@keyframes clay-float-delayed {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(-2deg); }
+}
+
+@keyframes clay-float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-30px) rotate(5deg); }
+}
+
+@keyframes clay-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+/* Animation delay helpers */
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* ═══ REDUCED MOTION ═══ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
