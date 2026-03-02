@@ -75,9 +75,12 @@ const Section = ({
 };
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <motion.p variants={fadeUp} className="text-sm font-black uppercase tracking-[0.15em] text-primary mb-4 font-heading">
-    {children}
-  </motion.p>
+  <motion.div variants={fadeUp} className="mb-5">
+    <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-5 py-2 text-xs font-black uppercase tracking-[0.2em] text-primary shadow-clayCard font-heading">
+      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+      {children}
+    </span>
+  </motion.div>
 );
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
