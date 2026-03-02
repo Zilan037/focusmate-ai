@@ -632,60 +632,60 @@ const Landing = () => {
           </SectionDesc>
         </div>
 
-        <motion.div variants={staggerContainer} className="mt-12 flex flex-col lg:flex-row items-end justify-center gap-6 lg:gap-10">
+        <motion.div variants={staggerContainer} className="mt-10 sm:mt-12 flex flex-col items-center lg:flex-row lg:items-end justify-center gap-8 lg:gap-10">
           {/* Card 1 — Stats */}
-          <motion.div variants={fadeUp} className="flex flex-col items-center gap-6 w-full max-w-[280px]">
+          <motion.div variants={fadeUp} className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-[320px] sm:max-w-[280px]">
             <div className="relative w-full">
-              <div className="rounded-[24px] bg-card/60 backdrop-blur-xl overflow-hidden shadow-clayCard transition-all duration-500 hover:-translate-y-2 hover:shadow-clayCardHover">
-                <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border/30">
+              <div className="rounded-[20px] sm:rounded-[24px] bg-card/60 backdrop-blur-xl overflow-hidden shadow-clayCard transition-all duration-500 hover:-translate-y-2 hover:shadow-clayCardHover">
+                <div className="flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 border-b border-border/30">
                   <div className="flex gap-1.5"><div className="h-2.5 w-2.5 rounded-full bg-[#FF6B6B]" /><div className="h-2.5 w-2.5 rounded-full bg-[#FFD93D]" /><div className="h-2.5 w-2.5 rounded-full bg-[#6BCB77]" /></div>
                   <span className="flex-1 text-center text-[9px] font-mono text-muted-foreground font-bold">Stats</span>
                 </div>
                 <img src={extDashboard} alt="FocusGuard Stats Dashboard showing productivity score" className="w-full h-auto block" loading="lazy" />
               </div>
             </div>
-            <div className="text-center">
-              <h3 className="text-[15px] font-bold text-foreground font-heading">Productivity Dashboard</h3>
-              <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Real-time score, focus vs. distraction, daily goals and streaks.</p>
+            <div className="text-center px-2">
+              <h3 className="text-sm sm:text-[15px] font-bold text-foreground font-heading">Productivity Dashboard</h3>
+              <p className="text-xs sm:text-[13px] text-muted-foreground mt-1 sm:mt-1.5 leading-relaxed">Real-time score, focus vs. distraction, daily goals and streaks.</p>
             </div>
           </motion.div>
 
           {/* Card 2 — Focus Mode (hero, elevated) */}
-          <motion.div variants={fadeUp} className="flex flex-col items-center gap-6 w-full max-w-[300px] lg:-mb-4">
+          <motion.div variants={fadeUp} className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-[340px] sm:max-w-[300px] lg:-mb-4">
             <div className="relative w-full">
-              <div className="rounded-[28px] bg-card/70 backdrop-blur-xl overflow-hidden shadow-clayCard ring-2 ring-primary/20 transition-all duration-500 hover:-translate-y-2 hover:shadow-clayCardHover">
-                <div className="flex items-center gap-1.5 px-4 py-3 border-b border-border/30 bg-primary/5">
+              <div className="rounded-[24px] sm:rounded-[28px] bg-card/70 backdrop-blur-xl overflow-hidden shadow-clayCard ring-2 ring-primary/20 transition-all duration-500 hover:-translate-y-2 hover:shadow-clayCardHover">
+                <div className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-border/30 bg-primary/5">
                   <div className="flex gap-1.5"><div className="h-2.5 w-2.5 rounded-full bg-[#FF6B6B]" /><div className="h-2.5 w-2.5 rounded-full bg-[#FFD93D]" /><div className="h-2.5 w-2.5 rounded-full bg-[#6BCB77]" /></div>
                   <span className="flex-1 text-center text-[9px] font-mono text-primary font-bold">Focus Mode</span>
                   <span className="h-2 w-2 rounded-full bg-productive animate-pulse" />
                 </div>
                 <img src={extFocus} alt="FocusGuard Focus Mode with task management and timed sessions" className="w-full h-auto block" loading="lazy" />
               </div>
-              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-16 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute -bottom-6 sm:-bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-12 sm:h-16 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
             </div>
-            <div className="text-center">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-4 py-1.5 text-[10px] font-black text-primary mb-2 shadow-clayCard font-heading">
+            <div className="text-center px-2">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] font-black text-primary mb-2 shadow-clayCard font-heading">
                 <Target className="h-3 w-3" /> Most Popular
               </div>
-              <h3 className="text-[15px] font-bold text-foreground font-heading">Deep Focus Sessions</h3>
-              <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Allow-only or block mode, task tracking and timed sessions.</p>
+              <h3 className="text-sm sm:text-[15px] font-bold text-foreground font-heading">Deep Focus Sessions</h3>
+              <p className="text-xs sm:text-[13px] text-muted-foreground mt-1 sm:mt-1.5 leading-relaxed">Allow-only or block mode, task tracking and timed sessions.</p>
             </div>
           </motion.div>
 
           {/* Card 3 — Activity */}
-          <motion.div variants={fadeUp} className="flex flex-col items-center gap-6 w-full max-w-[280px]">
+          <motion.div variants={fadeUp} className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-[320px] sm:max-w-[280px]">
             <div className="relative w-full">
-              <div className="rounded-[24px] bg-card/60 backdrop-blur-xl overflow-hidden shadow-clayCard transition-all duration-500 hover:-translate-y-2 hover:shadow-clayCardHover">
-                <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-border/30">
+              <div className="rounded-[20px] sm:rounded-[24px] bg-card/60 backdrop-blur-xl overflow-hidden shadow-clayCard transition-all duration-500 hover:-translate-y-2 hover:shadow-clayCardHover">
+                <div className="flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 border-b border-border/30">
                   <div className="flex gap-1.5"><div className="h-2.5 w-2.5 rounded-full bg-[#FF6B6B]" /><div className="h-2.5 w-2.5 rounded-full bg-[#FFD93D]" /><div className="h-2.5 w-2.5 rounded-full bg-[#6BCB77]" /></div>
                   <span className="flex-1 text-center text-[9px] font-mono text-muted-foreground font-bold">Activity</span>
                 </div>
                 <img src={extStats} alt="FocusGuard Activity view with category tracking" className="w-full h-auto block" loading="lazy" />
               </div>
             </div>
-            <div className="text-center">
-              <h3 className="text-[15px] font-bold text-foreground font-heading">Activity Tracking</h3>
-              <p className="text-[13px] text-muted-foreground mt-1.5 leading-relaxed">Smart category detection, session counting and site insights.</p>
+            <div className="text-center px-2">
+              <h3 className="text-sm sm:text-[15px] font-bold text-foreground font-heading">Activity Tracking</h3>
+              <p className="text-xs sm:text-[13px] text-muted-foreground mt-1 sm:mt-1.5 leading-relaxed">Smart category detection, session counting and site insights.</p>
             </div>
           </motion.div>
         </motion.div>
